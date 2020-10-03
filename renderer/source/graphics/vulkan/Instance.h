@@ -14,7 +14,7 @@ namespace vr
 
 		~Instance();
 
-		const VkInstance& GetVulkanInstance();
+		VkInstance GetVulkanInstance();
 
 	private:
 

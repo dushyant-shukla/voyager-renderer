@@ -1,25 +1,30 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+#include <GLFW/glfw3.h>
+
+#include "Instance.h"
 
 namespace vr
 {
-	class Window;
-	class Instance;
+	//class Instance;
 
 	class Surface
 	{
-		static Surface* CreateWindowSurface(Instance const* const instance, Window const* const window, VkAllocationCallbacks const* allocationCallbacks);
+	public:
+
+		static Surface* Surface::CreateWindowSurface(Instance* const instance, GLFWwindow* window, VkAllocationCallbacks* const allocationCallbacks);
 
 		~Surface();
 
 	private:
 
-		Surface(Instance* const instance, Window* const window, VkAllocationCallbacks* allocationCallbacks);
+		Surface(Instance* const instance, VkAllocationCallbacks* const allocationCallbacks);
 
-		Instance* mInstance;
+	private:
+		Instance* const mInstance;
+
 		VkSurfaceKHR mSurface;
-		Window* mWindow;
-		VkAllocationCallbacks* mAllocationCallbacks;
+		VkAllocationCallbacks* const mAllocationCallbacks;
 	};
 }

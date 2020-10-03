@@ -1,24 +1,24 @@
 #include "Surface.h"
 #include "utility/RendererCoreUtility.h"
-#include "window/Window.h"
-#include "Instance.h"
-
-#include <GLFW/glfw3.h>
 
 namespace vr
 {
-	Surface* vr::Surface::CreateWindowSurface(Instance const* const instance, Window const* const window, VkAllocationCallbacks const* allocationCallbacks)
+	Surface* Surface::CreateWindowSurface(Instance* const instance, GLFWwindow* window, VkAllocationCallbacks* const allocationCallbacks)
 	{
-		return nullptr;
+		static Surface surface(instance, allocationCallbacks);
+		CHECK_RESULT(glfwCreateWindowSurface(surface.mInstance->GetVulkanInstance(), window, allocationCallbacks, &surface.mSurface), "Failed to create window surface.");
+		RENDERER_DEBUG("RESOURCE CREATED: WINDOW SURFACE");
+		return &surface;
 	}
 
-	vr::Surface::Surface(Instance* const instance, Window* const window, VkAllocationCallbacks* allocationCallbacks)
-		: mInstance(instance), mWindow(window), mAllocationCallbacks(allocationCallbacks)
+	Surface::Surface(Instance* const instance, VkAllocationCallbacks* const allocationCallbacks)
+		: mInstance(instance), mAllocationCallbacks(allocationCallbacks)
 	{
-		CHECK_RESULT(glfwCreateWindowSurface(mInstance->GetVulkanInstance(), mWindow->GetNativeWindow(), nullptr, &mSurface), "Failed to create window surface.");
 	}
 
-	vr::Surface::~Surface()
+	Surface::~Surface()
 	{
+		vkDestroySurfaceKHR(mInstance->GetVulkanInstance(), mSurface, nullptr);
+		RENDERER_DEBUG("RESOURCE DESTROYED: WINDOW SURFACE");
 	}
 }

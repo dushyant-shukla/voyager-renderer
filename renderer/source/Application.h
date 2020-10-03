@@ -7,6 +7,7 @@
 namespace vr
 {
 	class Instance;
+	class Surface;
 	/*
 		Base class inherited by all samples.
 		It acts as an interface between the samples and the entry point to the renderer.
@@ -52,6 +53,7 @@ namespace vr
 	protected:
 
 		Instance* mInstance = { nullptr };
+		Surface* mSurface = { nullptr };
 
 	private:
 

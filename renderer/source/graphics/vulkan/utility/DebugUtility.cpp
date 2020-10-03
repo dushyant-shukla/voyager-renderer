@@ -34,9 +34,9 @@ namespace vr
 	{
 		auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
 		if (func != nullptr) {
-			CHECK_RESULT(func(instance, &info, pAllocator, &messenger), "Failed to create debug messenger.");
+			CHECK_RESULT(func(instance, &info, pAllocator, &messenger), "RESOURCE CREATION FAILED: DEBUG MESSENGER");
 		}
-		RENDERER_DEBUG("Debug messenger created.");
+		RENDERER_DEBUG("RESOURCE CREATED: DEBUG MESSENGER");
 	}
 
 	void DebugUtility::DestroyDebugMessenger(VkDebugUtilsMessengerEXT& const messenger, VkInstance& const instance, VkAllocationCallbacks const* const pAllocator)
@@ -46,7 +46,7 @@ namespace vr
 		if (func != nullptr) {
 			func(instance, messenger, pAllocator);
 		}
-		RENDERER_DEBUG("Debug messenger destroyed.");
+		RENDERER_DEBUG("RESOURCE DESTROYED: DEBUG MESSENGER");
 #endif
 	}
 }

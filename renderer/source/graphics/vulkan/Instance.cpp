@@ -10,7 +10,7 @@ namespace vr
 		static Instance instance;
 
 #ifdef ENABLE_VALIDATION
-		ASSERT_SUCCESS_AND_THROW(ExtensionUtility::CheckValidationLayerSupport(), "Validation layers requested, but not available.");
+		ASSERT_SUCCESS_AND_THROW(ExtensionUtility::CheckValidationLayerSupport(), "RESOURCE CREATION FAILED: VULKAN INSTANCE (REQUIRED VALIDATION LAYERS NOT AVAILABLE)");
 #endif
 
 		// Information about application
@@ -23,7 +23,7 @@ namespace vr
 		appInfo.apiVersion = VK_API_VERSION_1_2;
 
 		std::vector<const char*> extensions = ExtensionUtility::GetRequiredExtensions();
-		ASSERT_SUCCESS_AND_THROW(ExtensionUtility::CheckInstanceExtentionSupport(&extensions), "Required extensions not available.");
+		ASSERT_SUCCESS_AND_THROW(ExtensionUtility::CheckInstanceExtentionSupport(&extensions), "RESOURCE CREATION FAILED: VULKAN INSTANCE (REQUIRED EXTENSIONS NOT AVAILABLE)");
 
 		VkInstanceCreateInfo instanceCreateInfo = {};
 		instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -43,8 +43,8 @@ namespace vr
 		instanceCreateInfo.pNext = nullptr;
 #endif
 
-		CHECK_RESULT(vkCreateInstance(&instanceCreateInfo, nullptr, &instance.mInstance), "Failed to create a Vulkan instance.");
-		RENDERER_DEBUG("Vulkan instance created.");
+		CHECK_RESULT(vkCreateInstance(&instanceCreateInfo, nullptr, &instance.mInstance), "RESOURCE CREATION FAILED: VULKAN INSTANCE");
+		RENDERER_DEBUG("RESOURCE CREATED: VULKAN INSTANCE");
 
 #ifdef ENABLE_VALIDATION
 		DebugUtility::CreateDebugMessenger(instance.mDebugMessenger, instance.mInstance, debugCreateInfo, nullptr);
@@ -59,10 +59,10 @@ namespace vr
 	{
 		DebugUtility::DestroyDebugMessenger(mDebugMessenger, mInstance, nullptr);
 		vkDestroyInstance(mInstance, nullptr);
-		RENDERER_DEBUG("Vulkan instance destroyed.");
+		RENDERER_DEBUG("RESOURCE DESTROYED: VULKAN INSTANCE");
 	}
 
-	const VkInstance& Instance::GetVulkanInstance()
+	VkInstance Instance::GetVulkanInstance()
 	{
 		return mInstance;
 	}

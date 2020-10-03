@@ -2,6 +2,7 @@
 #include "logging/LoggingCore.h"
 #include "frame-rate-controller/FramerateController.h"
 #include "graphics/vulkan/Instance.h"
+#include "graphics/vulkan/Surface.h"
 
 namespace vr
 {
@@ -43,6 +44,7 @@ namespace vr
 	void Application::InitializeRenderer()
 	{
 		mInstance = Instance::CreateInstance(mName);
+		mSurface = Surface::CreateWindowSurface(mInstance, mWindow->GetNativeWindow(), nullptr);
 	}
 
 	void Application::Wait()

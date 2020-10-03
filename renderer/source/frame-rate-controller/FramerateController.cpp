@@ -15,7 +15,7 @@ namespace vr
 	FramerateController::FramerateController(unsigned int maxFrameRate) : mMaxFramerate(maxFrameRate), mFrameTime(0.0)
 	{
 		if (0 >= mMaxFramerate) { mMaxFramerate = 60; }
-		RENDERER_DEBUG("Max frame-rate set to: {0}", mMaxFramerate);
+		RENDERER_DEBUG("MAX FRAME RATE SET TO: {0} FPS", mMaxFramerate);
 
 		mTicksPerFrame = 1000.0 / mMaxFramerate;
 

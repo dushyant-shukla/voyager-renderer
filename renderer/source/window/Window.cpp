@@ -23,6 +23,7 @@ namespace vr
 	void Window::Shutdown()
 	{
 		glfwDestroyWindow(mWindow);
+		RENDERER_DEBUG("RESOURSE DESTROYED: NATIVE WINDOW");
 	}
 
 	bool Window::ShouldShutdown()
@@ -49,13 +50,13 @@ namespace vr
 	{
 		mWindowProperties = { properties };
 
-		ASSERT_SUCCESS_AND_THROW(glfwInit(), "Failed to initialize GLFW.");
+		ASSERT_SUCCESS_AND_THROW(glfwInit(), "RESOURCE CREATION FAILED: NATIVE WINDOW (FAILED TO INITIALIZE GLFW)");
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
 		mWindow = glfwCreateWindow(properties.mWidth, properties.mHeight, properties.mTitle.c_str(), nullptr, nullptr);
-		ASSERT_SUCCESS_AND_THROW(mWindow, "Failed to create window.");
+		ASSERT_SUCCESS_AND_THROW(mWindow, "RESOURCE CREATION FAILED: NATIVE WINDOW (FAILED TO CREATE WINDOW)");
 
 		glfwSetWindowUserPointer(mWindow, &mWindowProperties);
 
@@ -112,6 +113,6 @@ namespace vr
 				// TODO: window resize callback
 			});
 
-		RENDERER_DEBUG("Window initialization successful.");
+		RENDERER_DEBUG("RESOURSE CREATED: NATIVE WINDOW");
 	}
 }
