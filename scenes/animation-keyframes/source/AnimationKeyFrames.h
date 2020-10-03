@@ -10,6 +10,8 @@ namespace vr
 	{
 	public:
 
+		AnimationKeyframes(std::string name);
+
 		virtual void InitializeScene() override;
 	};
 }

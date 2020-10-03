@@ -348,3 +348,35 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+
+### Project specific settings
+
+/.vs/ProjectSettings.json
+/.vs
+
+/bin/
+/bin-intermediate/
+/engine/externals/glm/glm/out/build/x64-Debug/.cmake/api/v1/reply/index-2020-01-26T15-02-42-0978.json
+*.user
+*.filters
+*.vcxproj
+#*.exe
+/**.sln
+/externals/glfw/bin
+/externals/glfw/bin-int
+/externals/jsoncpp/bin
+/externals/jsoncpp/bin-int
+/externals/imgui/bin
+/externals/imgui/bin-int
+/externals/imgui/bin-intermediate
+/externals/glm/glm/out/**.**
+/externals/glm/glm/out/build/x64-Debug/CMakeFiles/**.**
+/externals/glm/glm/out/build/x64-Debug/CMakeFiles/ShowIncludes/**.**
+/externals/glm/glm/out/build/x64-Debug/**.**
+/externals/glm/glm/out/build/x64-Debug/.ninja_deps
+/externals/glm/glm/out/build/x64-Debug/.ninja_log
+/externals/glm/glm/out/build/x64-Debug/.cmake/api/v1/reply
+/default.config
+application/imgui.ini
+engine/externals/glfw/src/out/build/
+/enc_temp_folder/b7da9eaf7a2bfe7f387bfabcef0652a/Application.cpp

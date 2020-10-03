@@ -42,7 +42,6 @@ namespace vr
 
 	void Window::Init(const WindowProperties& properties)
 	{
-		RENDERER_INFO("Window initialization successful.");
 		mWindowProperties = { properties };
 
 		ASSERT_SUCCESS_AND_THROW(glfwInit(), "Failed to initialize GLFW.");
@@ -107,5 +106,7 @@ namespace vr
 				//Renderer2D::OnWindowResize(width, height);
 				// TODO: window resize callback
 			});
+
+		RENDERER_DEBUG("Window initialization successful.");
 	}
 }

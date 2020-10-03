@@ -2,12 +2,20 @@
 
 #include <memory>
 #include <window/Window.h>
+#include <vulkan/vulkan.h>
 
 namespace vr
 {
+	/*
+		Base class inherited by all samples.
+		It acts as an interface between the samples and the entry point to the renderer.
+	*/
 	class Application
 	{
 	public:
+
+		Application(std::string name);
+		~Application() = default;
 
 		void Run();
 
@@ -40,9 +48,14 @@ namespace vr
 		*/
 		void Wait();
 
+	protected:
+
+		std::unique_ptr<VkInstance> mInstance = { nullptr };
+
 	private:
 
 		std::unique_ptr<Window> mWindow;
+		std::string mName;
 	};
 
 	Application* CreateApplication();

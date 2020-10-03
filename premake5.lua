@@ -101,13 +101,21 @@ project "renderer"
   }
 
   filter "configurations:Debug"
-  buildoptions "/MDd"
-  symbols "On"
+	buildoptions "/MDd"
+	symbols "On"
+	defines
+	{
+		"ENABLE_VALIDATION",
+		"ENABLE_DEBUG_LOGGING"
+	}
+  
 
   filter "configurations:Release"
-  buildoptions "/MD"
-  optimize "On"
-
+	buildoptions "/MD"
+	optimize "On"
+	defines
+	{
+	}
 
 project "animation-keyframes"
   location  "scenes/animation-keyframes"
@@ -130,6 +138,7 @@ project "animation-keyframes"
     "%{include_dir.glm}",
     "%{include_dir.imgui}",
     "%{include_dir.jsoncpp}",
+	"%{include_dir.vulkan}"
   }
 
   links

@@ -5,7 +5,13 @@
 //////// RENDERER LOGGING ////////
 #define RENDERER_TRACE(...)			Logger::GetRendererLogger()->trace(__VA_ARGS__)
 #define RENDERER_INFO(...)			Logger::GetRendererLogger()->info(__VA_ARGS__)
+
+#ifdef ENABLE_DEBUG_LOGGING
 #define RENDERER_DEBUG(...)			Logger::GetRendererLogger()->debug(__VA_ARGS__)
+#else
+#define RENDERER_DEBUG(...)
+#endif
+
 #define RENDERER_WARN(...)			Logger::GetRendererLogger()->warn(__VA_ARGS__)
 #define RENDERER_ERROR(...)			Logger::GetRendererLogger()->error(__VA_ARGS__)
 #define RENDERER_CRITICAL(...)		Logger::GetRendererLogger()->critical(__VA_ARGS__)
