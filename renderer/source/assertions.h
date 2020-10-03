@@ -12,3 +12,9 @@
 			RENDERER_CRITICAL("{0} ({1}): {2}", __FILE__, __LINE__, message);\
 			throw std::runtime_error(message);\
 		}\
+
+#define THROW(message) \
+{\
+		RENDERER_CRITICAL("{0} ({1}): {2}", __FILE__, __LINE__, message);\
+		throw std::runtime_error(message);\
+}\

@@ -3,6 +3,7 @@
 #include "frame-rate-controller/FramerateController.h"
 #include "graphics/vulkan/Instance.h"
 #include "graphics/vulkan/Surface.h"
+#include "graphics/vulkan/Device.h"
 
 namespace vr
 {
@@ -45,6 +46,7 @@ namespace vr
 	{
 		mInstance = Instance::CreateInstance(mName);
 		mSurface = Surface::CreateWindowSurface(mInstance, mWindow->GetNativeWindow(), nullptr);
+		mDevice = Device::InitializeDevice(mInstance, mSurface);
 	}
 
 	void Application::Wait()

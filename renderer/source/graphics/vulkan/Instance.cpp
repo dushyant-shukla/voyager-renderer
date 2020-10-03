@@ -34,8 +34,8 @@ namespace vr
 		VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = {};
 		DebugUtility::PopulateDebugMessengerCreateInfo(debugCreateInfo);
 #ifdef ENABLE_VALIDATION
-		instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(ExtensionUtility::VALIDATION_LAYERS.size());
-		instanceCreateInfo.ppEnabledLayerNames = ExtensionUtility::VALIDATION_LAYERS.data();
+		instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(std::size(ExtensionUtility::VALIDATION_LAYERS));
+		instanceCreateInfo.ppEnabledLayerNames = ExtensionUtility::VALIDATION_LAYERS;
 		instanceCreateInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
 #else
 		instanceCreateInfo.enabledLayerCount = 0;
@@ -59,6 +59,7 @@ namespace vr
 	{
 		DebugUtility::DestroyDebugMessenger(mDebugMessenger, mInstance, nullptr);
 		vkDestroyInstance(mInstance, nullptr);
+		RENDERER_DEBUG("RESOURCE FREED: PHYSICAL DEVICE"); // since physical device is implicitly freed when VkInstance is destroyed
 		RENDERER_DEBUG("RESOURCE DESTROYED: VULKAN INSTANCE");
 	}
 

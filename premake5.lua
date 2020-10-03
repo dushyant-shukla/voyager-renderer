@@ -1,5 +1,6 @@
 solution "voyager-renderer"
   architecture  "x86_64"
+  startproject "model-loading"
 
 	configurations {
 		"Debug",
@@ -31,6 +32,8 @@ dll_name = {}
 include "externals/glfw"
 include "externals/imgui"
 include "externals/jsoncpp"
+
+------------------------------------------------------------- RENDERER LIBRARY PROJECT CONFIGURATION------------------------------------------------------
 
 project "renderer"
   location  "renderer"
@@ -117,6 +120,52 @@ project "renderer"
 	{
 	}
 
+------------------------------------------------------------- PROJECT MODEL-LOADING CONFIGURATION------------------------------------------------------
+
+project "model-loading"
+  location  "scenes/model-loading"
+  kind      "ConsoleApp"
+  language  "C++"
+
+  targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+  objdir ("bin-intermediate/" .. outputdir .. "/%{prj.name}")
+
+  files
+  {
+		"scenes/%{prj.name}/source/**.h",
+		"scenes/%{prj.name}/source/**.cpp"
+  }
+
+  includedirs
+  {
+	"renderer",
+	"renderer/source",
+    "%{include_dir.glm}",
+    "%{include_dir.imgui}",
+    "%{include_dir.jsoncpp}",
+	"%{include_dir.vulkan}"
+  }
+
+  links
+  {
+    "renderer"
+  }
+
+  filter "system:windows"
+	cppdialect "C++17"
+	staticruntime "On"
+	systemversion "latest"
+
+  filter "configurations:Debug"
+	buildoptions "/MDd"
+	symbols "On"
+
+  filter "configurations:Release"
+	buildoptions "/MD"
+	optimize "On"
+
+------------------------------------------------------------- PROJECT ANIMATION-KEYFRAMES CONFIGURATION------------------------------------------------------
+
 project "animation-keyframes"
   location  "scenes/animation-keyframes"
   kind      "ConsoleApp"
@@ -145,7 +194,7 @@ project "animation-keyframes"
   {
     "renderer"
   }
-   
+
   filter "system:windows"
 	cppdialect "C++17"
 	staticruntime "On"
@@ -158,6 +207,3 @@ project "animation-keyframes"
   filter "configurations:Release"
 	buildoptions "/MD"
 	optimize "On"
-
-
-  

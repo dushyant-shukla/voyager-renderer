@@ -17,6 +17,8 @@ namespace vr
 
 		~Surface();
 
+		inline VkSurfaceKHR GetVulkanSurface() { return mSurface; }
+
 	private:
 
 		Surface(Instance* const instance, VkAllocationCallbacks* const allocationCallbacks);
