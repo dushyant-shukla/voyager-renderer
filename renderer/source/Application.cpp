@@ -1,6 +1,7 @@
 #include "Application.h"
 #include "logging/LoggingCore.h"
 #include "frame-rate-controller/FramerateController.h"
+#include "graphics/vulkan/Instance.h"
 
 namespace vr
 {
@@ -25,7 +26,6 @@ namespace vr
 			mWindow->Update();
 			// TODO call scene render()
 			framerateController->FrameEnd();
-			RENDERER_DEBUG("frame time: {0}", framerateController->GetFrameTime());
 		}
 
 		Wait();
@@ -42,6 +42,7 @@ namespace vr
 
 	void Application::InitializeRenderer()
 	{
+		mInstance = Instance::CreateInstance(mName);
 	}
 
 	void Application::Wait()

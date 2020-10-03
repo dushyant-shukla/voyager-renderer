@@ -6,6 +6,7 @@
 
 namespace vr
 {
+	class Instance;
 	/*
 		Base class inherited by all samples.
 		It acts as an interface between the samples and the entry point to the renderer.
@@ -50,7 +51,7 @@ namespace vr
 
 	protected:
 
-		std::unique_ptr<VkInstance> mInstance = { nullptr };
+		Instance* mInstance = { nullptr };
 
 	private:
 

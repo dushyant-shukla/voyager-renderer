@@ -4,10 +4,12 @@
 
 namespace vr
 {
+	std::vector<const char*> ExtensionUtility::VALIDATION_LAYERS = { "VK_LAYER_KHRONOS_validation" };
+
 	/*
 	Returns true if support for required validation layer is available.
 	*/
-	bool CheckValidationLayerSupport()
+	bool ExtensionUtility::CheckValidationLayerSupport()
 	{
 		unsigned int count;
 		vkEnumerateInstanceLayerProperties(&count, nullptr);
@@ -28,7 +30,7 @@ namespace vr
 		return false;
 	}
 
-	std::vector<const char*> GetRequiredExtensions()
+	std::vector<const char*> ExtensionUtility::GetRequiredExtensions()
 	{
 		unsigned int glfwExtensionCount;
 		const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
@@ -38,5 +40,35 @@ namespace vr
 		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
 		return extensions;
+	}
+
+	bool ExtensionUtility::CheckInstanceExtentionSupport(std::vector<const char*>* checkExtensions)
+	{
+		unsigned int extensionCount = 0;
+		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+
+		std::vector<VkExtensionProperties> extensions(extensionCount);
+		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+
+		// check if given extensions are in the list of available extensions
+		for (const auto& checkExtension : *checkExtensions)
+		{
+			bool hasExtension = false;
+			for (const auto& extension : extensions)
+			{
+				if (strcmp(checkExtension, extension.extensionName) == 0)
+				{
+					hasExtension = true;
+					break;
+				}
+			}
+
+			if (!hasExtension)
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 }

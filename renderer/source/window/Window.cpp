@@ -40,6 +40,11 @@ namespace vr
 		return new Window(properties);
 	}
 
+	GLFWwindow* Window::GetNativeWindow()
+	{
+		return mWindow;
+	}
+
 	void Window::Init(const WindowProperties& properties)
 	{
 		mWindowProperties = { properties };

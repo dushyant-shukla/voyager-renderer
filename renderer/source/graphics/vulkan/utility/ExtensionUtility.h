@@ -6,9 +6,13 @@
 
 namespace vr
 {
-	//// VALIDATION LAYER UTILITY FUNCTION ////
-	const std::array<const char*, 1> VALIDATION_LAYERS = { "VK_LAYER_KHRONOS_validation" };
-	bool CheckValidationLayerSupport();
+	class ExtensionUtility
+	{
+	public:
 
-	std::vector<const char*> GetRequiredExtensions();
+		static std::vector<const char*> VALIDATION_LAYERS;
+		static bool CheckValidationLayerSupport();
+		static std::vector<const char*> GetRequiredExtensions();
+		static bool CheckInstanceExtentionSupport(std::vector<const char*>* checkExtensions);
+	};
 }

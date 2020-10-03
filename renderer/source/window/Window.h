@@ -33,6 +33,8 @@ namespace vr
 
 		static Window* InitializeWindow(const WindowProperties& properties = WindowProperties());
 
+		GLFWwindow* GetNativeWindow();
+
 	private:
 
 		Window(const WindowProperties& properties);
