@@ -9,6 +9,7 @@ namespace vr
 	class Instance;
 	class Surface;
 	class Device;
+	class Swapchain;
 
 	/*
 		Base class inherited by all samples.
@@ -57,6 +58,7 @@ namespace vr
 		Instance* mInstance = { nullptr };
 		Surface* mSurface = { nullptr };
 		Device* mDevice = { nullptr };
+		Swapchain* mSwapchain = { nullptr };
 
 	private:
 

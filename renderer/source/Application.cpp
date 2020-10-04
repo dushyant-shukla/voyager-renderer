@@ -4,6 +4,7 @@
 #include "graphics/vulkan/Instance.h"
 #include "graphics/vulkan/Surface.h"
 #include "graphics/vulkan/Device.h"
+#include "graphics/vulkan/Swapchain.h"
 
 namespace vr
 {
@@ -47,6 +48,7 @@ namespace vr
 		mInstance = Instance::CreateInstance(mName);
 		mSurface = Surface::CreateWindowSurface(mInstance, mWindow->GetNativeWindow(), nullptr);
 		mDevice = Device::InitializeDevice(mInstance, mSurface);
+		mSwapchain = Swapchain::CreateSwapchain(mDevice, mSurface, mWindow->GetNativeWindow(), nullptr);
 	}
 
 	void Application::Wait()

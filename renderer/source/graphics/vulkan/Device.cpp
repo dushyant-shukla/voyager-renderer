@@ -37,10 +37,6 @@ namespace vr
 		auto itr = std::find_if(physicalDevices.begin(), physicalDevices.end(), [this](PhysicalDevice& device) {
 			return IsDeviceSuitable(device);
 			});
-		if (itr == physicalDevices.end())
-		{
-			std::cout << "NO DEVICES!\n";
-		}
 		if (itr != physicalDevices.end())
 		{
 			mPhysicalDevice = *itr;
@@ -91,6 +87,8 @@ namespace vr
 		// From given logical device, of given queue family, of given Queue Index (0 since only one queue), place reference in given VkQueue
 		vkGetDeviceQueue(mLogicalDevice.device, indices.graphics.value(), 0, &mLogicalDevice.graphicsQueue);
 		vkGetDeviceQueue(mLogicalDevice.device, indices.presentation.value(), 0, &mLogicalDevice.presentationQueue);
+		vkGetDeviceQueue(mLogicalDevice.device, indices.compute.value(), 0, &mLogicalDevice.computeQueue);
+		vkGetDeviceQueue(mLogicalDevice.device, indices.transfer.value(), 0, &mLogicalDevice.transferQueue);
 	}
 
 	bool Device::IsDeviceSuitable(PhysicalDevice& device)
@@ -133,6 +131,14 @@ namespace vr
 			{
 				device.queueFamilies.graphics = i; // if queue family is valid,  then get index
 			}
+			else if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)
+			{
+				device.queueFamilies.compute = i; // if queue family is valid,  then get index
+			}
+			else if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT)
+			{
+				device.queueFamilies.transfer = i; // if queue family is valid,  then get index
+			}
 
 			// check if queue family supports presentation
 			VkBool32 presentationSupport = false;
@@ -148,6 +154,19 @@ namespace vr
 			{
 				break;
 			}
+		}
+
+		/*
+			If no exclusive compute and transfer queues could be found, initialize with graphics queue
+		*/
+		if (!device.queueFamilies.compute.has_value())
+		{
+			device.queueFamilies.compute = device.queueFamilies.graphics;
+		}
+
+		if (!device.queueFamilies.transfer.has_value())
+		{
+			device.queueFamilies.transfer = device.queueFamilies.graphics;
 		}
 	}
 

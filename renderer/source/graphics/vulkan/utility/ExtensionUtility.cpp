@@ -4,12 +4,6 @@
 
 namespace vr
 {
-	//std::vector<const char*> ExtensionUtility::VALIDATION_LAYERS = { "VK_LAYER_KHRONOS_validation" };
-
-	//std::string DEVICE_EXTENTIONS[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
-
-	//std::string INSTANCE_EXTENSIONS[] = { VK_EXT_DEBUG_UTILS_EXTENSION_NAME };
-
 	/*
 	Returns true if support for required validation layer is available.
 	*/

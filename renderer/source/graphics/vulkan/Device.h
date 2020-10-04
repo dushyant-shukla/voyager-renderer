@@ -7,7 +7,6 @@
 
 #include "Instance.h"
 #include "Surface.h"
-#include <ostream>
 
 namespace vr
 {
@@ -23,12 +22,15 @@ namespace vr
 	*/
 	typedef struct QueueFamilyIndices
 	{
-		std::optional<unsigned int> graphics; // location of the graphics family queue
-		std::optional<unsigned int> presentation; // location of the presentation family queue
+		std::optional<unsigned int> graphics;		// location of the graphics family queue
+		std::optional<unsigned int> presentation;	// location of the presentation family queue
+		std::optional<unsigned int> compute;		// location of the presentation family queue
+		std::optional<unsigned int> transfer;		// location of the presentation family queue
 
 		bool IsValid()
 		{
 			return graphics.has_value() && presentation.has_value();
+			//&& compute.has_value() && transfer.has_value();
 		}
 
 		QueueFamilyIndices() {}
@@ -42,6 +44,14 @@ namespace vr
 			{
 				presentation = other.presentation.value();
 			}
+			if (other.compute.has_value())
+			{
+				compute = other.compute.value();
+			}
+			if (other.transfer.has_value())
+			{
+				transfer = other.transfer.value();
+			}
 		}
 
 		QueueFamilyIndices& operator=(const QueueFamilyIndices& other)
@@ -53,6 +63,14 @@ namespace vr
 			if (other.presentation.has_value())
 			{
 				presentation = other.presentation.value();
+			}
+			if (other.compute.has_value())
+			{
+				compute = other.compute.value();
+			}
+			if (other.transfer.has_value())
+			{
+				transfer = other.transfer.value();
 			}
 			return *this;
 		}
@@ -91,6 +109,8 @@ namespace vr
 		VkDevice device;
 		VkQueue graphicsQueue;
 		VkQueue presentationQueue;
+		VkQueue computeQueue;
+		VkQueue transferQueue;
 	} LogicalDevice;
 
 	class Device
@@ -98,7 +118,28 @@ namespace vr
 	public:
 
 		static Device* InitializeDevice(Instance* const instance, Surface* const surface);
+
 		~Device();
+
+		inline const PhysicalDevice& GetPhysicalDevice()
+		{
+			return mPhysicalDevice;
+		}
+
+		inline const LogicalDevice& GetLogicalDevice()
+		{
+			return mLogicalDevice;
+		}
+
+		inline VkPhysicalDevice& GetVulkanPhysicalDevice()
+		{
+			return mPhysicalDevice.device;
+		}
+
+		inline VkDevice& GetVulkanLogicalDevice()
+		{
+			return mLogicalDevice.device;
+		}
 
 	private:
 

@@ -17,6 +17,8 @@ include_dir["jsoncpp"] 	= "externals/jsoncpp/include"
 include_dir["spdlog"] 	= "externals/spdlog/include"
 include_dir["imgui"] 	= "externals/imgui"
 include_dir["vulkan"]	= "externals/vulkan/include"
+include_dir["tiny_gltf"]= "externals/tiny_gltf"
+include_dir["jsonhpp"]  = "externals/jsonhpp"
 
 lib_name = {}
 lib_name["vulkan"]  = "vulkan-1.lib"
@@ -70,7 +72,9 @@ project "renderer"
     "%{include_dir.jsoncpp}",
     "%{include_dir.spdlog}",
     "%{include_dir.imgui}",
-    "%{include_dir.vulkan}"
+    "%{include_dir.vulkan}",
+	"%{include_dir.tiny_gltf}",
+	"%{include_dir.jsonhpp}"
   }
 
   libdirs
