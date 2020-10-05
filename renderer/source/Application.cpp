@@ -49,6 +49,13 @@ namespace vr
 		mSurface = Surface::CreateWindowSurface(mInstance, mWindow->GetNativeWindow(), nullptr);
 		mDevice = Device::InitializeDevice(mInstance, mSurface);
 		mSwapchain = Swapchain::CreateSwapchain(mDevice, mSurface, mWindow->GetNativeWindow(), nullptr);
+
+		/*CreateCommandBuffers();
+		SynchronizationPrimitives();
+		SetupDepthStencil();
+		SetupRenderPass();
+		CreatePipelineCache();
+		SetupFrameBuffer();*/
 	}
 
 	void Application::Wait()

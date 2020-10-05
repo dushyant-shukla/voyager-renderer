@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ShaderModule.h"
+#include "PipelineLayout.h"
 
 #include <vector>
 
@@ -29,7 +30,9 @@ namespace vr
 			const float depthBiasSlopeFactor, const float lineWidth,
 			VkPipelineRasterizationStateCreateFlags flags, void* next);
 
-		Pipeline& ConfigureMultiSampling(VkSampleCountFlagBits rasterizationSamples, const VkBool32& sampleShadingEnable, const float minSampleShading, VkSampleMask* pSampleMask, const VkBool32& alphaToCoverageEnable, const VkBool32& alphaToOneEnable, void* next);
+		Pipeline& ConfigureMultiSampling(VkSampleCountFlagBits rasterizationSamples, const VkBool32& sampleShadingEnable,
+			const float minSampleShading, VkSampleMask* pSampleMask, VkPipelineMultisampleStateCreateFlags flags,
+			const VkBool32& alphaToCoverageEnable, const VkBool32& alphaToOneEnable, void* next);
 
 		Pipeline& AddColorBlendAttachmentState(const VkBool32& blendEnable, const VkBlendFactor& srcColorBlendFactor,
 			const VkBlendFactor& dstColorBlendFactor, const VkBlendOp& colorBlendOp,
@@ -46,7 +49,7 @@ namespace vr
 		// TODO: TESELLATION STATE
 
 		// should do stuff like VkPipelineVertexInputStateCreateInfo from binding and attr descriptions
-		void Create();
+		void Create(const VkPipelineLayout& pipelineLayout, const VkRenderPass& renderPass, unsigned int subpass, const VkPipelineCreateFlags flags);
 
 	private:
 
@@ -59,8 +62,6 @@ namespace vr
 		// INPUT STATE
 		std::vector<VkVertexInputBindingDescription> mBindingDescriptions;
 		std::vector<VkVertexInputAttributeDescription> mAttributeDescriptions;
-
-		std::vector<VkPipelineColorBlendAttachmentState> mColorBlendAttachments;
 
 		// INPUT ASSEMBLY
 		VkPipelineInputAssemblyStateCreateInfo mInputAssemblyCreateInfo;
@@ -75,31 +76,9 @@ namespace vr
 		VkPipelineMultisampleStateCreateInfo mMultisampling;
 
 		// COLOR BLENDING
+		std::vector<VkPipelineColorBlendAttachmentState> mColorBlendAttachments;
 		VkPipelineColorBlendStateCreateInfo mColorBlending;
 
-		VkViewport mViewport;
-		VkRect2D mScissor;
-
-		VkPipelineCreateFlags                            flags;
-		uint32_t                                         stageCount;
-		const VkPipelineShaderStageCreateInfo* pStages;
-		const VkPipelineVertexInputStateCreateInfo* pVertexInputState;
-		const VkPipelineInputAssemblyStateCreateInfo* pInputAssemblyState;
-		const VkPipelineTessellationStateCreateInfo* pTessellationState;
-		const VkPipelineViewportStateCreateInfo* pViewportState;
-		const VkPipelineRasterizationStateCreateInfo* pRasterizationState;
-		const VkPipelineMultisampleStateCreateInfo* pMultisampleState;
-		const VkPipelineDepthStencilStateCreateInfo* pDepthStencilState;
-		const VkPipelineColorBlendStateCreateInfo* pColorBlendState;
-		const VkPipelineDynamicStateCreateInfo* pDynamicState;
-		VkPipelineLayout                                 layout;
-		VkRenderPass                                     renderPass;
-		uint32_t                                         subpass;
-		VkPipeline                                       basePipelineHandle;
-		int32_t                                          basePipelineIndex;
-
-		VkPipelineLayout mPipelineLayout;
-		VkPushConstantRange mPushConstantRange;
-		std::vector<VkDescriptorSetLayout> mDescriptorSetLayouts;
+		VkPipeline mPipeline;
 	};
 }

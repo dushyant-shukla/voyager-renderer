@@ -1,12 +1,22 @@
 #include "Pipeline.h"
+#include "utility/RendererCoreUtility.h"
 
 namespace vr
 {
 	Pipeline::Pipeline(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks)
-		: mLogicalDevice(device), mAllocationCallbacks(allocationCallbacks)
+		: mLogicalDevice(device), mAllocationCallbacks(allocationCallbacks),
+		mInputAssemblyCreateInfo(),
+		mViewportStateCreateInfo(),
+		mRasterizationStateCreateInfo(),
+		mMultisampling(),
+		mColorBlending()
 	{}
 
-	Pipeline::~Pipeline() {}
+	Pipeline::~Pipeline()
+	{
+		vkDestroyPipeline(mLogicalDevice, mPipeline, mAllocationCallbacks);
+		RENDERER_DEBUG("RESOURCE DESTROYED: GRAPHICS PIPELINE");
+	}
 
 	Pipeline& Pipeline::AddShaderStage(const VkShaderStageFlagBits& shaderStage, std::string filename)
 	{
@@ -66,8 +76,8 @@ namespace vr
 		VkViewport viewport = {};
 		viewport.x = 0.0f;										// x origin
 		viewport.y = 0.0f;										// y origin
-		viewport.width = (float)swapchainExtent.width;					// viewport width
-		viewport.height = (float)swapchainExtent.height;				// viewport height
+		viewport.width = (float)swapchainExtent.width;			// viewport width
+		viewport.height = (float)swapchainExtent.height;		// viewport height
 		viewport.minDepth = 0.0f;								// min framebuffer depth
 		viewport.maxDepth = 1.0f;								// max framebuffer depth
 
@@ -108,7 +118,7 @@ namespace vr
 	}
 
 	Pipeline& Pipeline::ConfigureMultiSampling(VkSampleCountFlagBits rasterizationSamples, const VkBool32& sampleShadingEnable,
-		const float minSampleShading, VkSampleMask* pSampleMask,
+		const float minSampleShading, VkSampleMask* pSampleMask, VkPipelineMultisampleStateCreateFlags flags,
 		const VkBool32& alphaToCoverageEnable, const VkBool32& alphaToOneEnable, void* next)
 	{
 		mMultisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -164,7 +174,7 @@ namespace vr
 		return *this;
 	}
 
-	void Pipeline::Create()
+	void Pipeline::Create(const VkPipelineLayout& pipelineLayout, const VkRenderPass& renderPass, unsigned int subpass, const VkPipelineCreateFlags flags)
 	{
 		// input state
 		VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo = {};
@@ -179,12 +189,35 @@ namespace vr
 			VK_DYNAMIC_STATE_VIEWPORT,
 			VK_DYNAMIC_STATE_LINE_WIDTH
 		};
-
 		VkPipelineDynamicStateCreateInfo dynamicState{};
 		dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 		dynamicState.dynamicStateCount = 2;
 		dynamicState.pDynamicStates = dynamicStates;
 		dynamicState.pNext = nullptr;
 		dynamicState.flags = 0;
+
+		VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo = {};
+		graphicsPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+		graphicsPipelineCreateInfo.stageCount = static_cast<unsigned int>(mShaderStages.size());
+		graphicsPipelineCreateInfo.pStages = mShaderStages.data();
+		graphicsPipelineCreateInfo.pVertexInputState = &vertexInputCreateInfo;
+		graphicsPipelineCreateInfo.pInputAssemblyState = &mInputAssemblyCreateInfo;
+		graphicsPipelineCreateInfo.pViewportState = &mViewportStateCreateInfo;
+		graphicsPipelineCreateInfo.pDynamicState = nullptr;
+		graphicsPipelineCreateInfo.pRasterizationState = &mRasterizationStateCreateInfo;
+		graphicsPipelineCreateInfo.pColorBlendState = &mColorBlending;
+		graphicsPipelineCreateInfo.pDepthStencilState = nullptr;
+		graphicsPipelineCreateInfo.pMultisampleState = &mMultisampling;
+		graphicsPipelineCreateInfo.layout = pipelineLayout;								// PIPELINE LAYOUT PIPELINE SHOULD USE
+		graphicsPipelineCreateInfo.renderPass = renderPass;								// RENDERPASS DESCRIPTION THE PIPELINE IS COMPATIBLE WITH
+		graphicsPipelineCreateInfo.subpass = subpass;											// SUBPASS OF RENDER PASS TO USE WITH PIPELINE
+
+		// pipeline derivatives: can create multiple pipelines that derive from one another for optimization
+		graphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;		// Existing pipeline to derive from
+		graphicsPipelineCreateInfo.basePipelineIndex = -1;					// or index of pipeline (being created) to derive from (in case of multiple at once)
+
+		// VK_NUL_HANDE below is pipeline cache
+		CHECK_RESULT(vkCreateGraphicsPipelines(mLogicalDevice, VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, mAllocationCallbacks, &mPipeline), "RESOURCE CREATION FAILED: GRAPHICS PIPELINE");
+		RENDERER_DEBUG("RESOURCE CREATED: GRAPHICS PIPELINE");
 	}
 }
