@@ -11,6 +11,5 @@ namespace vr
 	public:
 
 		static std::vector<char> ReadFile(const std::string& filename);
-		static VkShaderModule CreateShaderModule(const std::string& filename);
 	};
 }

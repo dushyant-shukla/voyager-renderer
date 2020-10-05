@@ -16,12 +16,12 @@ namespace vr
 		{
 			vkDestroyImageView(mDevice->GetLogicalDevice().device, image.imageView, mAllocationCallbacks);
 		}
-		vkDestroySwapchainKHR(mDevice->GetLogicalDevice().device, mSwapchian, mAllocationCallbacks);
+		vkDestroySwapchainKHR(mDevice->GetLogicalDevice().device, mSwapchain, mAllocationCallbacks);
 		RENDERER_DEBUG("RESOURCE DESTROYED: SWAPCHAIN");
 	}
 
 	Swapchain::Swapchain(Device* const device, Surface* const surface, GLFWwindow* window, VkAllocationCallbacks* const allocationCallbacks)
-		: mDevice(device), mSurface(surface), mWindow(window), mAllocationCallbacks(allocationCallbacks), mSwapchian(VK_NULL_HANDLE)
+		: mDevice(device), mSurface(surface), mWindow(window), mAllocationCallbacks(allocationCallbacks), mSwapchain(VK_NULL_HANDLE)
 	{
 		SwapChainDetails swapchainDetails = mDevice->GetPhysicalDevice().swapChainDetails;
 
@@ -118,14 +118,14 @@ namespace vr
 		swapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
 
 		// Create swapchain
-		CHECK_RESULT(vkCreateSwapchainKHR(mDevice->GetLogicalDevice().device, &swapchainCreateInfo, nullptr, &mSwapchian), "RESOURCE CREATION FAILED: SWAPCHAIN");
+		CHECK_RESULT(vkCreateSwapchainKHR(mDevice->GetLogicalDevice().device, &swapchainCreateInfo, nullptr, &mSwapchain), "RESOURCE CREATION FAILED: SWAPCHAIN");
 		RENDERER_DEBUG("RESOURCE CREATED: SWAPCHAIN");
 
 		// Fetch swapchain images from swapchain after successful creation of swapchain
 		unsigned int swapchainImageCount;
-		CHECK_RESULT(vkGetSwapchainImagesKHR(mDevice->GetLogicalDevice().device, mSwapchian, &swapchainImageCount, nullptr), "UNABLE TO FETCH SWAPCHAIN IMAGES");
+		CHECK_RESULT(vkGetSwapchainImagesKHR(mDevice->GetLogicalDevice().device, mSwapchain, &swapchainImageCount, nullptr), "UNABLE TO FETCH SWAPCHAIN IMAGES");
 		std::vector<VkImage> images(swapchainImageCount);
-		CHECK_RESULT(vkGetSwapchainImagesKHR(mDevice->GetLogicalDevice().device, mSwapchian, &swapchainImageCount, images.data()), "UNABLE TO FETCH SWAPCHAIN IMAGES");
+		CHECK_RESULT(vkGetSwapchainImagesKHR(mDevice->GetLogicalDevice().device, mSwapchain, &swapchainImageCount, images.data()), "UNABLE TO FETCH SWAPCHAIN IMAGES");
 
 		for (const auto& image : images)
 		{

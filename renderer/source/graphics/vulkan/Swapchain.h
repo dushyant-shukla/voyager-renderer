@@ -47,7 +47,7 @@ namespace vr
 		VkSurfaceFormatKHR mSurfaceFormat;
 		VkPresentModeKHR mPresentationMode;
 		VkExtent2D mExtent;
-		VkSwapchainKHR mSwapchian;
+		VkSwapchainKHR mSwapchain;
 		VkAllocationCallbacks* mAllocationCallbacks;
 		std::vector<SwapchainImage> mImages;
 	};

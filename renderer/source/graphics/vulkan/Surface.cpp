@@ -1,6 +1,8 @@
 #include "Surface.h"
 #include "utility/RendererCoreUtility.h"
 
+#include <GLFW/glfw3.h>
+
 namespace vr
 {
 	Surface* Surface::CreateWindowSurface(Instance* const instance, GLFWwindow* window, VkAllocationCallbacks* const allocationCallbacks)

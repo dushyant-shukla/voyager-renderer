@@ -27,6 +27,7 @@ namespace vr
 		void Render();
 
 		virtual void InitializeScene() = 0;
+		virtual void SetupPipeline() = 0;
 
 	private:
 
