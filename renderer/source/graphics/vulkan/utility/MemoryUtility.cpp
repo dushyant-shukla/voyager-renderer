@@ -1,4 +1,4 @@
-#include "MemoryUtiity.h"
+#include "MemoryUtility.h"
 
 namespace vr
 {

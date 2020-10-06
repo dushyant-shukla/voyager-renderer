@@ -20,6 +20,16 @@ namespace vr
 		RENDERER_DEBUG("RESOURCE DESTROYED: SWAPCHAIN");
 	}
 
+	std::vector<SwapchainImage>& Swapchain::GetSwapchainImages()
+	{
+		return mImages;
+	}
+
+	const VkExtent2D& Swapchain::GetSwapchainExtent()
+	{
+		return mExtent;
+	}
+
 	Swapchain::Swapchain(Device* const device, Surface* const surface, GLFWwindow* window, VkAllocationCallbacks* const allocationCallbacks)
 		: mDevice(device), mSurface(surface), mWindow(window), mAllocationCallbacks(allocationCallbacks), mSwapchain(VK_NULL_HANDLE)
 	{

@@ -23,6 +23,9 @@ namespace vr
 
 		~Swapchain();
 
+		std::vector<SwapchainImage>& GetSwapchainImages();
+		const VkExtent2D& GetSwapchainExtent();
+
 	private:
 
 		Swapchain(Device* const device, Surface* const surface, GLFWwindow* window, VkAllocationCallbacks* const allocationCallbacks);

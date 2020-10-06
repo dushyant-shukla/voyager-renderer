@@ -13,6 +13,8 @@ namespace vr
 
 		void CreateDefault(const VkRect2D& swapchainExtent);
 
+		const VkImageView& GetImageView();
+
 	private:
 
 		void ChooseSupportedFormat();

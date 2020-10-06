@@ -1,7 +1,7 @@
 #include "DepthBuffer.h"
 #include "utility/RendererCoreUtility.h"
 #include "assertions.h"
-#include "utility/MemoryUtiity.h"
+#include "utility/MemoryUtility.h"
 
 namespace vr
 {
@@ -85,6 +85,11 @@ namespace vr
 		// create an image view
 		CHECK_RESULT(vkCreateImageView(mLogicalDevice, &imageViewCreateInfo, nullptr, &mImageView), "RESOURCE CREATION FAILED: DEPTH BUFFER IMAGE VIEW");
 		RENDERER_DEBUG("RESOURCE CREATED: DEPTH BUFFER IMAGE VIEW");
+	}
+
+	const VkImageView& DepthBuffer::GetImageView()
+	{
+		return mImageView;
 	}
 
 	void DepthBuffer::ChooseSupportedFormat()
