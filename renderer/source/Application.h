@@ -25,12 +25,13 @@ namespace vr
 	public:
 
 		Application(std::string name);
-		~Application() = default;
+		virtual ~Application();
 
 		void Run();
 
 		void Render();
 
+		virtual void Draw() = 0;
 		virtual void InitializeScene() = 0;
 		virtual void SetupPipeline() = 0;
 

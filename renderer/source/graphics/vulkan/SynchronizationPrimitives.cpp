@@ -48,7 +48,7 @@ namespace vr
 		RENDERER_DEBUG("RESOURCES CREATED: SYNCHRONIZATION PRIMITIVES");
 	}
 
-	VkSemaphore SynchronizationPrimitives::GetImageAvailableSemaphore(const unsigned int& index)
+	const VkSemaphore& SynchronizationPrimitives::GetImageAvailableSemaphore(const unsigned int& index)
 	{
 		if (index >= MAX_FRAME_DRAWS)
 		{
@@ -57,7 +57,7 @@ namespace vr
 		return mImageAvailable[index];
 	}
 
-	VkSemaphore SynchronizationPrimitives::GetRenderFinishedSemaphore(const unsigned int& index)
+	const VkSemaphore& SynchronizationPrimitives::GetRenderFinishedSemaphore(const unsigned int& index)
 	{
 		if (index >= MAX_FRAME_DRAWS)
 		{
@@ -66,7 +66,7 @@ namespace vr
 		return mRenderFinished[index];
 	}
 
-	VkFence SynchronizationPrimitives::GetDrawFence(const unsigned int& index)
+	const VkFence& SynchronizationPrimitives::GetDrawFence(const unsigned int& index)
 	{
 		if (index >= MAX_FRAME_DRAWS)
 		{

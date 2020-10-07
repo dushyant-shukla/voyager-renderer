@@ -41,10 +41,9 @@ namespace vr
 			const VkBlendFactor& srcAlphaBlendFactor, const VkBlendFactor& dstAlphaBlendFactor,
 			const VkBlendOp& alphaBlendOp, VkColorComponentFlags colorWriteMask);
 
-		Pipeline& ConfigureColorBlend(VkStructureType sType, void* pNext, VkPipelineColorBlendStateCreateFlags flags,
-			VkBool32 logicOpEnable, VkLogicOp logicOp, uint32_t attachmentCount,
-			VkPipelineColorBlendAttachmentState* pAttachments, float blendConstant0,
-			float blendConstant1, float blendConstant2, float blendConstant3);
+		Pipeline& ConfigureColorBlend(void* pNext, VkPipelineColorBlendStateCreateFlags flags,
+			VkBool32 logicOpEnable, VkLogicOp logicOp,
+			float blendConstant0, float blendConstant1, float blendConstant2, float blendConstant3);
 
 		// TODO: DEPTH TESTING CONFIGURATION
 
@@ -53,6 +52,8 @@ namespace vr
 		// should do stuff like VkPipelineVertexInputStateCreateInfo from binding and attr descriptions
 		void Configure(const VkPipelineLayout& pipelineLayout, const VkRenderPass& renderPass, unsigned int subpass, const VkPipelineCreateFlags flags);
 
+		VkPipeline& GetVulkanPipeline();
+
 	private:
 
 		VkDevice mLogicalDevice;
@@ -60,6 +61,7 @@ namespace vr
 
 		// SHADER STAGES
 		std::vector<VkPipelineShaderStageCreateInfo> mShaderStages;
+		std::vector<ShaderModule> mShaderModules;
 
 		// INPUT STATE
 		std::vector<VkVertexInputBindingDescription> mBindingDescriptions;
@@ -69,6 +71,8 @@ namespace vr
 		VkPipelineInputAssemblyStateCreateInfo mInputAssemblyCreateInfo;
 
 		// VIEWPORT AND SCISSOR
+		VkViewport mViewport;
+		VkRect2D mScissor;
 		VkPipelineViewportStateCreateInfo mViewportStateCreateInfo;
 
 		// RASTERIZER
@@ -81,6 +85,6 @@ namespace vr
 		std::vector<VkPipelineColorBlendAttachmentState> mColorBlendAttachments;
 		VkPipelineColorBlendStateCreateInfo mColorBlending;
 
-		VkPipeline mPipeline;
+		VkPipeline mPipeline = VK_NULL_HANDLE;
 	};
 }

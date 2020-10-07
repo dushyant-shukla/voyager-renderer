@@ -18,6 +18,11 @@ namespace vr
 		RENDERER_DEBUG("RESOURCE DESTROYED: FRAME BUFFERS");
 	}
 
+	VkFramebuffer& Framebuffers::operator[](const unsigned int& index)
+	{
+		return mFramebuffers[index];
+	}
+
 	void Framebuffers::Create(const VkDevice& logicalDevice, VkAllocationCallbacks* allocationCallbacks, const std::vector<SwapchainImage> swapchainImages, const VkExtent2D& swapchainExtent, const VkImageView& depthbufferImageView, const VkRenderPass& renderPass)
 	{
 		mLogicalDevice = logicalDevice;

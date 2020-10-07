@@ -37,6 +37,11 @@ namespace vr
 		return mSurfaceFormat;
 	}
 
+	const VkSwapchainKHR& Swapchain::GetVulkanSwapChain()
+	{
+		return mSwapchain;
+	}
+
 	Swapchain::Swapchain(Device* const device, Surface* const surface, GLFWwindow* window, VkAllocationCallbacks* const allocationCallbacks)
 		: mDevice(device), mSurface(surface), mWindow(window), mAllocationCallbacks(allocationCallbacks), mSwapchain(VK_NULL_HANDLE)
 	{

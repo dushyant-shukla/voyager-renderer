@@ -18,10 +18,13 @@ namespace vr
 		virtual void InitializeScene() override;
 		virtual void SetupPipeline() override;
 		virtual void CleanupScene() override;
+		virtual void Draw() override;
+		void RecordCommands(const unsigned int& currentImage);
 
 	private:
 
 		Pipeline mPipeline;
 		PipelineLayout mPipelineLayout;
+		int mCurrentFrame = 0;
 	};
 }

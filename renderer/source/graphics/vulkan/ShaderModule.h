@@ -14,6 +14,8 @@ namespace vr
 
 		const VkShaderModule GetShaderModule();
 
+		std::string& GetFilename();
+
 	private:
 
 		VkDevice mLogicalDevice;

@@ -13,6 +13,9 @@ namespace vr
 		mDepthBuffer()
 	{}
 
+	Application::~Application()
+	{}
+
 	void Application::Run()
 	{
 		Logger::Init();
@@ -31,7 +34,7 @@ namespace vr
 		{
 			framerateController->FrameStart();
 			mWindow->Update();
-			// TODO call scene render()
+			Draw();
 			framerateController->FrameEnd();
 		}
 

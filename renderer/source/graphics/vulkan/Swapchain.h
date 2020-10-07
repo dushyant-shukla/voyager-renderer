@@ -27,6 +27,7 @@ namespace vr
 		std::vector<SwapchainImage>& GetSwapchainImages();
 		const VkExtent2D& GetSwapchainExtent();
 		const VkSurfaceFormatKHR& GetSurfaceFormat();
+		const VkSwapchainKHR& GetVulkanSwapChain();
 
 	private:
 

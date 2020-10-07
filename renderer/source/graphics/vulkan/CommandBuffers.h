@@ -18,6 +18,8 @@ namespace vr
 		~CommandBuffers();
 
 		void Create(const VkDevice& logicalDevice, VkAllocationCallbacks* allocationCallbacks, const int& queueFamilyIndex, const int& count);
+		VkCommandBuffer& operator[](const unsigned int& index);
+		size_t Size();
 
 	private:
 

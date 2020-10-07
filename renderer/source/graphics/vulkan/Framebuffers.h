@@ -15,6 +15,7 @@ namespace vr
 		~Framebuffers();
 
 		void Create(const VkDevice& logicalDevice, VkAllocationCallbacks* allocationCallbacks, const std::vector<SwapchainImage> swapchainImages, const VkExtent2D& swapchainExtent, const VkImageView& depthbufferImageView, const VkRenderPass& renderPass);
+		VkFramebuffer& operator[](const unsigned int& index);
 
 	private:
 

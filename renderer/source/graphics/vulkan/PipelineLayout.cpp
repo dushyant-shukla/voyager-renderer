@@ -9,12 +9,14 @@ namespace vr
 
 	PipelineLayout::~PipelineLayout()
 	{
+		vkDestroyPipelineLayout(mLogicalDevice, mLayout, mAllocationCallbacks);
+		RENDERER_DEBUG("RESOURCE DESTROYED: GRAPHICS PIPELINE LAYOUT");
 	}
 
 	void PipelineLayout::Cleanup()
 	{
-		vkDestroyPipelineLayout(mLogicalDevice, mLayout, mAllocationCallbacks);
-		RENDERER_DEBUG("RESOURCE DESTROYED: GRAPHICS PIPELINE LAYOUT");
+		//vkDestroyPipelineLayout(mLogicalDevice, mLayout, mAllocationCallbacks);
+		//RENDERER_DEBUG("RESOURCE DESTROYED: GRAPHICS PIPELINE LAYOUT");
 	}
 
 	PipelineLayout& PipelineLayout::Create(VkDevice logicalDevice, VkAllocationCallbacks* allocationCallbacks)
@@ -62,5 +64,10 @@ namespace vr
 			layouts.push_back(layout.GetVkDescriptorSetLayout());
 		}
 		return layouts;
+	}
+
+	const VkPipelineLayout& PipelineLayout::GetVulkanPipelineLayout()
+	{
+		return mLayout;
 	}
 }

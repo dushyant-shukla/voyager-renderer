@@ -13,6 +13,11 @@ namespace vr
 
 	Pipeline::~Pipeline()
 	{
+		for (auto shaderModule : mShaderModules)
+		{
+			vkDestroyShaderModule(mLogicalDevice, shaderModule.GetShaderModule(), mAllocationCallbacks);
+			RENDERER_DEBUG("RESOURCE DESTROYED: SHADER MODULE (" + shaderModule.GetFilename() + ")");
+		}
 		vkDestroyPipeline(mLogicalDevice, mPipeline, mAllocationCallbacks);
 		RENDERER_DEBUG("RESOURCE DESTROYED: GRAPHICS PIPELINE");
 	}
@@ -27,15 +32,17 @@ namespace vr
 
 	Pipeline& Pipeline::AddShaderStage(const VkShaderStageFlagBits& shaderStage, std::string filename)
 	{
-		ShaderModule vertexShader(mLogicalDevice, nullptr, filename);
+		ShaderModule shaderModule(mLogicalDevice, nullptr, filename);
 
-		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+		mShaderModules.emplace_back(std::move(shaderModule));
+
+		VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
 		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		vertShaderStageInfo.stage = shaderStage;
-		vertShaderStageInfo.module = vertexShader.GetShaderModule();
+		vertShaderStageInfo.module = mShaderModules.back().GetShaderModule();
 		vertShaderStageInfo.pName = "main";
+		mShaderStages.emplace_back(std::move(vertShaderStageInfo));
 
-		mShaderStages.push_back(vertShaderStageInfo);
 		RENDERER_DEBUG("RESOURCE CREATED: SHADER STAGE CONFIGURED FOR FILE: " + filename);
 		return *this;
 	}
@@ -64,6 +71,7 @@ namespace vr
 
 	Pipeline& Pipeline::ConfigureInputAssembly(const VkPrimitiveTopology& topology, const VkBool32& primitiveRestartEnable, VkPipelineInputAssemblyStateCreateFlags flags, void* next)
 	{
+		mInputAssemblyCreateInfo = {};
 		mInputAssemblyCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 		mInputAssemblyCreateInfo.topology = topology;
 		mInputAssemblyCreateInfo.primitiveRestartEnable = primitiveRestartEnable;
@@ -81,24 +89,25 @@ namespace vr
 		// The size of the swap chain and its images may differ from the WIDTH and HEIGHT of the window.
 		// The swap chain images will be used as framebuffers later on, so we should stick to their size.
 
-		VkViewport viewport = {};
-		viewport.x = 0.0f;										// x origin
-		viewport.y = 0.0f;										// y origin
-		viewport.width = (float)swapchainExtent.width;			// viewport width
-		viewport.height = (float)swapchainExtent.height;		// viewport height
-		viewport.minDepth = 0.0f;								// min framebuffer depth
-		viewport.maxDepth = 1.0f;								// max framebuffer depth
+		mViewport = {};
+		mViewport.x = 0.0f;										// x origin
+		mViewport.y = 0.0f;										// y origin
+		mViewport.width = (float)swapchainExtent.width;			// viewport width
+		mViewport.height = (float)swapchainExtent.height;		// viewport height
+		mViewport.minDepth = 0.0f;								// min framebuffer depth
+		mViewport.maxDepth = 1.0f;								// max framebuffer depth
 
 		// Scissor
-		VkRect2D scissor = {};
-		scissor.offset = { 0, 0 };								// offset to use region from
-		scissor.extent = swapchainExtent;								// Extent to describe region to use, starting at offset
+		mScissor = {};
+		mScissor.offset = { 0, 0 };								// offset to use region from
+		mScissor.extent = swapchainExtent;								// Extent to describe region to use, starting at offset
 
+		mViewportStateCreateInfo = {};
 		mViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 		mViewportStateCreateInfo.viewportCount = 1;
-		mViewportStateCreateInfo.pViewports = &viewport;
+		mViewportStateCreateInfo.pViewports = &mViewport;
 		mViewportStateCreateInfo.scissorCount = 1;
-		mViewportStateCreateInfo.pScissors = &scissor;
+		mViewportStateCreateInfo.pScissors = &mScissor;
 
 		return *this;
 	}
@@ -109,6 +118,7 @@ namespace vr
 		const float depthBiasSlopeFactor, const float lineWidth,
 		VkPipelineRasterizationStateCreateFlags flags, void* next)
 	{
+		mRasterizationStateCreateInfo = {};
 		mRasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		mRasterizationStateCreateInfo.depthClampEnable = depthClampEnable;
 		mRasterizationStateCreateInfo.rasterizerDiscardEnable = rasterizerDiscardEnable;
@@ -129,6 +139,7 @@ namespace vr
 		const float minSampleShading, VkSampleMask* pSampleMask, VkPipelineMultisampleStateCreateFlags flags,
 		const VkBool32& alphaToCoverageEnable, const VkBool32& alphaToOneEnable, void* next)
 	{
+		mMultisampling = {};
 		mMultisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 		mMultisampling.sampleShadingEnable = sampleShadingEnable;
 		mMultisampling.rasterizationSamples = rasterizationSamples;
@@ -147,7 +158,7 @@ namespace vr
 		const VkBlendFactor& srcAlphaBlendFactor, const VkBlendFactor& dstAlphaBlendFactor,
 		const VkBlendOp& alphaBlendOp, VkColorComponentFlags colorWriteMask)
 	{
-		VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+		VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
 		colorBlendAttachment.colorWriteMask = colorWriteMask;
 		colorBlendAttachment.blendEnable = blendEnable;
 		colorBlendAttachment.srcColorBlendFactor = srcColorBlendFactor; // Optional
@@ -162,11 +173,11 @@ namespace vr
 		return *this;
 	}
 
-	Pipeline& Pipeline::ConfigureColorBlend(VkStructureType sType, void* pNext, VkPipelineColorBlendStateCreateFlags flags,
-		VkBool32 logicOpEnable, VkLogicOp logicOp, uint32_t attachmentCount,
-		VkPipelineColorBlendAttachmentState* pAttachments,
+	Pipeline& Pipeline::ConfigureColorBlend(void* pNext, VkPipelineColorBlendStateCreateFlags flags,
+		VkBool32 logicOpEnable, VkLogicOp logicOp,
 		float blendConstant0, float blendConstant1, float blendConstant2, float blendConstant3)
 	{
+		mColorBlending = {};
 		mColorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 		mColorBlending.logicOpEnable = VK_FALSE;
 		mColorBlending.logicOp = VK_LOGIC_OP_COPY; // Optional
@@ -197,12 +208,21 @@ namespace vr
 			VK_DYNAMIC_STATE_VIEWPORT,
 			VK_DYNAMIC_STATE_LINE_WIDTH
 		};
-		VkPipelineDynamicStateCreateInfo dynamicState{};
+		VkPipelineDynamicStateCreateInfo dynamicState = {};
 		dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 		dynamicState.dynamicStateCount = 2;
 		dynamicState.pDynamicStates = dynamicStates;
 		dynamicState.pNext = nullptr;
 		dynamicState.flags = 0;
+
+		// DEPTH STENCIL TESTING : TODO
+		VkPipelineDepthStencilStateCreateInfo depthStencilCreateInfo = {};
+		depthStencilCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		depthStencilCreateInfo.depthTestEnable = VK_TRUE;			// enable depth test
+		depthStencilCreateInfo.depthWriteEnable = VK_TRUE;			// enable writing to depth buffer to replace old values
+		depthStencilCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;	// comparison operation that allows an overwrite (new value is less than what is already stored)
+		depthStencilCreateInfo.depthBoundsTestEnable = VK_FALSE;	// depth bounds test: does the depth value is between two bounds
+		depthStencilCreateInfo.stencilTestEnable = VK_FALSE;		// enalble the stencil test
 
 		VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo = {};
 		graphicsPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -214,7 +234,7 @@ namespace vr
 		graphicsPipelineCreateInfo.pDynamicState = nullptr;
 		graphicsPipelineCreateInfo.pRasterizationState = &mRasterizationStateCreateInfo;
 		graphicsPipelineCreateInfo.pColorBlendState = &mColorBlending;
-		graphicsPipelineCreateInfo.pDepthStencilState = nullptr;
+		graphicsPipelineCreateInfo.pDepthStencilState = &depthStencilCreateInfo;
 		graphicsPipelineCreateInfo.pMultisampleState = &mMultisampling;
 		graphicsPipelineCreateInfo.layout = pipelineLayout;								// PIPELINE LAYOUT PIPELINE SHOULD USE
 		graphicsPipelineCreateInfo.renderPass = renderPass;								// RENDERPASS DESCRIPTION THE PIPELINE IS COMPATIBLE WITH
@@ -225,7 +245,13 @@ namespace vr
 		graphicsPipelineCreateInfo.basePipelineIndex = -1;					// or index of pipeline (being created) to derive from (in case of multiple at once)
 
 		// VK_NUL_HANDE below is pipeline cache
+		mPipeline = {};
 		CHECK_RESULT(vkCreateGraphicsPipelines(mLogicalDevice, VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, mAllocationCallbacks, &mPipeline), "RESOURCE CREATION FAILED: GRAPHICS PIPELINE");
 		RENDERER_DEBUG("RESOURCE CREATED: GRAPHICS PIPELINE");
+	}
+
+	VkPipeline& Pipeline::GetVulkanPipeline()
+	{
+		return mPipeline;
 	}
 }

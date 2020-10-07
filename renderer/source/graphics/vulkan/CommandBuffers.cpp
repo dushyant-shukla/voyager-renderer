@@ -22,6 +22,16 @@ namespace vr
 		AllocateCommandbuffers(count);
 	}
 
+	VkCommandBuffer& CommandBuffers::operator[](const unsigned int& index)
+	{
+		return mCommandbuffers[index];
+	}
+
+	size_t CommandBuffers::Size()
+	{
+		return mCommandbuffers.size();
+	}
+
 	void CommandBuffers::CreateCommandPool(const int& queueFamilyIndex)
 	{
 		VkCommandPoolCreateInfo poolInfo = {};

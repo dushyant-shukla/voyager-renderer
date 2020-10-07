@@ -18,11 +18,16 @@ vr::ShaderModule::ShaderModule(const VkDevice& device, VkAllocationCallbacks* al
 
 vr::ShaderModule::~ShaderModule()
 {
-	vkDestroyShaderModule(mLogicalDevice, mModule, mAllocationCallbacks);
-	RENDERER_DEBUG("RESOURCE DESTROYED: SHADER MODULE (" + mFilename + ")");
+	//vkDestroyShaderModule(mLogicalDevice, mModule, mAllocationCallbacks);
+	//RENDERER_DEBUG("RESOURCE DESTROYED: SHADER MODULE (" + mFilename + ")");
 }
 
 const VkShaderModule vr::ShaderModule::GetShaderModule()
 {
 	return mModule;
+}
+
+std::string& vr::ShaderModule::GetFilename()
+{
+	return mFilename;
 }

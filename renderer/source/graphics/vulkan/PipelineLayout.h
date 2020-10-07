@@ -22,6 +22,8 @@ namespace vr
 
 		PipelineLayout& AddPushConstant(const VkShaderStageFlags flags, unsigned int offset, unsigned int size);
 
+		const VkPipelineLayout& GetVulkanPipelineLayout();
+
 		void Configure();
 
 	private:
@@ -34,6 +36,6 @@ namespace vr
 		std::optional<VkPushConstantRange > mPushConstant;
 		std::vector<DescriptorSetLayout> mDescriptorSetLayouts;
 
-		VkPipelineLayout mLayout;
+		VkPipelineLayout mLayout = VK_NULL_HANDLE;
 	};
 }
