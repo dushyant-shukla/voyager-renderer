@@ -3,6 +3,11 @@
 #include <memory>
 #include <window/Window.h>
 #include <vulkan/vulkan.h>
+#include "graphics/vulkan/DepthBuffer.h"
+#include "graphics/vulkan/RenderPass.h"
+#include "graphics/vulkan/Framebuffers.h"
+#include "graphics/vulkan/CommandBuffers.h"
+#include "graphics/vulkan/SynchronizationPrimitives.h"
 
 namespace vr
 {
@@ -49,6 +54,8 @@ namespace vr
 		*/
 		void InitializeRenderer();
 
+		virtual void CleanupScene() = 0;
+
 		/*
 			wait for device to clean up
 		*/
@@ -60,6 +67,11 @@ namespace vr
 		Surface* mSurface = { nullptr };
 		Device* mDevice = { nullptr };
 		Swapchain* mSwapchain = { nullptr };
+		DepthBuffer mDepthBuffer;
+		RenderPass mRenderpass;
+		Framebuffers mFramebuffers;
+		CommandBuffers mCommandBuffers;
+		SynchronizationPrimitives mSynchronizationPrimitives;
 
 	private:
 

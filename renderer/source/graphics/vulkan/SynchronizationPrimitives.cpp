@@ -4,7 +4,7 @@
 
 namespace vr
 {
-	SynchronizationPrimitives::SynchronizationPrimitives(const VkPhysicalDevice& physicalDevice, const VkDevice& device, VkAllocationCallbacks* allocationCallbacks)
+	SynchronizationPrimitives::SynchronizationPrimitives()
 	{
 	}
 
@@ -20,8 +20,11 @@ namespace vr
 		RENDERER_DEBUG("RESOURCES DESTROYED: SYNCHRONIZATION PRIMITIVES");
 	}
 
-	void SynchronizationPrimitives::Create()
+	void SynchronizationPrimitives::Create(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks)
 	{
+		mLogicalDevice = device;
+		mAllocationCallbacks = allocationCallbacks;
+
 		mImageAvailable.resize(MAX_FRAME_DRAWS);
 		mRenderFinished.resize(MAX_FRAME_DRAWS);
 		mDrawFences.resize(MAX_FRAME_DRAWS);
@@ -37,9 +40,9 @@ namespace vr
 
 		for (size_t i = 0; i < MAX_FRAME_DRAWS; ++i)
 		{
-			CHECK_RESULT(vkCreateSemaphore(mLogicalDevice, &semaphoreCreateInfo, nullptr, &mImageAvailable[i]), "RESOURCE CREATION FAILED: IMAGE AVAILABLE SEMAPHORE");
-			CHECK_RESULT(vkCreateSemaphore(mLogicalDevice, &semaphoreCreateInfo, nullptr, &mRenderFinished[i]), "RESOURCE CREATION FAILED: RENDER FINISHED SEMAPHORE");
-			CHECK_RESULT(vkCreateFence(mLogicalDevice, &fenceCreateInfo, nullptr, &mDrawFences[i]), "RESOURCE CREATION FAILED: DRAW FENCES SEMAPHORE");
+			CHECK_RESULT(vkCreateSemaphore(mLogicalDevice, &semaphoreCreateInfo, mAllocationCallbacks, &mImageAvailable[i]), "RESOURCE CREATION FAILED: IMAGE AVAILABLE SEMAPHORE");
+			CHECK_RESULT(vkCreateSemaphore(mLogicalDevice, &semaphoreCreateInfo, mAllocationCallbacks, &mRenderFinished[i]), "RESOURCE CREATION FAILED: RENDER FINISHED SEMAPHORE");
+			CHECK_RESULT(vkCreateFence(mLogicalDevice, &fenceCreateInfo, mAllocationCallbacks, &mDrawFences[i]), "RESOURCE CREATION FAILED: DRAW FENCES SEMAPHORE");
 		}
 
 		RENDERER_DEBUG("RESOURCES CREATED: SYNCHRONIZATION PRIMITIVES");

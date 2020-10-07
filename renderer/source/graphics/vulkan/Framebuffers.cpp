@@ -4,8 +4,7 @@
 
 namespace vr
 {
-	Framebuffers::Framebuffers(const VkDevice& logicalDevice, VkAllocationCallbacks* allocationCallbacks)
-		: mLogicalDevice(logicalDevice), mAllocationCallbacks(allocationCallbacks)
+	Framebuffers::Framebuffers()
 	{
 	}
 
@@ -19,8 +18,11 @@ namespace vr
 		RENDERER_DEBUG("RESOURCE DESTROYED: FRAME BUFFERS");
 	}
 
-	void Framebuffers::Create(const std::vector<SwapchainImage> swapchainImages, const VkRect2D& swapchainExtent, const VkImageView& depthbufferImageView, const VkRenderPass& renderPass)
+	void Framebuffers::Create(const VkDevice& logicalDevice, VkAllocationCallbacks* allocationCallbacks, const std::vector<SwapchainImage> swapchainImages, const VkExtent2D& swapchainExtent, const VkImageView& depthbufferImageView, const VkRenderPass& renderPass)
 	{
+		mLogicalDevice = logicalDevice;
+		mAllocationCallbacks = allocationCallbacks;
+
 		mFramebuffers.resize(swapchainImages.size());
 
 		for (size_t i = 0; i < swapchainImages.size(); ++i)
@@ -35,12 +37,13 @@ namespace vr
 			framebufferCreateInfo.renderPass = renderPass;
 			framebufferCreateInfo.attachmentCount = static_cast<unsigned int> (attachments.size());
 			framebufferCreateInfo.pAttachments = attachments.data();
-			framebufferCreateInfo.width = swapchainExtent.extent.width;
-			framebufferCreateInfo.height = swapchainExtent.extent.height;
+			framebufferCreateInfo.width = swapchainExtent.width;
+			framebufferCreateInfo.height = swapchainExtent.height;
 			framebufferCreateInfo.layers = 1;
 
 			CHECK_RESULT(vkCreateFramebuffer(mLogicalDevice, &framebufferCreateInfo, nullptr, &mFramebuffers[i]), "RESOURCE CREATION FAILED: FRAME BUFFERS");
-			RENDERER_DEBUG("RESOURCE CREATED: FRAME BUFFERS");
 		}
+
+		RENDERER_DEBUG("RESOURCE CREATED: FRAME BUFFERS");
 	}
 }

@@ -3,7 +3,7 @@
 #include "utility/RendererCoreUtility.h"
 
 vr::ShaderModule::ShaderModule(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks, std::string filename)
-	: mLogicalDevice(device), mAllocationCallbacks(allocationCallbacks), mModule()
+	: mLogicalDevice(device), mAllocationCallbacks(allocationCallbacks), mModule(), mFilename(filename)
 {
 	std::vector<char> code = ResourceLoader::ReadFile(filename);
 
@@ -19,6 +19,7 @@ vr::ShaderModule::ShaderModule(const VkDevice& device, VkAllocationCallbacks* al
 vr::ShaderModule::~ShaderModule()
 {
 	vkDestroyShaderModule(mLogicalDevice, mModule, mAllocationCallbacks);
+	RENDERER_DEBUG("RESOURCE DESTROYED: SHADER MODULE (" + mFilename + ")");
 }
 
 const VkShaderModule vr::ShaderModule::GetShaderModule()

@@ -8,12 +8,13 @@ namespace vr
 	{
 	public:
 
-		DepthBuffer(const VkPhysicalDevice& physicalDevice, const VkDevice& device, VkAllocationCallbacks* allocationCallbacks);
+		DepthBuffer();
 		~DepthBuffer();
 
-		void CreateDefault(const VkRect2D& swapchainExtent);
+		void CreateDefault(const VkPhysicalDevice& physicalDevice, const VkDevice& device, VkAllocationCallbacks* allocationCallbacks, const VkExtent2D& swapchainExtent);
 
 		const VkImageView& GetImageView();
+		const VkFormat& GetFormat();
 
 	private:
 

@@ -5,8 +5,7 @@
 
 namespace vr
 {
-	DepthBuffer::DepthBuffer(const VkPhysicalDevice& physicalDevice, const VkDevice& device, VkAllocationCallbacks* allocationCallbacks)
-		: mPhysicalDevice(physicalDevice), mLogicalDevice(device), mAllocationCallbacks(allocationCallbacks),
+	DepthBuffer::DepthBuffer() :
 		mFormat(),
 		mImage(),
 		mImageView(),
@@ -24,16 +23,20 @@ namespace vr
 		RENDERER_DEBUG("RESOURCE FREED: DEPTH BUFFER MEMORY");
 	}
 
-	void DepthBuffer::CreateDefault(const VkRect2D& swapchainExtent)
+	void DepthBuffer::CreateDefault(const VkPhysicalDevice& physicalDevice, const VkDevice& device, VkAllocationCallbacks* allocationCallbacks, const VkExtent2D& swapchainExtent)
 	{
+		mPhysicalDevice = physicalDevice;
+		mLogicalDevice = device;
+		mAllocationCallbacks = allocationCallbacks;
+
 		ChooseSupportedFormat();
 
 		// create image
 		VkImageCreateInfo imageCreateInfo = {};
 		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-		imageCreateInfo.extent.width = swapchainExtent.extent.width;
-		imageCreateInfo.extent.height = swapchainExtent.extent.height;
+		imageCreateInfo.extent.width = swapchainExtent.width;
+		imageCreateInfo.extent.height = swapchainExtent.height;
 		imageCreateInfo.extent.depth = 1;	// depth of image (just 1, no 3d aspect)
 		imageCreateInfo.mipLevels = 1;		// number of mip map levels
 		imageCreateInfo.arrayLayers = 1;
@@ -58,8 +61,8 @@ namespace vr
 		memAllocateInfo.allocationSize = memRequirements.size;
 		memAllocateInfo.memoryTypeIndex = MemoryUtiity::FindMemoryTypeIndex(mPhysicalDevice, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-		CHECK_RESULT(vkAllocateMemory(mLogicalDevice, &memAllocateInfo, nullptr, &mMemory), "Failed to allocate memory for image!");
-		RENDERER_DEBUG("RESOURCE CREATED: DEPTH BUFFER IMAGE");
+		CHECK_RESULT(vkAllocateMemory(mLogicalDevice, &memAllocateInfo, nullptr, &mMemory), "RESOURCE ALLOCATION FAILED: DEPTH BUFFER MEMORY");
+		RENDERER_DEBUG("RESOURCE ALLOCATED: DEPTH BUFFER MEMORY");
 
 		// connect allocated memory to image
 		CHECK_RESULT(vkBindImageMemory(mLogicalDevice, mImage, mMemory, 0), "DEPTH BUFFER: FAILED TO BIND ALLOCATED MEMORY TO IMAGE");
@@ -90,6 +93,11 @@ namespace vr
 	const VkImageView& DepthBuffer::GetImageView()
 	{
 		return mImageView;
+	}
+
+	const VkFormat& DepthBuffer::GetFormat()
+	{
+		return mFormat;
 	}
 
 	void DepthBuffer::ChooseSupportedFormat()

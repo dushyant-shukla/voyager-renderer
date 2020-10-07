@@ -2,6 +2,8 @@
 #include "utility/RendererCoreUtility.h"
 #include "assertions.h"
 
+#include <GLFW/glfw3.h>
+
 namespace vr
 {
 	Swapchain* Swapchain::CreateSwapchain(Device* const device, Surface* const surface, GLFWwindow* window, VkAllocationCallbacks* const allocationCallbacks)
@@ -28,6 +30,11 @@ namespace vr
 	const VkExtent2D& Swapchain::GetSwapchainExtent()
 	{
 		return mExtent;
+	}
+
+	const VkSurfaceFormatKHR& Swapchain::GetSurfaceFormat()
+	{
+		return mSurfaceFormat;
 	}
 
 	Swapchain::Swapchain(Device* const device, Surface* const surface, GLFWwindow* window, VkAllocationCallbacks* const allocationCallbacks)

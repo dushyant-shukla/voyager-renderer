@@ -19,5 +19,7 @@ namespace vr
 		VkDevice mLogicalDevice;
 		VkAllocationCallbacks* mAllocationCallbacks;
 		VkShaderModule mModule;
+
+		std::string mFilename;
 	};
 }

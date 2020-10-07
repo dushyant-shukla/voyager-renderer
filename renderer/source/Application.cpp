@@ -8,7 +8,10 @@
 
 namespace vr
 {
-	Application::Application(std::string name) : mName(name) {}
+	Application::Application(std::string name) :
+		mName(name),
+		mDepthBuffer()
+	{}
 
 	void Application::Run()
 	{
@@ -17,6 +20,7 @@ namespace vr
 		InitializeRenderer();
 		InitializeScene();
 		Render();
+		CleanupScene();
 		CleanupSystem();
 	}
 
@@ -48,17 +52,21 @@ namespace vr
 		mInstance = Instance::CreateInstance(mName);
 		mSurface = Surface::CreateWindowSurface(mInstance, mWindow->GetNativeWindow(), nullptr);
 		mDevice = Device::InitializeDevice(mInstance, mSurface);
+
+		VkDevice logicalDevice = mDevice->GetLogicalDevice().device;
+		VkPhysicalDevice physicalDevice = mDevice->GetPhysicalDevice().device;
+
 		mSwapchain = Swapchain::CreateSwapchain(mDevice, mSurface, mWindow->GetNativeWindow(), nullptr);
 
-		/*CreateCommandBuffers();
-		SynchronizationPrimitives();
-		SetupDepthStencil();
-		SetupRenderPass();
-		CreatePipelineCache();
-		SetupFrameBuffer();*/
+		mDepthBuffer.CreateDefault(mDevice->GetPhysicalDevice().device, mDevice->GetLogicalDevice().device, nullptr, mSwapchain->GetSwapchainExtent());
+		mRenderpass.SetupDefaultRenderPass(logicalDevice, nullptr, mSwapchain->GetSurfaceFormat(), mDepthBuffer.GetFormat());
+		mFramebuffers.Create(logicalDevice, nullptr, mSwapchain->GetSwapchainImages(), mSwapchain->GetSwapchainExtent(), mDepthBuffer.GetImageView(), mRenderpass.GetVulkanRenderPass());
+		mCommandBuffers.Create(logicalDevice, nullptr, mDevice->GetPhysicalDevice().queueFamilies.graphics.value(), mSwapchain->GetSwapchainImages().size());
+		mSynchronizationPrimitives.Create(logicalDevice, nullptr);
 	}
 
 	void Application::Wait()
 	{
+		vkDeviceWaitIdle(mDevice->GetLogicalDevice().device);
 	}
 }

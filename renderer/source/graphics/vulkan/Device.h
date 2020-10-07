@@ -141,6 +141,11 @@ namespace vr
 			return mLogicalDevice.device;
 		}
 
+		inline void Wait()
+		{
+			vkDeviceWaitIdle(mLogicalDevice.device);
+		}
+
 	private:
 
 		Device(Instance* instance, Surface* surface);

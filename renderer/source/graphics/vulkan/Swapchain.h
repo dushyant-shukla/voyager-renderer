@@ -1,11 +1,12 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
-#include <GLFW/glfw3.h>
 #include <vector>
 
 #include "Device.h"
 #include "Surface.h"
+
+struct GLFWwindow;
 
 namespace vr
 {
@@ -25,6 +26,7 @@ namespace vr
 
 		std::vector<SwapchainImage>& GetSwapchainImages();
 		const VkExtent2D& GetSwapchainExtent();
+		const VkSurfaceFormatKHR& GetSurfaceFormat();
 
 	private:
 

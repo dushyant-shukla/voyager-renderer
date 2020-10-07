@@ -8,10 +8,12 @@ namespace vr
 	{
 	public:
 
-		RenderPass(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks, const VkSurfaceFormatKHR& format);
+		RenderPass();
 		~RenderPass();
 
-		void SetupDefaultRenderPass(const VkFormat& depthBufferFormat);
+		void SetupDefaultRenderPass(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks, const VkSurfaceFormatKHR& surfaceFormat, const VkFormat& depthBufferFormat);
+
+		const VkRenderPass& GetVulkanRenderPass();
 
 	private:
 

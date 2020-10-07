@@ -11,8 +11,10 @@ namespace vr
 	{
 	public:
 
-		Pipeline(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks);
+		Pipeline();
 		~Pipeline();
+
+		Pipeline& Create(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks);
 
 		Pipeline& AddShaderStage(const VkShaderStageFlagBits& shaderStage, std::string filename);
 
@@ -49,7 +51,7 @@ namespace vr
 		// TODO: TESELLATION STATE
 
 		// should do stuff like VkPipelineVertexInputStateCreateInfo from binding and attr descriptions
-		void Create(const VkPipelineLayout& pipelineLayout, const VkRenderPass& renderPass, unsigned int subpass, const VkPipelineCreateFlags flags);
+		void Configure(const VkPipelineLayout& pipelineLayout, const VkRenderPass& renderPass, unsigned int subpass, const VkPipelineCreateFlags flags);
 
 	private:
 

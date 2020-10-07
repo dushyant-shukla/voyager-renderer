@@ -14,10 +14,10 @@ namespace vr
 	{
 	public:
 
-		CommandBuffers(const VkDevice& logicalDevice, VkAllocationCallbacks* allocationCallbacks);
+		CommandBuffers();
 		~CommandBuffers();
 
-		void Create(const int& queueFamilyIndex, const int& count);
+		void Create(const VkDevice& logicalDevice, VkAllocationCallbacks* allocationCallbacks, const int& queueFamilyIndex, const int& count);
 
 	private:
 

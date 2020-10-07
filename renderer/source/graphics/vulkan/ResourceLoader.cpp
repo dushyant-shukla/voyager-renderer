@@ -15,7 +15,7 @@ namespace vr
 
 		if (!file.is_open())
 		{
-			THROW("FAILED TO OPEN FILE: filename");
+			THROW("FAILED TO OPEN FILE: " + filename);
 		}
 
 		// get current read position and use to resize file buffer

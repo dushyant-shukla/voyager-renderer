@@ -2,8 +2,7 @@
 
 #include "utility/RendererCoreUtility.h"
 
-vr::RenderPass::RenderPass(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks, const VkSurfaceFormatKHR& format)
-	: mLogicalDevice(device), mAllocationCallbacks(allocationCallbacks), mSwapchainFormat(format)
+vr::RenderPass::RenderPass()
 {
 }
 
@@ -13,8 +12,12 @@ vr::RenderPass::~RenderPass()
 	RENDERER_DEBUG("RESOURCE DESTROYED: RENDER PASS");
 }
 
-void vr::RenderPass::SetupDefaultRenderPass(const VkFormat& depthBufferFormat)
+void vr::RenderPass::SetupDefaultRenderPass(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks, const VkSurfaceFormatKHR& surfaceFormat, const VkFormat& depthBufferFormat)
 {
+	mLogicalDevice = device;
+	mAllocationCallbacks = allocationCallbacks;
+	mSwapchainFormat = surfaceFormat;
+
 	VkAttachmentDescription colorAttachment = {};
 	colorAttachment.format = mSwapchainFormat.format;					// image format to use for attachment
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;					// number of samples to write for multisampling
@@ -89,4 +92,9 @@ void vr::RenderPass::SetupDefaultRenderPass(const VkFormat& depthBufferFormat)
 
 	CHECK_RESULT(vkCreateRenderPass(mLogicalDevice, &renderpassCreateInfo, nullptr, &mRenderPass), "RESOURCE CREATION FAILED: RENDER PASS");
 	RENDERER_DEBUG("RESOURCE CREATED: RENDER PASS");
+}
+
+const VkRenderPass& vr::RenderPass::GetVulkanRenderPass()
+{
+	return mRenderPass;
 }

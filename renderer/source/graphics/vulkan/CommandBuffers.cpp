@@ -3,8 +3,7 @@
 
 namespace vr
 {
-	CommandBuffers::CommandBuffers(const VkDevice& logicalDevice, VkAllocationCallbacks* allocationCallbacks)
-		: mLogicalDevice(logicalDevice), mAllocationCallbacks(allocationCallbacks), mCommandPool()
+	CommandBuffers::CommandBuffers()
 	{
 	}
 
@@ -14,8 +13,11 @@ namespace vr
 		RENDERER_DEBUG("RESOURCE DESTROYED: COMMAND POOL");
 	}
 
-	void CommandBuffers::Create(const int& queueFamilyIndex, const int& count)
+	void CommandBuffers::Create(const VkDevice& logicalDevice, VkAllocationCallbacks* allocationCallbacks, const int& queueFamilyIndex, const int& count)
 	{
+		mLogicalDevice = logicalDevice;
+		mAllocationCallbacks = allocationCallbacks;
+
 		CreateCommandPool(queueFamilyIndex);
 		AllocateCommandbuffers(count);
 	}

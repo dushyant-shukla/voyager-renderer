@@ -9,10 +9,10 @@ namespace vr
 	{
 	public:
 
-		SynchronizationPrimitives(const VkPhysicalDevice& physicalDevice, const VkDevice& device, VkAllocationCallbacks* allocationCallbacks);
+		SynchronizationPrimitives();
 		~SynchronizationPrimitives();
 
-		void Create();
+		void Create(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks);
 
 		VkSemaphore GetImageAvailableSemaphore(const unsigned int& index);
 		VkSemaphore GetRenderFinishedSemaphore(const unsigned int& index);

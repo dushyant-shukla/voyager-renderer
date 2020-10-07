@@ -3,8 +3,7 @@
 
 namespace vr
 {
-	Pipeline::Pipeline(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks)
-		: mLogicalDevice(device), mAllocationCallbacks(allocationCallbacks),
+	Pipeline::Pipeline() :
 		mInputAssemblyCreateInfo(),
 		mViewportStateCreateInfo(),
 		mRasterizationStateCreateInfo(),
@@ -18,6 +17,14 @@ namespace vr
 		RENDERER_DEBUG("RESOURCE DESTROYED: GRAPHICS PIPELINE");
 	}
 
+	Pipeline& Pipeline::Create(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks)
+	{
+		mLogicalDevice = device;
+		mAllocationCallbacks = allocationCallbacks;
+
+		return *this;
+	}
+
 	Pipeline& Pipeline::AddShaderStage(const VkShaderStageFlagBits& shaderStage, std::string filename)
 	{
 		ShaderModule vertexShader(mLogicalDevice, nullptr, filename);
@@ -29,6 +36,7 @@ namespace vr
 		vertShaderStageInfo.pName = "main";
 
 		mShaderStages.push_back(vertShaderStageInfo);
+		RENDERER_DEBUG("RESOURCE CREATED: SHADER STAGE CONFIGURED FOR FILE: " + filename);
 		return *this;
 	}
 
@@ -174,7 +182,7 @@ namespace vr
 		return *this;
 	}
 
-	void Pipeline::Create(const VkPipelineLayout& pipelineLayout, const VkRenderPass& renderPass, unsigned int subpass, const VkPipelineCreateFlags flags)
+	void Pipeline::Configure(const VkPipelineLayout& pipelineLayout, const VkRenderPass& renderPass, unsigned int subpass, const VkPipelineCreateFlags flags)
 	{
 		// input state
 		VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo = {};

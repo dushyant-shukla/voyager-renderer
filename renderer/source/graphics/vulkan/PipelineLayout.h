@@ -11,14 +11,18 @@ namespace vr
 	{
 	public:
 
-		PipelineLayout(VkDevice logicalDevice, VkAllocationCallbacks* allocationCallbacks);
+		PipelineLayout();
 		~PipelineLayout();
 
-		void AddDescriptorSetLayout(const DescriptorSetLayout& layout);
+		void Cleanup();
 
-		void AddPushConstant(const VkShaderStageFlags flags, unsigned int offset, unsigned int size);
+		PipelineLayout& Create(VkDevice logicalDevice, VkAllocationCallbacks* allocationCallbacks);
 
-		void Create();
+		PipelineLayout& AddDescriptorSetLayout(const DescriptorSetLayout& layout);
+
+		PipelineLayout& AddPushConstant(const VkShaderStageFlags flags, unsigned int offset, unsigned int size);
+
+		void Configure();
 
 	private:
 
