@@ -51,16 +51,16 @@ project "renderer"
     "%{prj.name}/source/**.h",
     "%{prj.name}/source/**.cpp",
 
-    "%{prj.name}/externals/stbi/**.h",
-    "%{prj.name}/externals/stbi/**.cpp",
+    "%../externals/stbi/**.h",
+    "%../externals/stbi/**.cpp",
 
-    "%{prj.name}/externals/glm/glm/**.hpp",
-    "%{prj.name}/externals/glm/glm/**.inl",
+    "../externals/glm/glm/**.hpp",
+    "../externals/glm/glm/**.inl",
 
-    "%{prj.name}/externals/jsoncpp/include/json/**.h",
-    "%{prj.name}/externals/jsoncpp/src/lib_json/**.h",
-    "%{prj.name}/externals/jsoncpp/src/lib_json/**.cpp",
-    "%{prj.name}/externals/jsoncpp/src/lib_json/**.inl"
+    "../externals/jsoncpp/include/json/**.h",
+    "../externals/jsoncpp/src/lib_json/**.h",
+    "../externals/jsoncpp/src/lib_json/**.cpp",
+    "../externals/jsoncpp/src/lib_json/**.inl"
   }
 
   includedirs
@@ -147,6 +147,7 @@ project "model-loading"
     "%{include_dir.glm}",
     "%{include_dir.imgui}",
     "%{include_dir.jsoncpp}",
+	"%{include_dir.spdlog}",
 	"%{include_dir.vulkan}"
   }
 
@@ -191,7 +192,8 @@ project "animation-keyframes"
     "%{include_dir.glm}",
     "%{include_dir.imgui}",
     "%{include_dir.jsoncpp}",
-	"%{include_dir.vulkan}"
+	"%{include_dir.vulkan}",
+	"%{include_dir.spdlog}"
   }
 
   links

@@ -7,6 +7,7 @@
 #include "graphics/vulkan/RenderPass.h"
 #include "graphics/vulkan/Framebuffers.h"
 #include "graphics/vulkan/CommandBuffers.h"
+#include "graphics/vulkan/CommandPool.h"
 #include "graphics/vulkan/SynchronizationPrimitives.h"
 
 namespace vr
@@ -71,7 +72,8 @@ namespace vr
 		DepthBuffer mDepthBuffer;
 		RenderPass mRenderpass;
 		Framebuffers mFramebuffers;
-		CommandBuffers mCommandBuffers;
+		CommandBuffers mGraphicsCommandBuffers;
+		CommandPool mTransferCommandPool;
 		SynchronizationPrimitives mSynchronizationPrimitives;
 
 	private:

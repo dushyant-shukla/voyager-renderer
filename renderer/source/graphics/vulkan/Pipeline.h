@@ -19,8 +19,10 @@ namespace vr
 		Pipeline& AddShaderStage(const VkShaderStageFlagBits& shaderStage, std::string filename);
 
 		Pipeline& AddVertexInputBindingDescription(const unsigned int binding, const unsigned int stride, const VkVertexInputRate& inputRate);
+		Pipeline& AddVertexInputBindingDescription(const VkVertexInputBindingDescription& bindingDescription);
 
 		Pipeline& AddVertexInputAttributeDescription(const unsigned int binding, const VkFormat& format, const unsigned int location, const unsigned int offset);
+		Pipeline& AddVertexInputAttributeDescription(std::vector<VkVertexInputAttributeDescription>& attributeDescriptions);
 
 		Pipeline& ConfigureInputAssembly(const VkPrimitiveTopology& topology, const VkBool32& primitiveRestartEnable, VkPipelineInputAssemblyStateCreateFlags flags, void* next);
 

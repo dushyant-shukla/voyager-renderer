@@ -20,6 +20,9 @@ namespace vr
 
 	void AnimationKeyframes::SetupPipeline()
 	{
+		mVertexBuffer.Create(mDevice->GetPhysicalDevice().device, mDevice->GetLogicalDevice().device, mDevice->GetLogicalDevice().transferQueue, mTransferCommandPool.GetVulkanCommandPool(), nullptr, VERTICES, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+		mIndexBuffer.Create(mDevice->GetPhysicalDevice().device, mDevice->GetLogicalDevice().device, mDevice->GetLogicalDevice().transferQueue, mTransferCommandPool.GetVulkanCommandPool(), nullptr, INDICES, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+
 		mPipelineLayout.Create(mDevice->GetLogicalDevice().device, nullptr)
 			.Configure();
 
@@ -27,6 +30,8 @@ namespace vr
 			.AddShaderStage(VK_SHADER_STAGE_VERTEX_BIT, "../../assets/shaders/vert.spv")
 			.AddShaderStage(VK_SHADER_STAGE_FRAGMENT_BIT, "../../assets/shaders/frag.spv")
 			.ConfigureInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE, 0, nullptr)
+			.AddVertexInputBindingDescription(Vertex::GetVertexInputBindingDescription())
+			.AddVertexInputAttributeDescription(Vertex::GetVertexInputAttributeDescriptions())
 			.ConfigureViewport(mSwapchain->GetSwapchainExtent())
 			.ConfigureRasterizer(VK_FALSE, VK_FALSE, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f, 0, nullptr)
 			.ConfigureMultiSampling(VK_SAMPLE_COUNT_1_BIT, VK_FALSE, 1.0f, nullptr, 0, VK_FALSE, VK_FALSE, nullptr)
@@ -45,10 +50,10 @@ namespace vr
 	void AnimationKeyframes::Draw()
 	{
 		// 1# Get the next available image to draw to and set something to signal when the image is ready to draw to (a semaphore)
-// 2# Submit command buffer to queue for execution, making sure it waits for the image to be available before drawing and signal when it has finished rendering to the image
-// 3# present image to screen when it has signalled finished rendering.
+		// 2# Submit command buffer to queue for execution, making sure it waits for the image to be available before drawing and signal when it has finished rendering to the image
+		// 3# present image to screen when it has signalled finished rendering.
 
-// wait for given fence to signal (open) from last draw before continuing
+		// wait for given fence to signal (open) from last draw before continuing
 		vkWaitForFences(mDevice->GetLogicalDevice().device, 1, &mSynchronizationPrimitives.GetDrawFence(mCurrentFrame), VK_TRUE, std::numeric_limits<uint64_t>::max());
 		// close the fense for current frame
 		vkResetFences(mDevice->GetLogicalDevice().device, 1, &mSynchronizationPrimitives.GetDrawFence(mCurrentFrame));
@@ -71,7 +76,7 @@ namespace vr
 		};
 		submitInfo.pWaitDstStageMask = waitFlags;							// stages to check semaphore at
 		submitInfo.commandBufferCount = 1;									// number of command buffer to submit
-		submitInfo.pCommandBuffers = &mCommandBuffers[imageIndex];			// command buffer to submit
+		submitInfo.pCommandBuffers = &mGraphicsCommandBuffers[imageIndex];			// command buffer to submit
 		submitInfo.signalSemaphoreCount = 1;								// number of semaphores to signal
 		submitInfo.pSignalSemaphores = &mSynchronizationPrimitives.GetRenderFinishedSemaphore(mCurrentFrame);	// semaphore to signal when the command buffer finishes
 
@@ -125,7 +130,7 @@ namespace vr
 		renderpassBeginInfo.pClearValues = clearValues.data();			// list of clear values (TODO: depth attachment clear value)
 		renderpassBeginInfo.clearValueCount = static_cast<unsigned int> (clearValues.size());
 
-		size_t size = mCommandBuffers.Size();
+		size_t size = mGraphicsCommandBuffers.Size();
 		for (size_t i = 0; i < size; ++i)
 		{
 			renderpassBeginInfo.framebuffer = mFramebuffers[i];
@@ -138,23 +143,29 @@ namespace vr
 			// 6# end recording commands to command buffer
 
 			// start recording commands to command buffer
-			if (vkBeginCommandBuffer(mCommandBuffers[i], &bufferBeginInfo) != VK_SUCCESS)
+			if (vkBeginCommandBuffer(mGraphicsCommandBuffers[i], &bufferBeginInfo) != VK_SUCCESS)
 			{
 				throw std::runtime_error("Failed to start recording a command buffer!!");
 			}
 
 			// being render pass
-			vkCmdBeginRenderPass(mCommandBuffers[i], &renderpassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdBeginRenderPass(mGraphicsCommandBuffers[i], &renderpassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 			// bind pipeline to be used in render pass
-			vkCmdBindPipeline(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline.GetVulkanPipeline());
+			vkCmdBindPipeline(mGraphicsCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline.GetVulkanPipeline());
 
-			vkCmdDraw(mCommandBuffers[i], 3, 1, 0, 0);
+			VkBuffer vertexBuffers[] = { mVertexBuffer.GetVulkanBuffer() };
+			VkDeviceSize offsets[] = { 0 };
+			vkCmdBindVertexBuffers(mGraphicsCommandBuffers[i], 0, 1, vertexBuffers, offsets);
+			vkCmdBindIndexBuffer(mGraphicsCommandBuffers[i], mIndexBuffer.GetVulkanBuffer(), 0, VK_INDEX_TYPE_UINT16);
+
+			//vkCmdDraw(mGraphicsCommandBuffers[i], 3, 1, 0, 0);
+			vkCmdDrawIndexed(mGraphicsCommandBuffers[i], static_cast<uint32_t>(INDICES.size()), 1, 0, 0, 0);
 
 			// end render pass
-			vkCmdEndRenderPass(mCommandBuffers[i]);
+			vkCmdEndRenderPass(mGraphicsCommandBuffers[i]);
 
-			if (vkEndCommandBuffer(mCommandBuffers[i]) != VK_SUCCESS)
+			if (vkEndCommandBuffer(mGraphicsCommandBuffers[i]) != VK_SUCCESS)
 			{
 				throw std::runtime_error("Failed to stop recording a command buffer!!");
 			}

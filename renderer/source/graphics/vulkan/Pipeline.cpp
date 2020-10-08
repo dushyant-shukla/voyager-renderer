@@ -58,6 +58,12 @@ namespace vr
 		return *this;
 	}
 
+	Pipeline& Pipeline::AddVertexInputBindingDescription(const VkVertexInputBindingDescription& bindingDescription)
+	{
+		mBindingDescriptions.push_back(bindingDescription);
+		return *this;
+	}
+
 	Pipeline& Pipeline::AddVertexInputAttributeDescription(const unsigned int binding, const VkFormat& format, const unsigned int location, const unsigned int offset)
 	{
 		VkVertexInputAttributeDescription description = {};
@@ -66,6 +72,12 @@ namespace vr
 		description.location = location;
 		description.offset = offset;
 		mAttributeDescriptions.push_back(description);
+		return *this;
+	}
+
+	Pipeline& Pipeline::AddVertexInputAttributeDescription(std::vector<VkVertexInputAttributeDescription>& attributeDescriptions)
+	{
+		mAttributeDescriptions.insert(mAttributeDescriptions.begin(), attributeDescriptions.begin(), attributeDescriptions.end());
 		return *this;
 	}
 
