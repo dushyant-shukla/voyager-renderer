@@ -3,14 +3,14 @@
 
 namespace vr
 {
-	VkPhysicalDevice MemoryUtility::PhysicalDevice = VK_NULL_HANDLE;
-	VkDevice MemoryUtility::LogicalDevice = VK_NULL_HANDLE;
+	VkPhysicalDevice MemoryUtility::sPhysicalDevice = VK_NULL_HANDLE;
+	VkDevice MemoryUtility::sLogicalDevice = VK_NULL_HANDLE;
 
-	unsigned int MemoryUtility::FindMemoryTypeIndex(VkPhysicalDevice physicalDevice, unsigned int allowedTypes, VkMemoryPropertyFlags propertyFlags)
+	unsigned int MemoryUtility::FindMemoryTypeIndex(unsigned int allowedTypes, VkMemoryPropertyFlags propertyFlags)
 	{
 		// Get properties of the physical device memory
 		VkPhysicalDeviceMemoryProperties memoryProperties = {};
-		vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, &memoryProperties);
+		vkGetPhysicalDeviceMemoryProperties(sPhysicalDevice, &memoryProperties);
 
 		for (unsigned int i = 0; i < memoryProperties.memoryTypeCount; ++i)
 		{
@@ -23,7 +23,7 @@ namespace vr
 		}
 	}
 
-	void MemoryUtility::CreateBuffer(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, VkDeviceSize bufferSize,
+	void MemoryUtility::CreateBuffer(VkDeviceSize bufferSize,
 		VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags bufferProperties, VkAllocationCallbacks* allocationCallbacks, VkBuffer* buffer, VkDeviceMemory* bufferMemory)
 	{
 		// Information to create buffer (doesn't include assigning the memory)
@@ -33,24 +33,24 @@ namespace vr
 		bufferInfo.usage = bufferUsageFlags;						// multiple types of buffers possible, we need vertex buffer
 		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;			// similar to swapchain, images can share vertex buffers
 
-		CHECK_RESULT(vkCreateBuffer(LogicalDevice, &bufferInfo, allocationCallbacks, buffer), "RESOURCE CREATION FAILED: VERTEX BUFFER");
+		CHECK_RESULT(vkCreateBuffer(sLogicalDevice, &bufferInfo, allocationCallbacks, buffer), "RESOURCE CREATION FAILED: VERTEX BUFFER");
 
 		// get buffer memory requirements
 		VkMemoryRequirements memRequirements = {};
-		vkGetBufferMemoryRequirements(LogicalDevice, *buffer, &memRequirements);
+		vkGetBufferMemoryRequirements(sLogicalDevice, *buffer, &memRequirements);
 
 		// allocate memory to buffer
 		VkMemoryAllocateInfo memoryAllocateInfo = {};
 		memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		memoryAllocateInfo.allocationSize = memRequirements.size;			// Index of memory type on physical device that has required bit flags
-		memoryAllocateInfo.memoryTypeIndex = FindMemoryTypeIndex(PhysicalDevice, memRequirements.memoryTypeBits, bufferProperties);
+		memoryAllocateInfo.memoryTypeIndex = FindMemoryTypeIndex(memRequirements.memoryTypeBits, bufferProperties);
 		// Allocate memory to VkDeviceMemory
-		CHECK_RESULT(vkAllocateMemory(LogicalDevice, &memoryAllocateInfo, allocationCallbacks, bufferMemory), "RESOURCE ALLOCATION FAILED: VERTEX BUFFER MEMORY");
+		CHECK_RESULT(vkAllocateMemory(sLogicalDevice, &memoryAllocateInfo, allocationCallbacks, bufferMemory), "RESOURCE ALLOCATION FAILED: VERTEX BUFFER MEMORY");
 		// Bind memory to vertex buffer
-		CHECK_RESULT(vkBindBufferMemory(LogicalDevice, *buffer, *bufferMemory, 0), "VERTEX BUFFER MEMORY FAILED TO BE BOUND TO VERTEX BUFFER");
+		CHECK_RESULT(vkBindBufferMemory(sLogicalDevice, *buffer, *bufferMemory, 0), "VERTEX BUFFER MEMORY FAILED TO BE BOUND TO VERTEX BUFFER");
 	}
 
-	VkCommandBuffer MemoryUtility::BeginCommandBuffer(VkDevice logicalDevice, VkCommandPool commandPool)
+	VkCommandBuffer MemoryUtility::BeginCommandBuffer(VkCommandPool commandPool)
 	{
 		VkCommandBuffer commandBuffer;
 
@@ -62,7 +62,7 @@ namespace vr
 		allocInfo.commandBufferCount = 1;
 
 		// allocate command buffer from pool
-		vkAllocateCommandBuffers(logicalDevice, &allocInfo, &commandBuffer);
+		vkAllocateCommandBuffers(sLogicalDevice, &allocInfo, &commandBuffer);
 
 		// Information to being the command buffer record
 		VkCommandBufferBeginInfo beginInfo = {};
@@ -74,7 +74,7 @@ namespace vr
 		return commandBuffer;
 	}
 
-	void MemoryUtility::EndAndSubmitCommandBuffer(const VkDevice& logicalDevice, const VkCommandPool& commandPool, const VkQueue& queue, const VkCommandBuffer& commandBuffer)
+	void MemoryUtility::EndAndSubmitCommandBuffer(const VkCommandPool& commandPool, const VkQueue& queue, const VkCommandBuffer& commandBuffer)
 	{
 		// end commands
 		vkEndCommandBuffer(commandBuffer);
@@ -91,13 +91,13 @@ namespace vr
 		vkQueueWaitIdle(queue);
 
 		// free command buffer
-		vkFreeCommandBuffers(logicalDevice, commandPool, 1, &commandBuffer);
+		vkFreeCommandBuffers(sLogicalDevice, commandPool, 1, &commandBuffer);
 	}
 
-	void MemoryUtility::CopyBuffer(const VkDevice& logicalDevice, const VkQueue& queue, const VkCommandPool& commandPool, const VkBuffer& srcBuffer, const VkBuffer& dstBuffer, VkDeviceSize bufferSize)
+	void MemoryUtility::CopyBuffer(const VkQueue& queue, const VkCommandPool& commandPool, const VkBuffer& srcBuffer, const VkBuffer& dstBuffer, VkDeviceSize bufferSize)
 	{
 		//create the buffer
-		VkCommandBuffer transferCommandBuffer = BeginCommandBuffer(logicalDevice, commandPool);
+		VkCommandBuffer transferCommandBuffer = BeginCommandBuffer(commandPool);
 
 		// Region of data to copy from and to
 		VkBufferCopy bufferCopyRegion = {};
@@ -108,13 +108,13 @@ namespace vr
 		// command to copy src buffer to dst buffer
 		vkCmdCopyBuffer(transferCommandBuffer, srcBuffer, dstBuffer, 1, &bufferCopyRegion);
 
-		EndAndSubmitCommandBuffer(logicalDevice, commandPool, queue, transferCommandBuffer);
+		EndAndSubmitCommandBuffer(commandPool, queue, transferCommandBuffer);
 	}
 
 	void MemoryUtility::CopyBufferToImage(const VkQueue transferQueue, const VkCommandPool& transferCommandPool, const VkBuffer& srcBuffer, VkImage& dstImage, const unsigned int& width, const unsigned int& height)
 	{
 		//create the buffer
-		VkCommandBuffer transferCommandBuffer = BeginCommandBuffer(LogicalDevice, transferCommandPool);
+		VkCommandBuffer transferCommandBuffer = BeginCommandBuffer(transferCommandPool);
 
 		VkBufferImageCopy imageRegion = {};
 		imageRegion.bufferOffset = 0;											// offset into data
@@ -130,6 +130,6 @@ namespace vr
 		// copy buffer to given image
 		vkCmdCopyBufferToImage(transferCommandBuffer, srcBuffer, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageRegion);
 
-		EndAndSubmitCommandBuffer(LogicalDevice, transferCommandPool, transferQueue, transferCommandBuffer);
+		EndAndSubmitCommandBuffer(transferCommandPool, transferQueue, transferCommandBuffer);
 	}
 }

@@ -1,6 +1,7 @@
 #include "SwapChain.h"
 #include "utility/RendererCoreUtility.h"
 #include "assertions.h"
+#include "utility/ImageUtility.h"
 
 #include <GLFW/glfw3.h>
 
@@ -155,7 +156,7 @@ namespace vr
 			newImage.image = image;
 
 			// Populate image view
-			PopulateImageView(image, mSurfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT, newImage.imageView);
+			ImageUtility::CreateImageView(image, mSurfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT, newImage.imageView);
 			mImages.push_back(newImage);
 		}
 	}
@@ -209,30 +210,5 @@ namespace vr
 		newExtent.width = std::max(surfaceCapabilities.minImageExtent.width, std::min(surfaceCapabilities.maxImageExtent.width, newExtent.width));
 		newExtent.height = std::max(surfaceCapabilities.minImageExtent.height, std::min(surfaceCapabilities.maxImageExtent.height, newExtent.height));
 		return newExtent;
-	}
-
-	void Swapchain::PopulateImageView(const VkImage& image, const VkFormat& format, const VkImageAspectFlags& aspectFlags, VkImageView& imageView)
-	{
-		VkImageViewCreateInfo imageViewCreateInfo = {};
-		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		imageViewCreateInfo.image = image;
-		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		imageViewCreateInfo.format = format;
-		imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;				// Allows remapping of RGBA components to other RGBA values
-		imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-		// Sub-resources allow the view to view only a part of an image
-		imageViewCreateInfo.subresourceRange.aspectMask = aspectFlags;					// which aspect of image to view (eg. COLOR_BIT for viewing color)
-		imageViewCreateInfo.subresourceRange.baseMipLevel = 0;							// start mipmap level to view from
-		imageViewCreateInfo.subresourceRange.levelCount = 1;							// number of mipmap levels to view
-		imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;						// start array level to view from
-		imageViewCreateInfo.subresourceRange.layerCount = 1;							// number of array levels to view
-		imageViewCreateInfo.flags = 0;
-		imageViewCreateInfo.pNext = NULL;
-
-		// create an image view
-		CHECK_RESULT(vkCreateImageView(mDevice->GetLogicalDevice().device, &imageViewCreateInfo, nullptr, &imageView), "RESOURCE CREATION FAILED: IMAGE VIEW");
 	}
 }

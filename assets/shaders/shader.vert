@@ -18,10 +18,14 @@ layout(set = 0, binding = 0) uniform UniformBufferObject
 layout (location = 0) out VS_OUT
 {
     vec3 color;
+    vec2 uv;
+    vec3 normal;
 } vs_out;
 
 void main() 
 {
     gl_Position = mvp_buffer.projection * mvp_buffer.view * mvp_buffer.model * vec4(position, 1.0);
     vs_out.color = color;
+    vs_out.uv = uv;
+    vs_out.normal = normal;
 }

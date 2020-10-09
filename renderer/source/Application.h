@@ -34,7 +34,7 @@ namespace vr
 
 		virtual void Draw() = 0;
 		virtual void InitializeScene() = 0;
-		virtual void SetupPipeline() = 0;
+		virtual VkPhysicalDeviceFeatures CheckRequiredFeatures();
 
 	private:
 
@@ -75,6 +75,14 @@ namespace vr
 		CommandBuffers mGraphicsCommandBuffers;
 		CommandPool mTransferCommandPool;
 		SynchronizationPrimitives mSynchronizationPrimitives;
+
+		// Stores the features available on the selected physical device
+		VkPhysicalDeviceFeatures deviceFeatures;
+
+		/** @brief Set of physical device features to be enabled for this example (must be set in the derived constructor) */
+		VkPhysicalDeviceFeatures enabledFeatures{};
+
+		bool isReady = false;
 
 	private:
 

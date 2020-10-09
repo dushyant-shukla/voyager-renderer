@@ -8,6 +8,7 @@
 #include "graphics/vulkan/utility/MemoryUtility.h"
 
 #define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <array>
@@ -21,36 +22,42 @@ namespace vr
 
 	AnimationKeyframes::~AnimationKeyframes()
 	{
-		for (size_t i = 0; i < mSwapchain->GetSwapchainImages().size(); i++) {
-			vkDestroyBuffer(mDevice->GetLogicalDevice().device, mMvpBuffers[i], nullptr);
-			vkFreeMemory(mDevice->GetLogicalDevice().device, mMvpBuffersMemory[i], nullptr);
+		if (isReady)
+		{
+			for (size_t i = 0; i < mSwapchain->GetSwapchainImages().size(); i++) {
+				vkDestroyBuffer(mDevice->GetLogicalDevice().device, mMvpBuffers[i], nullptr);
+				vkFreeMemory(mDevice->GetLogicalDevice().device, mMvpBuffersMemory[i], nullptr);
+			}
+			RENDERER_DEBUG("RESOURCE DESTROYED: UNIFORM BUFFER");
+			RENDERER_DEBUG("RESOURCE FREED: UNIFORM BUFFER MEMORY");
 		}
-		RENDERER_DEBUG("RESOURCE DESTROYED: UNIFORM BUFFER");
-		RENDERER_DEBUG("RESOURCE FREED: UNIFORM BUFFER MEMORY");
 	}
 
 	void AnimationKeyframes::InitializeScene()
 	{
-		mVertexBuffer.Create(mDevice->GetPhysicalDevice().device, mDevice->GetLogicalDevice().device, mDevice->GetLogicalDevice().transferQueue, mTransferCommandPool.GetVulkanCommandPool(), nullptr, VERTICES, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-		mIndexBuffer.Create(mDevice->GetPhysicalDevice().device, mDevice->GetLogicalDevice().device, mDevice->GetLogicalDevice().transferQueue, mTransferCommandPool.GetVulkanCommandPool(), nullptr, INDICES, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+		mVertexBuffer.Create(mDevice->GetLogicalDevice().device, mDevice->GetLogicalDevice().transferQueue, mTransferCommandPool.GetVulkanCommandPool(), nullptr, VERTICES, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+		mIndexBuffer.Create(mDevice->GetLogicalDevice().device, mDevice->GetLogicalDevice().transferQueue, mTransferCommandPool.GetVulkanCommandPool(), nullptr, INDICES, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
 		VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 		mMvpBuffers.resize(mSwapchain->GetSwapchainImages().size());
 		mMvpBuffersMemory.resize(mSwapchain->GetSwapchainImages().size());
 		for (size_t i = 0; i < mSwapchain->GetSwapchainImages().size(); ++i)
 		{
-			MemoryUtility::CreateBuffer(mDevice->GetPhysicalDevice().device, mDevice->GetLogicalDevice().device, bufferSize,
-				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			MemoryUtility::CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 				nullptr, &mMvpBuffers[i], &mMvpBuffersMemory[i]);
 		}
+
+		mCross.Create("statue.jpg", mDevice->GetLogicalDevice().device, nullptr, mTransferCommandPool.GetVulkanCommandPool(), mDevice->GetLogicalDevice().transferQueue);
+		mTextureSampler.CreateDefault(mDevice->GetLogicalDevice().device, nullptr);
 
 		SetupDescriptors();
 
 		SetupPipeline();
 
-		cross.Create("cross.jpg", mDevice->GetLogicalDevice().device, nullptr, mTransferCommandPool.GetVulkanCommandPool(), mDevice->GetLogicalDevice().transferQueue);
-
 		RecordCommands(0);
+
+		isReady = true;
 	}
 
 	void AnimationKeyframes::SetupPipeline()
@@ -138,6 +145,24 @@ namespace vr
 		mCurrentFrame = (mCurrentFrame + 1) % SynchronizationPrimitives::MAX_FRAME_DRAWS;
 	}
 
+	VkPhysicalDeviceFeatures AnimationKeyframes::CheckRequiredFeatures()
+	{
+		bool requiredFeaturesAvailable = true;
+		VkPhysicalDeviceFeatures requiredDeviceFeatures = {};
+		if (!mDevice->GetPhysicalDevice().features.samplerAnisotropy)
+		{
+			requiredFeaturesAvailable = false;
+		}
+
+		if (requiredFeaturesAvailable)
+		{
+			requiredDeviceFeatures.samplerAnisotropy = VK_TRUE;
+			return requiredDeviceFeatures;
+		}
+
+		throw std::runtime_error("DEVICE NOT SUITABLE: REQUIRED FEATURES NOT AVAILABLE");
+	}
+
 	void AnimationKeyframes::RecordCommands(const unsigned int& currentImage)
 	{
 		// Information about how to begin each command buffer
@@ -212,8 +237,10 @@ namespace vr
 
 		//RENDERER_TRACE("CLOCK DT: {0}", timeElapsed);
 
+		//mvpBuffer.model = glm::mat4(1.0f);
 		mvpBuffer.model = glm::rotate(glm::mat4(1.0f), timeElapsed * glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		mvpBuffer.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		//mvpBuffer.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
 		mvpBuffer.projection = glm::perspective(glm::radians(45.0f), (float)mSwapchain->GetSwapchainExtent().width / (float)mSwapchain->GetSwapchainExtent().height, 0.1f, 10.0f);
 		mvpBuffer.projection[1][1] *= -1;
 
@@ -227,10 +254,12 @@ namespace vr
 	void AnimationKeyframes::SetupDescriptors()
 	{
 		mDescriptorSetLayout.AddLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr)
+			.AddLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr)
 			.Create(mDevice->GetLogicalDevice().device, nullptr, 0, nullptr);
 
 		mDescriptorPool.Initialize(mDevice->GetLogicalDevice().device, nullptr)
 			.AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<unsigned int>(mSwapchain->GetSwapchainImages().size()))
+			.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<unsigned int>(mSwapchain->GetSwapchainImages().size()))
 			.Create(0, static_cast<unsigned int>(mSwapchain->GetSwapchainImages().size()), nullptr);
 
 		std::vector<VkDescriptorSetLayout> layouts(mSwapchain->GetSwapchainImages().size(), mDescriptorSetLayout.GetVkDescriptorSetLayout());
@@ -251,19 +280,40 @@ namespace vr
 			bufferInfo.offset = 0;
 			bufferInfo.range = sizeof(UniformBufferObject);
 
-			VkWriteDescriptorSet descriptorWrite{};
-			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrite.dstSet = mDescriptorSets[i];
-			descriptorWrite.dstBinding = 0;
-			descriptorWrite.dstArrayElement = 0;
-			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descriptorWrite.descriptorCount = 1;
-			descriptorWrite.pBufferInfo = &bufferInfo;
-			descriptorWrite.pImageInfo = nullptr; // Optional
-			descriptorWrite.pTexelBufferView = nullptr; // Optional
+			VkDescriptorImageInfo imageInfo = {};
+			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			imageInfo.imageView = mCross.GetVulkanImageView();
+			imageInfo.sampler = mTextureSampler.GetVulkanSampler();
 
-			vkUpdateDescriptorSets(mDevice->GetLogicalDevice().device, 1, &descriptorWrite, 0, nullptr);
+			std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+
+			descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrites[0].dstSet = mDescriptorSets[i];
+			descriptorWrites[0].dstBinding = 0;
+			descriptorWrites[0].dstArrayElement = 0;
+			descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			descriptorWrites[0].descriptorCount = 1;
+			descriptorWrites[0].pBufferInfo = &bufferInfo;
+			descriptorWrites[0].pImageInfo = nullptr; // Optional
+			descriptorWrites[0].pTexelBufferView = nullptr; // Optional
+
+			descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrites[1].dstSet = mDescriptorSets[i];
+			descriptorWrites[1].dstBinding = 1;
+			descriptorWrites[1].dstArrayElement = 0;
+			descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptorWrites[1].descriptorCount = 1;
+			descriptorWrites[1].pBufferInfo = nullptr;
+			descriptorWrites[1].pImageInfo = &imageInfo; // Optional
+			descriptorWrites[1].pTexelBufferView = nullptr; // Optional
+
+			vkUpdateDescriptorSets(mDevice->GetLogicalDevice().device, static_cast<unsigned int>(descriptorWrites.size()),
+				descriptorWrites.data(), 0, nullptr);
 		}
+	}
+
+	void AnimationKeyframes::SetupTextureSampler()
+	{
 	}
 
 	Application* CreateApplication()

@@ -10,14 +10,17 @@ namespace vr
 
 	SynchronizationPrimitives::~SynchronizationPrimitives()
 	{
-		for (size_t i = 0; i < MAX_FRAME_DRAWS; ++i)
+		if (!mRenderFinished.empty())
 		{
-			vkDestroySemaphore(mLogicalDevice, mRenderFinished[i], nullptr);
-			vkDestroySemaphore(mLogicalDevice, mImageAvailable[i], nullptr);
-			vkDestroyFence(mLogicalDevice, mDrawFences[i], nullptr);
-		}
+			for (size_t i = 0; i < MAX_FRAME_DRAWS; ++i)
+			{
+				vkDestroySemaphore(mLogicalDevice, mRenderFinished[i], nullptr);
+				vkDestroySemaphore(mLogicalDevice, mImageAvailable[i], nullptr);
+				vkDestroyFence(mLogicalDevice, mDrawFences[i], nullptr);
+			}
 
-		RENDERER_DEBUG("RESOURCES DESTROYED: SYNCHRONIZATION PRIMITIVES");
+			RENDERER_DEBUG("RESOURCES DESTROYED: SYNCHRONIZATION PRIMITIVES");
+		}
 	}
 
 	void SynchronizationPrimitives::Create(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks)

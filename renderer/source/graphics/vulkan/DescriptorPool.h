@@ -24,7 +24,7 @@ namespace vr
 		VkDevice mLogicalDevice;
 		VkAllocationCallbacks* mAllocationCallbacks;
 
-		VkDescriptorPool mPool;
+		VkDescriptorPool mPool = VK_NULL_HANDLE;
 		std::vector<VkDescriptorPoolSize> mPoolSizes;
 	};
 }

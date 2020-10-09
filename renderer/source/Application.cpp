@@ -20,13 +20,20 @@ namespace vr
 
 	void Application::Run()
 	{
-		Logger::Init();
-		InitializeWindow();
-		InitializeRenderer();
-		InitializeScene();
-		Render();
-		CleanupScene();
-		CleanupSystem();
+		try
+		{
+			Logger::Init();
+			InitializeWindow();
+			InitializeRenderer();
+			InitializeScene();
+			Render();
+			CleanupScene();
+			CleanupSystem();
+		}
+		catch (std::runtime_error& error)
+		{
+			RENDERER_CRITICAL(error.what());
+		}
 	}
 
 	void Application::Render()
@@ -43,9 +50,14 @@ namespace vr
 		Wait();
 	}
 
+	VkPhysicalDeviceFeatures Application::CheckRequiredFeatures()
+	{
+		return mDevice->GetPhysicalDevice().features;
+	}
+
 	void Application::InitializeWindow()
 	{
-		mWindow = std::unique_ptr<Window>(Window::InitializeWindow(WindowProperties()));
+		mWindow = std::unique_ptr<Window>(Window::InitializeWindow(WindowProperties(), mName));
 	}
 
 	void Application::CleanupSystem()
@@ -56,16 +68,18 @@ namespace vr
 	{
 		mInstance = Instance::CreateInstance(mName);
 		mSurface = Surface::CreateWindowSurface(mInstance, mWindow->GetNativeWindow(), nullptr);
+
 		mDevice = Device::InitializeDevice(mInstance, mSurface);
+		mDevice->SetupLogicalDevice(CheckRequiredFeatures());
 
 		VkDevice logicalDevice = mDevice->GetLogicalDevice().device;
 		VkPhysicalDevice physicalDevice = mDevice->GetPhysicalDevice().device;
 
 		// initializing utilities
-		ImageUtility::logicalDevice = logicalDevice;
+		ImageUtility::sLogicalDevice = logicalDevice;
 
-		MemoryUtility::LogicalDevice = logicalDevice;
-		MemoryUtility::PhysicalDevice = physicalDevice;
+		MemoryUtility::sLogicalDevice = logicalDevice;
+		MemoryUtility::sPhysicalDevice = physicalDevice;
 
 		mSwapchain = Swapchain::CreateSwapchain(mDevice, mSurface, mWindow->GetNativeWindow(), nullptr);
 

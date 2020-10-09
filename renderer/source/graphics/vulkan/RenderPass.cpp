@@ -8,8 +8,11 @@ vr::RenderPass::RenderPass()
 
 vr::RenderPass::~RenderPass()
 {
-	vkDestroyRenderPass(mLogicalDevice, mRenderPass, mAllocationCallbacks);
-	RENDERER_DEBUG("RESOURCE DESTROYED: RENDER PASS");
+	if (mRenderPass != VK_NULL_HANDLE)
+	{
+		vkDestroyRenderPass(mLogicalDevice, mRenderPass, mAllocationCallbacks);
+		RENDERER_DEBUG("RESOURCE DESTROYED: RENDER PASS");
+	}
 }
 
 void vr::RenderPass::SetupDefaultRenderPass(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks, const VkSurfaceFormatKHR& surfaceFormat, const VkFormat& depthBufferFormat)

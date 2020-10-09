@@ -20,6 +20,6 @@ namespace vr
 		VkDevice mLogicalDevice;
 		VkAllocationCallbacks* mAllocationCallbacks;
 
-		VkCommandPool mPool;
+		VkCommandPool mPool = VK_NULL_HANDLE;
 	};
 }

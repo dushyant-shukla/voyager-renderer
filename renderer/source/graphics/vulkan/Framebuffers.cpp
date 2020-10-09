@@ -10,12 +10,15 @@ namespace vr
 
 	Framebuffers::~Framebuffers()
 	{
-		for (auto framebuffer : mFramebuffers)
+		if (!mFramebuffers.empty())
 		{
-			vkDestroyFramebuffer(mLogicalDevice, framebuffer, mAllocationCallbacks);
-		}
+			for (auto framebuffer : mFramebuffers)
+			{
+				vkDestroyFramebuffer(mLogicalDevice, framebuffer, mAllocationCallbacks);
+			}
 
-		RENDERER_DEBUG("RESOURCE DESTROYED: FRAME BUFFERS");
+			RENDERER_DEBUG("RESOURCE DESTROYED: FRAME BUFFERS");
+		}
 	}
 
 	VkFramebuffer& Framebuffers::operator[](const unsigned int& index)

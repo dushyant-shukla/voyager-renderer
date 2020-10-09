@@ -31,7 +31,7 @@ namespace vr
 		bool ShouldShutdown();
 		void Update();
 
-		static Window* InitializeWindow(const WindowProperties& properties = WindowProperties());
+		static Window* InitializeWindow(WindowProperties& properties = WindowProperties(), const std::string& sampleName = "");
 
 		GLFWwindow* GetNativeWindow();
 

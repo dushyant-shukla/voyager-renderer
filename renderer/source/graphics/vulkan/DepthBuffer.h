@@ -27,8 +27,8 @@ namespace vr
 		VkAllocationCallbacks* mAllocationCallbacks;
 
 		VkFormat mFormat;
-		VkImage mImage;
-		VkImageView mImageView;
-		VkDeviceMemory mMemory;
+		VkImage mImage = VK_NULL_HANDLE;
+		VkImageView mImageView = VK_NULL_HANDLE;
+		VkDeviceMemory mMemory = VK_NULL_HANDLE;
 	};
 }

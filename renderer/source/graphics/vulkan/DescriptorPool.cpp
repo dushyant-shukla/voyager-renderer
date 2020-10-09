@@ -9,8 +9,11 @@ namespace vr
 
 	DescriptorPool::~DescriptorPool()
 	{
-		vkDestroyDescriptorPool(mLogicalDevice, mPool, mAllocationCallbacks);
-		RENDERER_DEBUG("RESOURCE DESTROYED: DESCRIPTOR POOL");
+		if (mPool != VK_NULL_HANDLE)
+		{
+			vkDestroyDescriptorPool(mLogicalDevice, mPool, mAllocationCallbacks);
+			RENDERER_DEBUG("RESOURCE DESTROYED: DESCRIPTOR POOL");
+		}
 	}
 
 	DescriptorPool& DescriptorPool::Initialize(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks)

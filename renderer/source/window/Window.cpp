@@ -35,9 +35,9 @@ namespace vr
 	{
 		glfwPollEvents();
 	}
-
-	Window* Window::InitializeWindow(const WindowProperties& properties)
+	Window* Window::InitializeWindow(WindowProperties& properties, const std::string& sampleName)
 	{
+		properties.mTitle += (": " + sampleName);
 		return new Window(properties);
 	}
 

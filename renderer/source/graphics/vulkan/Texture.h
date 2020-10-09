@@ -13,6 +13,9 @@ namespace vr
 
 		void Create(const char* filename, VkDevice logicalDevice, VkAllocationCallbacks* allocationCallbacks, VkCommandPool transferCommandPool, VkQueue transferQueue);
 
+		const VkImageView& GetVulkanImageView();
+		const VkImage& GetVulkanImage();
+
 	private:
 
 		VkDevice mLogicalDevice;

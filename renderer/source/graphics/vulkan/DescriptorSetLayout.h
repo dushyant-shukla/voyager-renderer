@@ -29,6 +29,6 @@ namespace vr
 
 		std::vector<VkDescriptorSetLayoutBinding> mLayoutBindings;
 
-		VkDescriptorSetLayout mLayout;
+		VkDescriptorSetLayout mLayout = VK_NULL_HANDLE;
 	};
 }

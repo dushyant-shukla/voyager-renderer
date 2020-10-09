@@ -12,8 +12,23 @@ namespace vr
 
 	Texture::~Texture()
 	{
-		vkDestroyImage(mLogicalDevice, mImage, nullptr);
-		vkFreeMemory(mLogicalDevice, mMemory, nullptr);
+		if (mImage != VK_NULL_HANDLE)
+		{
+			vkDestroyImage(mLogicalDevice, mImage, nullptr);
+			RENDERER_DEBUG("RESOURCE DESTROYED: TEXTURE IMAGE");
+		}
+
+		if (mImageView != VK_NULL_HANDLE)
+		{
+			vkDestroyImageView(mLogicalDevice, mImageView, nullptr);
+			RENDERER_DEBUG("RESOURCE DESTROYED: TEXTURE IMAGE VIEW");
+		}
+
+		if (mMemory != VK_NULL_HANDLE)
+		{
+			vkFreeMemory(mLogicalDevice, mMemory, nullptr);
+			RENDERER_DEBUG("RESOURCE FREED: TEXTURE IMAGE MEMORY");
+		}
 	}
 
 	void Texture::Create(const char* filename, VkDevice logicalDevice, VkAllocationCallbacks* allocationCallbacks, VkCommandPool transferCommandPool, VkQueue transferQueue)
@@ -28,7 +43,7 @@ namespace vr
 
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingMemory;
-		MemoryUtility::CreateBuffer(VK_NULL_HANDLE, logicalDevice, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		MemoryUtility::CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, mAllocationCallbacks,
 			&stagingBuffer, &stagingMemory);
 
@@ -53,9 +68,21 @@ namespace vr
 		ImageUtility::TransitionImageLayout(transferQueue, transferCommandPool, mImage, VK_FORMAT_R8G8B8A8_SRGB,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
+		ImageUtility::CreateImageView(mImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mImageView);
+
 		vkDestroyBuffer(mLogicalDevice, stagingBuffer, nullptr);
 		vkFreeMemory(mLogicalDevice, stagingMemory, nullptr);
 
 		RENDERER_DEBUG("RESOURCE CREATED: IMAGE TEXTURE (" + std::string(filename) + ")");
+	}
+
+	const VkImageView& Texture::GetVulkanImageView()
+	{
+		return mImageView;
+	}
+
+	const VkImage& Texture::GetVulkanImage()
+	{
+		return mImage;
 	}
 }

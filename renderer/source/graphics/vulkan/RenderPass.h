@@ -21,6 +21,6 @@ namespace vr
 		VkAllocationCallbacks* mAllocationCallbacks;
 		VkSurfaceFormatKHR mSwapchainFormat;
 
-		VkRenderPass mRenderPass;
+		VkRenderPass mRenderPass = VK_NULL_HANDLE;
 	};
 }

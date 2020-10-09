@@ -15,12 +15,23 @@ namespace vr
 
 	DepthBuffer::~DepthBuffer()
 	{
-		vkDestroyImageView(mLogicalDevice, mImageView, mAllocationCallbacks);
-		RENDERER_DEBUG("RESOURCE DESTROYED: DEPTH BUFFER IMAGE VIEW");
-		vkDestroyImage(mLogicalDevice, mImage, mAllocationCallbacks);
-		RENDERER_DEBUG("RESOURCE DESTROYED: DEPTH BUFFER IMAGE");
-		vkFreeMemory(mLogicalDevice, mMemory, mAllocationCallbacks);
-		RENDERER_DEBUG("RESOURCE FREED: DEPTH BUFFER MEMORY");
+		if (mImageView != VK_NULL_HANDLE)
+		{
+			vkDestroyImageView(mLogicalDevice, mImageView, mAllocationCallbacks);
+			RENDERER_DEBUG("RESOURCE DESTROYED: DEPTH BUFFER IMAGE VIEW");
+		}
+
+		if (mImage != VK_NULL_HANDLE)
+		{
+			vkDestroyImage(mLogicalDevice, mImage, mAllocationCallbacks);
+			RENDERER_DEBUG("RESOURCE DESTROYED: DEPTH BUFFER IMAGE");
+		}
+
+		if (mMemory != VK_NULL_HANDLE)
+		{
+			vkFreeMemory(mLogicalDevice, mMemory, mAllocationCallbacks);
+			RENDERER_DEBUG("RESOURCE FREED: DEPTH BUFFER MEMORY");
+		}
 	}
 
 	void DepthBuffer::CreateDefault(const VkPhysicalDevice& physicalDevice, const VkDevice& device, VkAllocationCallbacks* allocationCallbacks, const VkExtent2D& swapchainExtent)
@@ -59,7 +70,7 @@ namespace vr
 		VkMemoryAllocateInfo memAllocateInfo = {};
 		memAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		memAllocateInfo.allocationSize = memRequirements.size;
-		memAllocateInfo.memoryTypeIndex = MemoryUtility::FindMemoryTypeIndex(mPhysicalDevice, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		memAllocateInfo.memoryTypeIndex = MemoryUtility::FindMemoryTypeIndex(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		CHECK_RESULT(vkAllocateMemory(mLogicalDevice, &memAllocateInfo, nullptr, &mMemory), "RESOURCE ALLOCATION FAILED: DEPTH BUFFER MEMORY");
 		RENDERER_DEBUG("RESOURCE ALLOCATED: DEPTH BUFFER MEMORY");

@@ -106,7 +106,7 @@ namespace vr
 
 	typedef struct LogicalDevice
 	{
-		VkDevice device;
+		VkDevice device = VK_NULL_HANDLE;
 		VkQueue graphicsQueue;
 		VkQueue presentationQueue;
 		VkQueue computeQueue;
@@ -118,6 +118,7 @@ namespace vr
 	public:
 
 		static Device* InitializeDevice(Instance* const instance, Surface* const surface);
+		void SetupLogicalDevice(const VkPhysicalDeviceFeatures& requiredFeatures);
 
 		~Device();
 
@@ -151,7 +152,6 @@ namespace vr
 		Device(Instance* instance, Surface* surface);
 
 		void SetupPhysicalDevice();
-		void SetupLogicalDevice();
 
 		bool IsDeviceSuitable(PhysicalDevice& device);
 

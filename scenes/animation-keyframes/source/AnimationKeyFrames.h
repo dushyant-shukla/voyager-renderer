@@ -11,6 +11,7 @@
 #include "graphics/vulkan/DescriptorSetLayout.h"
 #include "graphics/vulkan/DescriptorPool.h"
 #include "graphics/vulkan/Texture.h"
+#include "graphics/vulkan/TextureSampler.h"
 
 #include "clock/Clock.h"
 
@@ -24,15 +25,17 @@ namespace vr
 		~AnimationKeyframes();
 
 		virtual void InitializeScene() override;
-		virtual void SetupPipeline() override;
 		virtual void CleanupScene() override;
 		virtual void Draw() override;
-		void RecordCommands(const unsigned int& currentImage);
+		virtual VkPhysicalDeviceFeatures CheckRequiredFeatures() override;
 
 	private:
 
+		void SetupPipeline();
+		void RecordCommands(const unsigned int& currentImage);
 		void UpdateUniformBuffer(const unsigned int& index);
 		void SetupDescriptors();
+		void SetupTextureSampler();
 
 	private:
 
@@ -45,20 +48,28 @@ namespace vr
 			// order of vertices here is clockwise.
 
 			// set front face to VK_FRONT_FACE_CLOCKWISE in rasterizer configuration
-			{{ 0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
-			{{ 0.5f,  0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
-			{{-0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
-			{{-0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}}
+			{{ 0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+			{{ 0.5f,  0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
+			{{-0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
+			{{-0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
 
-			// set front face to VK_FRONT_FACE_COUNTER_CLOCKWISE in rasterizer configuration
-			//{{ 0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
-			//{{-0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
-			//{{-0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
-			//{{ 0.5f,  0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}}
+			{{ 0.5f, -0.5f, 0.3f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+			{{ 0.5f,  0.5f, 0.3f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
+			{{-0.5f,  0.5f, 0.3f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
+			{{-0.5f, -0.5f, 0.3f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}}
+
+			////////////////////////////////////////////////
+
+				// set front face to VK_FRONT_FACE_COUNTER_CLOCKWISE in rasterizer configuration
+				//{{ 0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+				//{{-0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+				//{{-0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+				//{{ 0.5f,  0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}}
 		};
 
 		const std::vector<uint16_t> INDICES = {
-			0, 1, 2, 2, 3, 0
+			0, 1, 2, 2, 3, 0,
+			4, 5, 6, 6, 7, 4
 		};
 
 		Buffer<Vertex> mVertexBuffer;
@@ -77,7 +88,8 @@ namespace vr
 		DescriptorPool mDescriptorPool;
 		std::vector<VkDescriptorSet> mDescriptorSets;
 
-		Texture cross;
+		Texture mCross;
+		TextureSampler mTextureSampler;
 
 		int mCurrentFrame = 0;
 

@@ -9,8 +9,11 @@ namespace vr
 
 	DescriptorSetLayout::~DescriptorSetLayout()
 	{
-		vkDestroyDescriptorSetLayout(mLogicalDevice, mLayout, mAllocationCallbacks);
-		RENDERER_DEBUG("RESOURCE DESTROYED: DESCRIPTOR SET LAYOUT");
+		if (mLayout != VK_NULL_HANDLE)
+		{
+			vkDestroyDescriptorSetLayout(mLogicalDevice, mLayout, mAllocationCallbacks);
+			RENDERER_DEBUG("RESOURCE DESTROYED: DESCRIPTOR SET LAYOUT");
+		}
 	}
 
 	DescriptorSetLayout& DescriptorSetLayout::AddLayoutBinding(unsigned int binding, VkDescriptorType descriptorType, unsigned int descriptorCount, VkShaderStageFlags stageFlags, const VkSampler* pImmutableSamplers)

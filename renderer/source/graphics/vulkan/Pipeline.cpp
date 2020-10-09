@@ -18,8 +18,12 @@ namespace vr
 			vkDestroyShaderModule(mLogicalDevice, shaderModule.GetShaderModule(), mAllocationCallbacks);
 			RENDERER_DEBUG("RESOURCE DESTROYED: SHADER MODULE (" + shaderModule.GetFilename() + ")");
 		}
-		vkDestroyPipeline(mLogicalDevice, mPipeline, mAllocationCallbacks);
-		RENDERER_DEBUG("RESOURCE DESTROYED: GRAPHICS PIPELINE");
+
+		if (mPipeline != VK_NULL_HANDLE)
+		{
+			vkDestroyPipeline(mLogicalDevice, mPipeline, mAllocationCallbacks);
+			RENDERER_DEBUG("RESOURCE DESTROYED: GRAPHICS PIPELINE");
+		}
 	}
 
 	Pipeline& Pipeline::Create(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks)

@@ -31,7 +31,7 @@ namespace vr
 		VkDevice mLogicalDevice;
 		VkAllocationCallbacks* mAllocationCallbacks;
 
-		VkCommandPool mCommandPool;
+		VkCommandPool mCommandPool = VK_NULL_HANDLE;
 		std::vector<VkCommandBuffer> mCommandbuffers;
 	};
 }

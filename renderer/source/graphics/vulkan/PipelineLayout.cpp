@@ -9,8 +9,11 @@ namespace vr
 
 	PipelineLayout::~PipelineLayout()
 	{
-		vkDestroyPipelineLayout(mLogicalDevice, mLayout, mAllocationCallbacks);
-		RENDERER_DEBUG("RESOURCE DESTROYED: GRAPHICS PIPELINE LAYOUT");
+		if (mLayout != VK_NULL_HANDLE)
+		{
+			vkDestroyPipelineLayout(mLogicalDevice, mLayout, mAllocationCallbacks);
+			RENDERER_DEBUG("RESOURCE DESTROYED: GRAPHICS PIPELINE LAYOUT");
+		}
 	}
 
 	void PipelineLayout::Cleanup()

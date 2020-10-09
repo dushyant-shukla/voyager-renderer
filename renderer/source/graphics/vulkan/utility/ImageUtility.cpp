@@ -4,7 +4,7 @@
 
 namespace vr
 {
-	VkDevice ImageUtility::logicalDevice = VK_NULL_HANDLE;
+	VkDevice ImageUtility::sLogicalDevice = VK_NULL_HANDLE;
 
 	void ImageUtility::CreateImage(const unsigned int& width, const unsigned int& height, const VkFormat& format, const VkImageTiling& tiling, const VkImageUsageFlags usageFlags, const VkMemoryPropertyFlags memoryFlags, VkImage& image, VkDeviceMemory& memory)
 	{
@@ -23,25 +23,48 @@ namespace vr
 		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;	// number of samples for multi-sampling
 		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;	// whether the image can be shared between queues
 
-		CHECK_RESULT(vkCreateImage(logicalDevice, &imageCreateInfo, nullptr, &image), "RESOURCE CREATION FAILED: IMAGE");
+		CHECK_RESULT(vkCreateImage(sLogicalDevice, &imageCreateInfo, nullptr, &image), "RESOURCE CREATION FAILED: IMAGE");
 
 		VkMemoryRequirements memRequirements = {};
-		vkGetImageMemoryRequirements(logicalDevice, image, &memRequirements);
+		vkGetImageMemoryRequirements(sLogicalDevice, image, &memRequirements);
 
 		VkMemoryAllocateInfo memAllocateInfo = {};
 		memAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		memAllocateInfo.allocationSize = memRequirements.size;
-		memAllocateInfo.memoryTypeIndex = MemoryUtility::FindMemoryTypeIndex(VK_NULL_HANDLE, memRequirements.memoryTypeBits, memoryFlags);
+		memAllocateInfo.memoryTypeIndex = MemoryUtility::FindMemoryTypeIndex(memRequirements.memoryTypeBits, memoryFlags);
 
-		CHECK_RESULT(vkAllocateMemory(logicalDevice, &memAllocateInfo, nullptr, &memory), "RESOURCE ALLOCATION FAILED: IMAGE MEMORY");
+		CHECK_RESULT(vkAllocateMemory(sLogicalDevice, &memAllocateInfo, nullptr, &memory), "RESOURCE ALLOCATION FAILED: IMAGE MEMORY");
 
 		// connect allocated memory to image
-		CHECK_RESULT(vkBindImageMemory(logicalDevice, image, memory, 0), "FAILED TO BIND ALLOCATED MEMORY TO IMAGE!");
+		CHECK_RESULT(vkBindImageMemory(sLogicalDevice, image, memory, 0), "FAILED TO BIND ALLOCATED MEMORY TO IMAGE!");
+	}
+
+	void ImageUtility::CreateImageView(const VkImage& image, const VkFormat format, const VkImageAspectFlags aspectFlags, VkImageView& imageView)
+	{
+		VkImageViewCreateInfo imageViewCreateInfo = {};
+		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		imageViewCreateInfo.image = image;
+		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		imageViewCreateInfo.format = format;
+		imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;				// Allows remapping of RGBA components to other RGBA values
+		imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+		// Sub-resources allow the view to view only a part of an image
+		imageViewCreateInfo.subresourceRange.aspectMask = aspectFlags;					// which aspect of image to view (eg. COLOR_BIT for viewing color)
+		imageViewCreateInfo.subresourceRange.baseMipLevel = 0;							// start mipmap level to view from
+		imageViewCreateInfo.subresourceRange.levelCount = 1;							// number of mipmap levels to view
+		imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;						// start array level to view from
+		imageViewCreateInfo.subresourceRange.layerCount = 1;							// number of array levels to view
+
+		// create an image view
+		CHECK_RESULT(vkCreateImageView(sLogicalDevice, &imageViewCreateInfo, nullptr, &imageView), "RESOURCE CREATION FAILED: IMAGE VIEW");
 	}
 
 	void ImageUtility::TransitionImageLayout(const VkQueue& queue, const VkCommandPool commandPool, VkImage& image, VkFormat format, const VkImageLayout& oldLayout, const VkImageLayout& newLayout)
 	{
-		VkCommandBuffer commandBuffer = MemoryUtility::BeginCommandBuffer(logicalDevice, commandPool);
+		VkCommandBuffer commandBuffer = MemoryUtility::BeginCommandBuffer(commandPool);
 
 		VkImageMemoryBarrier imageMemoryBarrier = {};
 		imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -85,6 +108,6 @@ namespace vr
 			0, nullptr,					// buffer memory barrier count and data
 			1, &imageMemoryBarrier);	// image memory barrier count and data
 
-		MemoryUtility::EndAndSubmitCommandBuffer(logicalDevice, commandPool, queue, commandBuffer);
+		MemoryUtility::EndAndSubmitCommandBuffer(commandPool, queue, commandBuffer);
 	}
 }

@@ -9,8 +9,11 @@ namespace vr
 
 	CommandBuffers::~CommandBuffers()
 	{
-		vkDestroyCommandPool(mLogicalDevice, mCommandPool, mAllocationCallbacks);
-		RENDERER_DEBUG("RESOURCE DESTROYED: COMMAND POOL");
+		if (mCommandPool != VK_NULL_HANDLE)
+		{
+			vkDestroyCommandPool(mLogicalDevice, mCommandPool, mAllocationCallbacks);
+			RENDERER_DEBUG("RESOURCE DESTROYED: COMMAND POOL");
+		}
 	}
 
 	void CommandBuffers::Create(const VkDevice& logicalDevice, VkAllocationCallbacks* allocationCallbacks, const int& queueFamilyIndex, const int& count)

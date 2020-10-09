@@ -42,8 +42,6 @@ namespace vr
 		*/
 		VkExtent2D ChooseSwapExtent();
 
-		void PopulateImageView(const VkImage& image, const VkFormat& format, const VkImageAspectFlags& aspectFlags, VkImageView& imageView);
-
 	private:
 
 		Surface* mSurface;

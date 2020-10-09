@@ -13,7 +13,7 @@ namespace vr
 	{
 		static Device device(instance, surface);
 		device.SetupPhysicalDevice();
-		device.SetupLogicalDevice();
+		/*device.SetupLogicalDevice();*/
 		return &device;
 	}
 
@@ -22,8 +22,11 @@ namespace vr
 
 	Device::~Device()
 	{
-		vkDestroyDevice(mLogicalDevice.device, nullptr);
-		RENDERER_DEBUG("RESOURCE DESTROYED: LOGICAL DEVICE");
+		if (mLogicalDevice.device != VK_NULL_HANDLE)
+		{
+			vkDestroyDevice(mLogicalDevice.device, nullptr);
+			RENDERER_DEBUG("RESOURCE DESTROYED: LOGICAL DEVICE");
+		}
 	}
 
 	void Device::SetupPhysicalDevice()
@@ -48,7 +51,7 @@ namespace vr
 		}
 	}
 
-	void Device::SetupLogicalDevice()
+	void Device::SetupLogicalDevice(const VkPhysicalDeviceFeatures& requiredFeatures)
 	{
 		// get the queue family indices for the chosen physical device
 		QueueFamilyIndices indices = mPhysicalDevice.queueFamilies;
@@ -74,10 +77,7 @@ namespace vr
 		deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();														// list of queue create infos so device can create required queues
 		deviceCreateInfo.enabledExtensionCount = static_cast<unsigned int>(std::size(ExtensionUtility::DEVICE_EXTENSIONS));	// number of enabled logical device extensions
 		deviceCreateInfo.ppEnabledExtensionNames = ExtensionUtility::DEVICE_EXTENSIONS;										// list of enabled logical device extensions
-
-		VkPhysicalDeviceFeatures deviceFeatures = {};																		// Physical device features, the logical device will be using
-		deviceFeatures.samplerAnisotropy = VK_TRUE;																			// enable anisotropy
-		deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
+		deviceCreateInfo.pEnabledFeatures = &requiredFeatures;
 
 		// create the logical device for the given physical device
 		CHECK_RESULT(vkCreateDevice(mPhysicalDevice.device, &deviceCreateInfo, nullptr, &mLogicalDevice.device), "RESOURCE CREATION FAILED: LOGICAL DEVICE");
@@ -110,8 +110,7 @@ namespace vr
 		}
 
 		return device.queueFamilies.IsValid() &&
-			extensionsSupported && swapchainValid &&
-			device.features.samplerAnisotropy;
+			extensionsSupported && swapchainValid;
 	}
 
 	void Device::QueryDeviceQueueFamilies(PhysicalDevice& device)
