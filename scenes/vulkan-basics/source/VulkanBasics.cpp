@@ -1,4 +1,4 @@
-#include "AnimationKeyFrames.h"
+#include "VulkanBasics.h"
 #include "graphics/vulkan/ShaderModule.h"
 #include "graphics/vulkan/Device.h"
 #include "graphics/vulkan/Swapchain.h"
@@ -13,12 +13,12 @@
 
 namespace vr
 {
-	AnimationKeyframes::AnimationKeyframes(std::string name) : Application(name),
+	VulkanBasics::VulkanBasics(std::string name) : Application(name),
 		mPipeline(),
 		mPipelineLayout()
 	{}
 
-	AnimationKeyframes::~AnimationKeyframes()
+	VulkanBasics::~VulkanBasics()
 	{
 		if (isReady)
 		{
@@ -31,7 +31,7 @@ namespace vr
 		}
 	}
 
-	void AnimationKeyframes::InitializeScene()
+	void VulkanBasics::InitializeScene()
 	{
 		mVertexBuffer.Create(mDevice->GetLogicalDevice().device, mDevice->GetLogicalDevice().transferQueue, mTransferCommandPool.GetVulkanCommandPool(), nullptr, VERTICES, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 		mIndexBuffer.Create(mDevice->GetLogicalDevice().device, mDevice->GetLogicalDevice().transferQueue, mTransferCommandPool.GetVulkanCommandPool(), nullptr, INDICES, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
@@ -58,7 +58,7 @@ namespace vr
 		isReady = true;
 	}
 
-	void AnimationKeyframes::SetupPipeline()
+	void VulkanBasics::SetupPipeline()
 	{
 		mPipelineLayout.Create(mDevice->GetLogicalDevice().device, nullptr)
 			.AddDescriptorSetLayout(mDescriptorSetLayout.GetVkDescriptorSetLayout())
@@ -78,12 +78,12 @@ namespace vr
 			.Configure(mPipelineLayout.GetVulkanPipelineLayout(), mRenderpass.GetVulkanRenderPass(), 0, 0);
 	}
 
-	void AnimationKeyframes::CleanupScene()
+	void VulkanBasics::CleanupScene()
 	{
 		mPipelineLayout.Cleanup();
 	}
 
-	void AnimationKeyframes::Draw()
+	void VulkanBasics::Draw()
 	{
 		// 1# Get the next available image to draw to and set something to signal when the image is ready to draw to (a semaphore)
 		// 2# Submit command buffer to queue for execution, making sure it waits for the image to be available before drawing and signal when it has finished rendering to the image
@@ -143,7 +143,7 @@ namespace vr
 		mCurrentFrame = (mCurrentFrame + 1) % SynchronizationPrimitives::MAX_FRAME_DRAWS;
 	}
 
-	VkPhysicalDeviceFeatures AnimationKeyframes::CheckRequiredFeatures()
+	VkPhysicalDeviceFeatures VulkanBasics::CheckRequiredFeatures()
 	{
 		bool requiredFeaturesAvailable = true;
 		VkPhysicalDeviceFeatures requiredDeviceFeatures = {};
@@ -161,7 +161,7 @@ namespace vr
 		throw std::runtime_error("DEVICE NOT SUITABLE: REQUIRED FEATURES NOT AVAILABLE");
 	}
 
-	void AnimationKeyframes::RecordCommands(const unsigned int& currentImage)
+	void VulkanBasics::RecordCommands(const unsigned int& currentImage)
 	{
 		// Information about how to begin each command buffer
 		VkCommandBufferBeginInfo bufferBeginInfo = {};
@@ -229,7 +229,7 @@ namespace vr
 		}
 	}
 
-	void AnimationKeyframes::UpdateUniformBuffer(const unsigned int& index)
+	void VulkanBasics::UpdateUniformBuffer(const unsigned int& index)
 	{
 		float timeElapsed = mClock.Mark();
 
@@ -249,7 +249,7 @@ namespace vr
 		//mClock.Reset();
 	}
 
-	void AnimationKeyframes::SetupDescriptors()
+	void VulkanBasics::SetupDescriptors()
 	{
 		mDescriptorSetLayout.AddLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr)
 			.AddLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr)
@@ -310,12 +310,12 @@ namespace vr
 		}
 	}
 
-	void AnimationKeyframes::SetupTextureSampler()
+	void VulkanBasics::SetupTextureSampler()
 	{
 	}
 
 	Application* CreateApplication()
 	{
-		return new AnimationKeyframes("Animation (Key Frames)");
+		return new VulkanBasics("Vulkan Basics");
 	}
 }

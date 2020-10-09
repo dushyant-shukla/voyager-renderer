@@ -17,12 +17,12 @@
 
 namespace vr
 {
-	class AnimationKeyframes : public Application
+	class VulkanBasics : public Application
 	{
 	public:
 
-		AnimationKeyframes(std::string name);
-		~AnimationKeyframes();
+		VulkanBasics(std::string name);
+		~VulkanBasics();
 
 		virtual void InitializeScene() override;
 		virtual void CleanupScene() override;

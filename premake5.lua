@@ -1,6 +1,6 @@
 solution "voyager-renderer"
-  architecture  "x86_64"
-  startproject "model-loading"
+  architecture "x86_64"
+  startproject "vulkan-basics"
 
 	configurations {
 		"Debug",
@@ -35,7 +35,7 @@ include "externals/glfw"
 include "externals/imgui"
 include "externals/jsoncpp"
 
-------------------------------------------------------------- RENDERER LIBRARY PROJECT CONFIGURATION------------------------------------------------------
+------------------------------------------------------------- RENDERER LIBRARY PROJECT CONFIGURATION ------------------------------------------------------
 
 project "renderer"
   location  "renderer"
@@ -113,7 +113,7 @@ project "renderer"
 	{
 	}
 
-------------------------------------------------------------- PROJECT MODEL-LOADING CONFIGURATION------------------------------------------------------
+------------------------------------------------------------- PROJECT MODEL-LOADING CONFIGURATION ------------------------------------------------------
 
 project "model-loading"
   location  "scenes/model-loading"
@@ -158,7 +158,54 @@ project "model-loading"
 	buildoptions "/MD"
 	optimize "On"
 
-------------------------------------------------------------- PROJECT ANIMATION-KEYFRAMES CONFIGURATION------------------------------------------------------
+------------------------------------------------------------- PROJECT VULKAN-BASICS CONFIGURATION ------------------------------------------------------
+
+project "vulkan-basics"
+  location  "scenes/vulkan-basics"
+  kind      "ConsoleApp"
+  language  "C++"
+
+  targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+  objdir ("bin-intermediate/" .. outputdir .. "/%{prj.name}")
+
+  files
+  {
+		"scenes/%{prj.name}/source/**.h",
+		"scenes/%{prj.name}/source/**.cpp"
+  }
+
+  includedirs
+  {
+	"renderer",
+	"renderer/source",
+    "%{include_dir.glm}",
+    "%{include_dir.imgui}",
+    "%{include_dir.jsoncpp}",
+	"%{include_dir.vulkan}",
+	"%{include_dir.spdlog}",
+	"%{include_dir.stbi}"
+  }
+
+  links
+  {
+    "renderer"
+  }
+
+  filter "system:windows"
+	cppdialect "C++17"
+	staticruntime "On"
+	systemversion "latest"
+	
+  filter "configurations:Debug"
+	buildoptions "/MDd"
+	symbols "On"
+	
+  filter "configurations:Release"
+	buildoptions "/MD"
+	optimize "On"
+	
+	
+-------------------------------------------------------------- PROJECT ANIMATION KEYFRAMES CONFIGURATION ------------------------------------------------------
 
 project "animation-keyframes"
   location  "scenes/animation-keyframes"
