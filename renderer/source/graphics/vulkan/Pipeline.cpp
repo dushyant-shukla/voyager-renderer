@@ -250,7 +250,7 @@ namespace vr
 		graphicsPipelineCreateInfo.pMultisampleState = &mMultisampling;
 		graphicsPipelineCreateInfo.layout = pipelineLayout;								// PIPELINE LAYOUT PIPELINE SHOULD USE
 		graphicsPipelineCreateInfo.renderPass = renderPass;								// RENDERPASS DESCRIPTION THE PIPELINE IS COMPATIBLE WITH
-		graphicsPipelineCreateInfo.subpass = subpass;											// SUBPASS OF RENDER PASS TO USE WITH PIPELINE
+		graphicsPipelineCreateInfo.subpass = subpass;									// SUBPASS OF RENDER PASS TO USE WITH PIPELINE
 
 		// pipeline derivatives: can create multiple pipelines that derive from one another for optimization
 		graphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;		// Existing pipeline to derive from

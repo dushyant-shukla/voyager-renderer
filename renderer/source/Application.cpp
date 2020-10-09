@@ -5,6 +5,8 @@
 #include "graphics/vulkan/Surface.h"
 #include "graphics/vulkan/Device.h"
 #include "graphics/vulkan/Swapchain.h"
+#include "graphics/vulkan/utility/ImageUtility.h"
+#include "graphics/vulkan/utility/MemoryUtility.h"
 
 namespace vr
 {
@@ -58,6 +60,12 @@ namespace vr
 
 		VkDevice logicalDevice = mDevice->GetLogicalDevice().device;
 		VkPhysicalDevice physicalDevice = mDevice->GetPhysicalDevice().device;
+
+		// initializing utilities
+		ImageUtility::logicalDevice = logicalDevice;
+
+		MemoryUtility::LogicalDevice = logicalDevice;
+		MemoryUtility::PhysicalDevice = physicalDevice;
 
 		mSwapchain = Swapchain::CreateSwapchain(mDevice, mSurface, mWindow->GetNativeWindow(), nullptr);
 

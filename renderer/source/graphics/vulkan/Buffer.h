@@ -56,7 +56,7 @@ namespace vr
 		// staging buffer
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingBufferMemory;
-		MemoryUtiity::CreateBuffer(physicalDevice, mLogicalDevice, bufferSize,
+		MemoryUtility::CreateBuffer(physicalDevice, mLogicalDevice, bufferSize,
 			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			mAllocationCallbacks, &stagingBuffer, &stagingBufferMemory);
@@ -68,12 +68,12 @@ namespace vr
 		vkUnmapMemory(mLogicalDevice, stagingBufferMemory);
 
 		// vertex buffer
-		MemoryUtiity::CreateBuffer(physicalDevice, mLogicalDevice, bufferSize,
+		MemoryUtility::CreateBuffer(physicalDevice, mLogicalDevice, bufferSize,
 			VK_BUFFER_USAGE_TRANSFER_DST_BIT | flags,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			mAllocationCallbacks, &mBuffer, &mMemory);
 
-		MemoryUtiity::CopyBuffer(mLogicalDevice, transferQueue, commandPool, stagingBuffer, mBuffer, bufferSize);
+		MemoryUtility::CopyBuffer(mLogicalDevice, transferQueue, commandPool, stagingBuffer, mBuffer, bufferSize);
 
 		vkDestroyBuffer(mLogicalDevice, stagingBuffer, mAllocationCallbacks);
 		RENDERER_DEBUG("RESOURCE DESTROYED: STAGING BUFFER");

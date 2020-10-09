@@ -26,7 +26,7 @@ namespace vr
 		return *this;
 	}
 
-	PipelineLayout& PipelineLayout::AddDescriptorSetLayout(const DescriptorSetLayout& layout)
+	PipelineLayout& PipelineLayout::AddDescriptorSetLayout(const VkDescriptorSetLayout& layout)
 	{
 		mDescriptorSetLayouts.push_back(layout);
 		return *this;
@@ -48,22 +48,12 @@ namespace vr
 		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
 		pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutCreateInfo.setLayoutCount = static_cast<unsigned int> (mDescriptorSetLayouts.size());
-		pipelineLayoutCreateInfo.pSetLayouts = mDescriptorSetLayouts.empty() ? nullptr : GetVkDescriptorSets().data();
+		pipelineLayoutCreateInfo.pSetLayouts = mDescriptorSetLayouts.empty() ? nullptr : mDescriptorSetLayouts.data();
 		pipelineLayoutCreateInfo.pushConstantRangeCount = mPushConstant.has_value() ? 1 : 0;
 		pipelineLayoutCreateInfo.pPushConstantRanges = mPushConstant.has_value() ? &mPushConstant.value() : nullptr;
 
 		CHECK_RESULT(vkCreatePipelineLayout(mLogicalDevice, &pipelineLayoutCreateInfo, mAllocationCallbacks, &mLayout), "RESOURCE CREATION FAILED: PIPELINE LAYOUT");
 		RENDERER_DEBUG("RESOURCE CREATED: PIPELINE LAYOUT");
-	}
-
-	std::vector<VkDescriptorSetLayout> PipelineLayout::GetVkDescriptorSets()
-	{
-		std::vector<VkDescriptorSetLayout> layouts;
-		for (auto& layout : mDescriptorSetLayouts)
-		{
-			layouts.push_back(layout.GetVkDescriptorSetLayout());
-		}
-		return layouts;
 	}
 
 	const VkPipelineLayout& PipelineLayout::GetVulkanPipelineLayout()

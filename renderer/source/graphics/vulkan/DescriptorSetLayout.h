@@ -9,18 +9,18 @@ namespace vr
 	{
 	public:
 
-		DescriptorSetLayout(VkDevice logicalDevice, VkAllocationCallbacks* allocationCallbacks);
+		DescriptorSetLayout();
 		~DescriptorSetLayout();
 
-		void AddLayoutBinding(unsigned int binding,
+		DescriptorSetLayout& AddLayoutBinding(unsigned int binding,
 			VkDescriptorType descriptorType,
 			unsigned int descriptorCount,
 			VkShaderStageFlags stageFlags,
 			const VkSampler* pImmutableSamplers);
 
-		void Create(VkDescriptorSetLayoutCreateFlags flags, void* next);
+		void Create(VkDevice logicalDevice, VkAllocationCallbacks* allocationCallbacks, VkDescriptorSetLayoutCreateFlags flags, void* next);
 
-		const VkDescriptorSetLayout& GetVkDescriptorSetLayout() const;
+		const VkDescriptorSetLayout& GetVkDescriptorSetLayout();
 
 	private:
 

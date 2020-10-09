@@ -49,18 +49,7 @@ project "renderer"
   {
 	"%{prj.name}/main.h",
     "%{prj.name}/source/**.h",
-    "%{prj.name}/source/**.cpp",
-
-    "%../externals/stbi/**.h",
-    "%../externals/stbi/**.cpp",
-
-    "../externals/glm/glm/**.hpp",
-    "../externals/glm/glm/**.inl",
-
-    "../externals/jsoncpp/include/json/**.h",
-    "../externals/jsoncpp/src/lib_json/**.h",
-    "../externals/jsoncpp/src/lib_json/**.cpp",
-    "../externals/jsoncpp/src/lib_json/**.inl"
+    "%{prj.name}/source/**.cpp"
   }
 
   includedirs
@@ -193,7 +182,8 @@ project "animation-keyframes"
     "%{include_dir.imgui}",
     "%{include_dir.jsoncpp}",
 	"%{include_dir.vulkan}",
-	"%{include_dir.spdlog}"
+	"%{include_dir.spdlog}",
+	"%{include_dir.stbi}"
   }
 
   links

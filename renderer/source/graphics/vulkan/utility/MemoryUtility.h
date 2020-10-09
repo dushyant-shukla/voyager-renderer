@@ -4,7 +4,7 @@
 
 namespace vr
 {
-	class MemoryUtiity
+	class MemoryUtility
 	{
 	public:
 
@@ -19,5 +19,13 @@ namespace vr
 		static void EndAndSubmitCommandBuffer(const VkDevice& logicalDevice, const VkCommandPool& commandPool, const VkQueue& queue, const VkCommandBuffer& commandBuffer);
 
 		static void CopyBuffer(const VkDevice& logicalDevice, const VkQueue& queue, const VkCommandPool& commandPool, const VkBuffer& srcBuffer, const VkBuffer& dstBuffer, VkDeviceSize bufferSize);
+
+		static void CopyBufferToImage(const VkQueue transferQueue, const VkCommandPool& transferCommandPool, const VkBuffer& srcBuffer, VkImage& dstImage, const unsigned int& width, const unsigned int& height);
+
+	public:
+
+		static VkPhysicalDevice PhysicalDevice;
+		static VkDevice LogicalDevice;
+		static VkAllocationCallbacks* AllocationCallbacks;
 	};
 }

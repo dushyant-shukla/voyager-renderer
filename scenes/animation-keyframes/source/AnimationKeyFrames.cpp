@@ -1,9 +1,15 @@
+#include "..\..\..\renderer\source\Application.h"
+#include "..\..\..\renderer\source\Application.h"
 #include "AnimationKeyFrames.h"
 #include "graphics/vulkan/ShaderModule.h"
 #include "graphics/vulkan/Device.h"
 #include "graphics/vulkan/Swapchain.h"
 #include "graphics/vulkan/SynchronizationPrimitives.h"
+#include "graphics/vulkan/utility/MemoryUtility.h"
 
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <array>
 
 namespace vr
@@ -13,17 +19,44 @@ namespace vr
 		mPipelineLayout()
 	{}
 
-	void AnimationKeyframes::InitializeScene()
+	AnimationKeyframes::~AnimationKeyframes()
 	{
-		SetupPipeline();
+		for (size_t i = 0; i < mSwapchain->GetSwapchainImages().size(); i++) {
+			vkDestroyBuffer(mDevice->GetLogicalDevice().device, mMvpBuffers[i], nullptr);
+			vkFreeMemory(mDevice->GetLogicalDevice().device, mMvpBuffersMemory[i], nullptr);
+		}
+		RENDERER_DEBUG("RESOURCE DESTROYED: UNIFORM BUFFER");
+		RENDERER_DEBUG("RESOURCE FREED: UNIFORM BUFFER MEMORY");
 	}
 
-	void AnimationKeyframes::SetupPipeline()
+	void AnimationKeyframes::InitializeScene()
 	{
 		mVertexBuffer.Create(mDevice->GetPhysicalDevice().device, mDevice->GetLogicalDevice().device, mDevice->GetLogicalDevice().transferQueue, mTransferCommandPool.GetVulkanCommandPool(), nullptr, VERTICES, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 		mIndexBuffer.Create(mDevice->GetPhysicalDevice().device, mDevice->GetLogicalDevice().device, mDevice->GetLogicalDevice().transferQueue, mTransferCommandPool.GetVulkanCommandPool(), nullptr, INDICES, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
+		VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+		mMvpBuffers.resize(mSwapchain->GetSwapchainImages().size());
+		mMvpBuffersMemory.resize(mSwapchain->GetSwapchainImages().size());
+		for (size_t i = 0; i < mSwapchain->GetSwapchainImages().size(); ++i)
+		{
+			MemoryUtility::CreateBuffer(mDevice->GetPhysicalDevice().device, mDevice->GetLogicalDevice().device, bufferSize,
+				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				nullptr, &mMvpBuffers[i], &mMvpBuffersMemory[i]);
+		}
+
+		SetupDescriptors();
+
+		SetupPipeline();
+
+		cross.Create("cross.jpg", mDevice->GetLogicalDevice().device, nullptr, mTransferCommandPool.GetVulkanCommandPool(), mDevice->GetLogicalDevice().transferQueue);
+
+		RecordCommands(0);
+	}
+
+	void AnimationKeyframes::SetupPipeline()
+	{
 		mPipelineLayout.Create(mDevice->GetLogicalDevice().device, nullptr)
+			.AddDescriptorSetLayout(mDescriptorSetLayout.GetVkDescriptorSetLayout())
 			.Configure();
 
 		mPipeline.Create(mDevice->GetLogicalDevice().device, nullptr)
@@ -33,13 +66,11 @@ namespace vr
 			.AddVertexInputBindingDescription(Vertex::GetVertexInputBindingDescription())
 			.AddVertexInputAttributeDescription(Vertex::GetVertexInputAttributeDescriptions())
 			.ConfigureViewport(mSwapchain->GetSwapchainExtent())
-			.ConfigureRasterizer(VK_FALSE, VK_FALSE, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f, 0, nullptr)
+			.ConfigureRasterizer(VK_FALSE, VK_FALSE, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f, 0, nullptr)
 			.ConfigureMultiSampling(VK_SAMPLE_COUNT_1_BIT, VK_FALSE, 1.0f, nullptr, 0, VK_FALSE, VK_FALSE, nullptr)
 			.AddColorBlendAttachmentState(VK_FALSE, VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD, VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT)
 			.ConfigureColorBlend(nullptr, 0, VK_FALSE, VK_LOGIC_OP_COPY, 0.0f, 0.0f, 0.0f, 0.0f)
 			.Configure(mPipelineLayout.GetVulkanPipelineLayout(), mRenderpass.GetVulkanRenderPass(), 0, 0);
-
-		RecordCommands(0);
 	}
 
 	void AnimationKeyframes::CleanupScene()
@@ -62,6 +93,7 @@ namespace vr
 		unsigned int imageIndex;
 		vkAcquireNextImageKHR(mDevice->GetLogicalDevice().device, mSwapchain->GetVulkanSwapChain(), std::numeric_limits<uint64_t>::max(), mSynchronizationPrimitives.GetImageAvailableSemaphore(mCurrentFrame), VK_NULL_HANDLE, &imageIndex);
 
+		UpdateUniformBuffer(imageIndex);
 		//RecordCommands(imageIndex);
 		//UpdateUniformBuffers(imageIndex);
 
@@ -159,6 +191,8 @@ namespace vr
 			vkCmdBindVertexBuffers(mGraphicsCommandBuffers[i], 0, 1, vertexBuffers, offsets);
 			vkCmdBindIndexBuffer(mGraphicsCommandBuffers[i], mIndexBuffer.GetVulkanBuffer(), 0, VK_INDEX_TYPE_UINT16);
 
+			vkCmdBindDescriptorSets(mGraphicsCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout.GetVulkanPipelineLayout(), 0, 1, &mDescriptorSets[i], 0, nullptr);
+
 			//vkCmdDraw(mGraphicsCommandBuffers[i], 3, 1, 0, 0);
 			vkCmdDrawIndexed(mGraphicsCommandBuffers[i], static_cast<uint32_t>(INDICES.size()), 1, 0, 0, 0);
 
@@ -169,6 +203,66 @@ namespace vr
 			{
 				throw std::runtime_error("Failed to stop recording a command buffer!!");
 			}
+		}
+	}
+
+	void AnimationKeyframes::UpdateUniformBuffer(const unsigned int& index)
+	{
+		float timeElapsed = mClock.Mark();
+
+		//RENDERER_TRACE("CLOCK DT: {0}", timeElapsed);
+
+		mvpBuffer.model = glm::rotate(glm::mat4(1.0f), timeElapsed * glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		mvpBuffer.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		mvpBuffer.projection = glm::perspective(glm::radians(45.0f), (float)mSwapchain->GetSwapchainExtent().width / (float)mSwapchain->GetSwapchainExtent().height, 0.1f, 10.0f);
+		mvpBuffer.projection[1][1] *= -1;
+
+		void* data;
+		vkMapMemory(mDevice->GetLogicalDevice().device, mMvpBuffersMemory[index], 0, sizeof(mvpBuffer), 0, &data);
+		memcpy(data, &mvpBuffer, sizeof(mvpBuffer));
+		vkUnmapMemory(mDevice->GetLogicalDevice().device, mMvpBuffersMemory[index]);
+		//mClock.Reset();
+	}
+
+	void AnimationKeyframes::SetupDescriptors()
+	{
+		mDescriptorSetLayout.AddLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr)
+			.Create(mDevice->GetLogicalDevice().device, nullptr, 0, nullptr);
+
+		mDescriptorPool.Initialize(mDevice->GetLogicalDevice().device, nullptr)
+			.AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<unsigned int>(mSwapchain->GetSwapchainImages().size()))
+			.Create(0, static_cast<unsigned int>(mSwapchain->GetSwapchainImages().size()), nullptr);
+
+		std::vector<VkDescriptorSetLayout> layouts(mSwapchain->GetSwapchainImages().size(), mDescriptorSetLayout.GetVkDescriptorSetLayout());
+		VkDescriptorSetAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		allocInfo.descriptorPool = mDescriptorPool.GetVulkanDescriptorPool();
+		allocInfo.descriptorSetCount = static_cast<uint32_t>(mSwapchain->GetSwapchainImages().size());
+		allocInfo.pSetLayouts = layouts.data();
+
+		mDescriptorSets.resize(mSwapchain->GetSwapchainImages().size());
+		CHECK_RESULT(vkAllocateDescriptorSets(mDevice->GetLogicalDevice().device, &allocInfo, mDescriptorSets.data()), "RESOURCE ALLOCATION FAILED: DESCRIPTOR SETS");
+		RENDERER_DEBUG("RESOURCE ALLOCATED: DESCRIPTOR SETS");
+
+		for (size_t i = 0; i < mSwapchain->GetSwapchainImages().size(); ++i)
+		{
+			VkDescriptorBufferInfo bufferInfo{};
+			bufferInfo.buffer = mMvpBuffers[i];
+			bufferInfo.offset = 0;
+			bufferInfo.range = sizeof(UniformBufferObject);
+
+			VkWriteDescriptorSet descriptorWrite{};
+			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrite.dstSet = mDescriptorSets[i];
+			descriptorWrite.dstBinding = 0;
+			descriptorWrite.dstArrayElement = 0;
+			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			descriptorWrite.descriptorCount = 1;
+			descriptorWrite.pBufferInfo = &bufferInfo;
+			descriptorWrite.pImageInfo = nullptr; // Optional
+			descriptorWrite.pTexelBufferView = nullptr; // Optional
+
+			vkUpdateDescriptorSets(mDevice->GetLogicalDevice().device, 1, &descriptorWrite, 0, nullptr);
 		}
 	}
 

@@ -59,7 +59,7 @@ namespace vr
 		VkMemoryAllocateInfo memAllocateInfo = {};
 		memAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		memAllocateInfo.allocationSize = memRequirements.size;
-		memAllocateInfo.memoryTypeIndex = MemoryUtiity::FindMemoryTypeIndex(mPhysicalDevice, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		memAllocateInfo.memoryTypeIndex = MemoryUtility::FindMemoryTypeIndex(mPhysicalDevice, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		CHECK_RESULT(vkAllocateMemory(mLogicalDevice, &memAllocateInfo, nullptr, &mMemory), "RESOURCE ALLOCATION FAILED: DEPTH BUFFER MEMORY");
 		RENDERER_DEBUG("RESOURCE ALLOCATED: DEPTH BUFFER MEMORY");

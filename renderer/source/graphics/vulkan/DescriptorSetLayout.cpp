@@ -3,8 +3,7 @@
 
 namespace vr
 {
-	DescriptorSetLayout::DescriptorSetLayout(VkDevice logicalDevice, VkAllocationCallbacks* allocationCallbacks)
-		: mLogicalDevice(logicalDevice), mAllocationCallbacks(allocationCallbacks)
+	DescriptorSetLayout::DescriptorSetLayout()
 	{
 	}
 
@@ -14,7 +13,7 @@ namespace vr
 		RENDERER_DEBUG("RESOURCE DESTROYED: DESCRIPTOR SET LAYOUT");
 	}
 
-	void DescriptorSetLayout::AddLayoutBinding(unsigned int binding, VkDescriptorType descriptorType, unsigned int descriptorCount, VkShaderStageFlags stageFlags, const VkSampler* pImmutableSamplers)
+	DescriptorSetLayout& DescriptorSetLayout::AddLayoutBinding(unsigned int binding, VkDescriptorType descriptorType, unsigned int descriptorCount, VkShaderStageFlags stageFlags, const VkSampler* pImmutableSamplers)
 	{
 		VkDescriptorSetLayoutBinding layoutBinding = {};
 		layoutBinding.binding = binding;											// binding of mvp uniform in vertex shader
@@ -24,10 +23,15 @@ namespace vr
 		layoutBinding.pImmutableSamplers = pImmutableSamplers;							// for texture: can make sampler data immutable by specifying a layout
 
 		mLayoutBindings.push_back(layoutBinding);
+
+		return *this;
 	}
 
-	void DescriptorSetLayout::Create(VkDescriptorSetLayoutCreateFlags flags, void* next)
+	void DescriptorSetLayout::Create(VkDevice logicalDevice, VkAllocationCallbacks* allocationCallbacks, VkDescriptorSetLayoutCreateFlags flags, void* next)
 	{
+		mLogicalDevice = logicalDevice;
+		mAllocationCallbacks = allocationCallbacks;
+
 		VkDescriptorSetLayoutCreateInfo layoutCreateInfo = {};
 		layoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		layoutCreateInfo.bindingCount = static_cast<unsigned int>(mLayoutBindings.size());
@@ -40,7 +44,7 @@ namespace vr
 		RENDERER_DEBUG("RESOURCE CREATED: DESCRIPTOR SET LAYOUT");
 	}
 
-	const VkDescriptorSetLayout& DescriptorSetLayout::GetVkDescriptorSetLayout() const
+	const VkDescriptorSetLayout& DescriptorSetLayout::GetVkDescriptorSetLayout()
 	{
 		return mLayout;
 	}
