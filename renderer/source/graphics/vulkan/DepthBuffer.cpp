@@ -2,6 +2,7 @@
 #include "utility/RendererCoreUtility.h"
 #include "assertions.h"
 #include "utility/MemoryUtility.h"
+#include "RendererState.h"
 
 namespace vr
 {
@@ -17,29 +18,25 @@ namespace vr
 	{
 		if (mImageView != VK_NULL_HANDLE)
 		{
-			vkDestroyImageView(mLogicalDevice, mImageView, mAllocationCallbacks);
+			vkDestroyImageView(LOGICAL_DEVICE, mImageView, ALLOCATION_CALLBACK);
 			RENDERER_DEBUG("RESOURCE DESTROYED: DEPTH BUFFER IMAGE VIEW");
 		}
 
 		if (mImage != VK_NULL_HANDLE)
 		{
-			vkDestroyImage(mLogicalDevice, mImage, mAllocationCallbacks);
+			vkDestroyImage(LOGICAL_DEVICE, mImage, ALLOCATION_CALLBACK);
 			RENDERER_DEBUG("RESOURCE DESTROYED: DEPTH BUFFER IMAGE");
 		}
 
 		if (mMemory != VK_NULL_HANDLE)
 		{
-			vkFreeMemory(mLogicalDevice, mMemory, mAllocationCallbacks);
+			vkFreeMemory(LOGICAL_DEVICE, mMemory, ALLOCATION_CALLBACK);
 			RENDERER_DEBUG("RESOURCE FREED: DEPTH BUFFER MEMORY");
 		}
 	}
 
-	void DepthBuffer::CreateDefault(const VkPhysicalDevice& physicalDevice, const VkDevice& device, VkAllocationCallbacks* allocationCallbacks, const VkExtent2D& swapchainExtent)
+	void DepthBuffer::CreateDefault(const VkExtent2D& swapchainExtent)
 	{
-		mPhysicalDevice = physicalDevice;
-		mLogicalDevice = device;
-		mAllocationCallbacks = allocationCallbacks;
-
 		ChooseSupportedFormat();
 
 		// create image
@@ -58,13 +55,13 @@ namespace vr
 		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;	// number of samples for multi-sampling
 		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;	// whether the image can be shared between queues
 
-		CHECK_RESULT(vkCreateImage(mLogicalDevice, &imageCreateInfo, mAllocationCallbacks, &mImage), "RESOURCE CREATION FAILED: DEPTH BUFFER IMAGE");
+		CHECK_RESULT(vkCreateImage(LOGICAL_DEVICE, &imageCreateInfo, ALLOCATION_CALLBACK, &mImage), "RESOURCE CREATION FAILED: DEPTH BUFFER IMAGE");
 		RENDERER_DEBUG("RESOURCE CREATED: DEPTH BUFFER IMAGE");
 
 		// create memory for the image
 		// get memory requirements for a type of image
 		VkMemoryRequirements memRequirements = {};
-		vkGetImageMemoryRequirements(mLogicalDevice, mImage, &memRequirements);
+		vkGetImageMemoryRequirements(LOGICAL_DEVICE, mImage, &memRequirements);
 
 		// allocate memory using image requirements and user defined properties
 		VkMemoryAllocateInfo memAllocateInfo = {};
@@ -72,11 +69,11 @@ namespace vr
 		memAllocateInfo.allocationSize = memRequirements.size;
 		memAllocateInfo.memoryTypeIndex = MemoryUtility::FindMemoryTypeIndex(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-		CHECK_RESULT(vkAllocateMemory(mLogicalDevice, &memAllocateInfo, nullptr, &mMemory), "RESOURCE ALLOCATION FAILED: DEPTH BUFFER MEMORY");
+		CHECK_RESULT(vkAllocateMemory(LOGICAL_DEVICE, &memAllocateInfo, ALLOCATION_CALLBACK, &mMemory), "RESOURCE ALLOCATION FAILED: DEPTH BUFFER MEMORY");
 		RENDERER_DEBUG("RESOURCE ALLOCATED: DEPTH BUFFER MEMORY");
 
 		// connect allocated memory to image
-		CHECK_RESULT(vkBindImageMemory(mLogicalDevice, mImage, mMemory, 0), "DEPTH BUFFER: FAILED TO BIND ALLOCATED MEMORY TO IMAGE");
+		CHECK_RESULT(vkBindImageMemory(LOGICAL_DEVICE, mImage, mMemory, 0), "DEPTH BUFFER: FAILED TO BIND ALLOCATED MEMORY TO IMAGE");
 		RENDERER_DEBUG("DEPTH BUFFER: SUCCESSFULLY BOUND IMAGE TO ALLOCATED MEMORY");
 
 		VkImageViewCreateInfo imageViewCreateInfo = {};
@@ -90,14 +87,14 @@ namespace vr
 		imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
 		// Sub-resources allow the view to view only a part of an image
-		imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;					// which aspect of image to view (eg. COLOR_BIT for viewing color)
+		imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;	// which aspect of image to view (eg. COLOR_BIT for viewing color)
 		imageViewCreateInfo.subresourceRange.baseMipLevel = 0;							// start mipmap level to view from
 		imageViewCreateInfo.subresourceRange.levelCount = 1;							// number of mipmap levels to view
 		imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;						// start array level to view from
 		imageViewCreateInfo.subresourceRange.layerCount = 1;							// number of array levels to view
 
 		// create an image view
-		CHECK_RESULT(vkCreateImageView(mLogicalDevice, &imageViewCreateInfo, nullptr, &mImageView), "RESOURCE CREATION FAILED: DEPTH BUFFER IMAGE VIEW");
+		CHECK_RESULT(vkCreateImageView(LOGICAL_DEVICE, &imageViewCreateInfo, ALLOCATION_CALLBACK, &mImageView), "RESOURCE CREATION FAILED: DEPTH BUFFER IMAGE VIEW");
 		RENDERER_DEBUG("RESOURCE CREATED: DEPTH BUFFER IMAGE VIEW");
 	}
 
@@ -122,7 +119,7 @@ namespace vr
 		{
 			// get properties for a given format on this device
 			VkFormatProperties properties = {};
-			vkGetPhysicalDeviceFormatProperties(mPhysicalDevice, formats[i], &properties);
+			vkGetPhysicalDeviceFormatProperties(PHYSICAL_DEVICE, formats[i], &properties);
 
 			// depending on tiling choice, need to check for different bit flag
 			if (tiling == VK_IMAGE_TILING_LINEAR && ((properties.linearTilingFeatures & featureFlags) == featureFlags))

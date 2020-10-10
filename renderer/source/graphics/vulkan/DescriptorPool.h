@@ -12,7 +12,6 @@ namespace vr
 		DescriptorPool();
 		~DescriptorPool();
 
-		DescriptorPool& Initialize(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks);
 		void Create(VkDescriptorPoolCreateFlags flags, unsigned int maxSets, void* next);
 
 		DescriptorPool& AddPoolSize(const VkDescriptorType type, unsigned int count);
@@ -20,9 +19,6 @@ namespace vr
 		const VkDescriptorPool& GetVulkanDescriptorPool();
 
 	private:
-
-		VkDevice mLogicalDevice;
-		VkAllocationCallbacks* mAllocationCallbacks;
 
 		VkDescriptorPool mPool = VK_NULL_HANDLE;
 		std::vector<VkDescriptorPoolSize> mPoolSizes;

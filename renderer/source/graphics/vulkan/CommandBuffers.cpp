@@ -1,5 +1,6 @@
 #include "CommandBuffers.h"
 #include "utility/RendererCoreUtility.h"
+#include "RendererState.h"
 
 namespace vr
 {
@@ -11,16 +12,13 @@ namespace vr
 	{
 		if (mCommandPool != VK_NULL_HANDLE)
 		{
-			vkDestroyCommandPool(mLogicalDevice, mCommandPool, mAllocationCallbacks);
+			vkDestroyCommandPool(LOGICAL_DEVICE, mCommandPool, ALLOCATION_CALLBACK);
 			RENDERER_DEBUG("RESOURCE DESTROYED: COMMAND POOL");
 		}
 	}
 
-	void CommandBuffers::Create(const VkDevice& logicalDevice, VkAllocationCallbacks* allocationCallbacks, const int& queueFamilyIndex, const int& count)
+	void CommandBuffers::Create(const int& queueFamilyIndex, const int& count)
 	{
-		mLogicalDevice = logicalDevice;
-		mAllocationCallbacks = allocationCallbacks;
-
 		CreateCommandPool(queueFamilyIndex);
 		AllocateCommandbuffers(count);
 	}
@@ -41,7 +39,7 @@ namespace vr
 		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;	// this flag forces a reset on command buffer on every vkCommandBuffer() (check record command function)
 		poolInfo.queueFamilyIndex = queueFamilyIndex;
-		CHECK_RESULT(vkCreateCommandPool(mLogicalDevice, &poolInfo, mAllocationCallbacks, &mCommandPool), "RESOURCE CREATION FAILED: COMMAND POOL");
+		CHECK_RESULT(vkCreateCommandPool(LOGICAL_DEVICE, &poolInfo, ALLOCATION_CALLBACK, &mCommandPool), "RESOURCE CREATION FAILED: COMMAND POOL");
 		RENDERER_DEBUG("RESOURCE CREATED: COMMAND POOL");
 	}
 
@@ -57,7 +55,7 @@ namespace vr
 		cAllocateInfo.commandBufferCount = static_cast<unsigned int> (mCommandbuffers.size());
 
 		// Allocate command buffers and place the handles in an array of buffers
-		CHECK_RESULT(vkAllocateCommandBuffers(mLogicalDevice, &cAllocateInfo, mCommandbuffers.data()), "RESOURCE ALLOCATION FAILED: COMMAND BUFFERS");
+		CHECK_RESULT(vkAllocateCommandBuffers(LOGICAL_DEVICE, &cAllocateInfo, mCommandbuffers.data()), "RESOURCE ALLOCATION FAILED: COMMAND BUFFERS");
 		RENDERER_DEBUG("RESOURCE ALLOCATED: COMMAND BUFFERS");
 	}
 }

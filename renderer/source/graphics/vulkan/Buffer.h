@@ -5,6 +5,7 @@
 
 #include "utility/RendererCoreUtility.h"
 #include "utility/MemoryUtility.h"
+#include "RendererState.h"
 
 namespace vr
 {
@@ -16,16 +17,13 @@ namespace vr
 		Buffer();
 		~Buffer();
 
-		void Create(const VkDevice& device, const VkQueue& transferQueue, const VkCommandPool& commandPool, VkAllocationCallbacks* allocationCallbacks, const std::vector<T>& vertices, VkBufferUsageFlagBits flags);
+		void Create(const VkQueue& transferQueue, const VkCommandPool& commandPool, const std::vector<T>& vertices, VkBufferUsageFlagBits flags);
 
 		const VkBuffer& GetVulkanBuffer();
 
 	private:
 
 	private:
-
-		VkDevice mLogicalDevice;
-		VkAllocationCallbacks* mAllocationCallbacks;
 
 		VkBuffer mBuffer = VK_NULL_HANDLE;
 		VkDeviceMemory mMemory = VK_NULL_HANDLE;
@@ -41,22 +39,20 @@ namespace vr
 	{
 		if (mBuffer != VK_NULL_HANDLE)
 		{
-			vkDestroyBuffer(mLogicalDevice, mBuffer, mAllocationCallbacks);
+			vkDestroyBuffer(LOGICAL_DEVICE, mBuffer, ALLOCATION_CALLBACK);
 			RENDERER_DEBUG("RESOURCE DESTROYED: VERTEX BUFFER");
 		}
 
 		if (mMemory != VK_NULL_HANDLE)
 		{
-			vkFreeMemory(mLogicalDevice, mMemory, nullptr);
+			vkFreeMemory(LOGICAL_DEVICE, mMemory, ALLOCATION_CALLBACK);
 			RENDERER_DEBUG("RESOURCE FREED: VERTEX BUFFER MEMORY");
 		}
 	}
 
 	template<typename T>
-	inline void Buffer<T>::Create(const VkDevice& device, const VkQueue& transferQueue, const VkCommandPool& commandPool, VkAllocationCallbacks* allocationCallbacks, const std::vector<T>& vertices, VkBufferUsageFlagBits flags)
+	inline void Buffer<T>::Create(const VkQueue& transferQueue, const VkCommandPool& commandPool, const std::vector<T>& vertices, VkBufferUsageFlagBits flags)
 	{
-		mLogicalDevice = device;
-		mAllocationCallbacks = allocationCallbacks;
 		VkDeviceSize bufferSize = sizeof(T) * vertices.size();
 
 		// staging buffer
@@ -65,25 +61,25 @@ namespace vr
 		MemoryUtility::CreateBuffer(bufferSize,
 			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			mAllocationCallbacks, &stagingBuffer, &stagingBufferMemory);
+			ALLOCATION_CALLBACK, &stagingBuffer, &stagingBufferMemory);
 
 		// map memory and copy data to staging buffer
 		void* data;
-		CHECK_RESULT(vkMapMemory(mLogicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data), "VERTEX BUFFER: FAILED TO MAP VERTEX DATA TO VERTEX BUFFER MEMORY");
+		CHECK_RESULT(vkMapMemory(LOGICAL_DEVICE, stagingBufferMemory, 0, bufferSize, 0, &data), "VERTEX BUFFER: FAILED TO MAP VERTEX DATA TO VERTEX BUFFER MEMORY");
 		memcpy(data, vertices.data(), (size_t)bufferSize);
-		vkUnmapMemory(mLogicalDevice, stagingBufferMemory);
+		vkUnmapMemory(LOGICAL_DEVICE, stagingBufferMemory);
 
 		// vertex buffer
 		MemoryUtility::CreateBuffer(bufferSize,
 			VK_BUFFER_USAGE_TRANSFER_DST_BIT | flags,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			mAllocationCallbacks, &mBuffer, &mMemory);
+			ALLOCATION_CALLBACK, &mBuffer, &mMemory);
 
 		MemoryUtility::CopyBuffer(transferQueue, commandPool, stagingBuffer, mBuffer, bufferSize);
 
-		vkDestroyBuffer(mLogicalDevice, stagingBuffer, mAllocationCallbacks);
+		vkDestroyBuffer(LOGICAL_DEVICE, stagingBuffer, ALLOCATION_CALLBACK);
 		RENDERER_DEBUG("RESOURCE DESTROYED: STAGING BUFFER");
-		vkFreeMemory(mLogicalDevice, stagingBufferMemory, mAllocationCallbacks);
+		vkFreeMemory(LOGICAL_DEVICE, stagingBufferMemory, ALLOCATION_CALLBACK);
 		RENDERER_DEBUG("RESOURCE FREED: STAGING BUFFER MEMORY");
 	}
 

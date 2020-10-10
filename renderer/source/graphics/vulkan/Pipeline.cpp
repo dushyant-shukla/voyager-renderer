@@ -1,5 +1,6 @@
 #include "Pipeline.h"
 #include "utility/RendererCoreUtility.h"
+#include "RendererState.h"
 
 namespace vr
 {
@@ -15,28 +16,20 @@ namespace vr
 	{
 		for (auto shaderModule : mShaderModules)
 		{
-			vkDestroyShaderModule(mLogicalDevice, shaderModule.GetShaderModule(), mAllocationCallbacks);
+			vkDestroyShaderModule(LOGICAL_DEVICE, shaderModule.GetShaderModule(), ALLOCATION_CALLBACK);
 			RENDERER_DEBUG("RESOURCE DESTROYED: SHADER MODULE (" + shaderModule.GetFilename() + ")");
 		}
 
 		if (mPipeline != VK_NULL_HANDLE)
 		{
-			vkDestroyPipeline(mLogicalDevice, mPipeline, mAllocationCallbacks);
+			vkDestroyPipeline(LOGICAL_DEVICE, mPipeline, ALLOCATION_CALLBACK);
 			RENDERER_DEBUG("RESOURCE DESTROYED: GRAPHICS PIPELINE");
 		}
 	}
 
-	Pipeline& Pipeline::Create(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks)
-	{
-		mLogicalDevice = device;
-		mAllocationCallbacks = allocationCallbacks;
-
-		return *this;
-	}
-
 	Pipeline& Pipeline::AddShaderStage(const VkShaderStageFlagBits& shaderStage, std::string filename)
 	{
-		ShaderModule shaderModule(mLogicalDevice, nullptr, filename);
+		ShaderModule shaderModule(filename);
 
 		mShaderModules.emplace_back(std::move(shaderModule));
 
@@ -262,7 +255,7 @@ namespace vr
 
 		// VK_NUL_HANDE below is pipeline cache
 		mPipeline = {};
-		CHECK_RESULT(vkCreateGraphicsPipelines(mLogicalDevice, VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, mAllocationCallbacks, &mPipeline), "RESOURCE CREATION FAILED: GRAPHICS PIPELINE");
+		CHECK_RESULT(vkCreateGraphicsPipelines(LOGICAL_DEVICE, VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, ALLOCATION_CALLBACK, &mPipeline), "RESOURCE CREATION FAILED: GRAPHICS PIPELINE");
 		RENDERER_DEBUG("RESOURCE CREATED: GRAPHICS PIPELINE");
 	}
 

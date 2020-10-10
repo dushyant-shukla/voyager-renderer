@@ -11,14 +11,11 @@ namespace vr
 		CommandPool();
 		~CommandPool();
 
-		void Create(const VkDevice& logicalDevice, VkAllocationCallbacks* allocationCallbacks, const int& queueFamilyIndex, VkCommandPoolCreateFlags flags);
+		void Create(const int& queueFamilyIndex, VkCommandPoolCreateFlags flags);
 
 		const VkCommandPool& GetVulkanCommandPool();
 
 	private:
-
-		VkDevice mLogicalDevice;
-		VkAllocationCallbacks* mAllocationCallbacks;
 
 		VkCommandPool mPool = VK_NULL_HANDLE;
 	};

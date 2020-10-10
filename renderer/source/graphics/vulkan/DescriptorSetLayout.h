@@ -18,14 +18,11 @@ namespace vr
 			VkShaderStageFlags stageFlags,
 			const VkSampler* pImmutableSamplers);
 
-		void Create(VkDevice logicalDevice, VkAllocationCallbacks* allocationCallbacks, VkDescriptorSetLayoutCreateFlags flags, void* next);
+		void Create(VkDescriptorSetLayoutCreateFlags flags, void* next);
 
 		const VkDescriptorSetLayout& GetVkDescriptorSetLayout();
 
 	private:
-
-		VkDevice mLogicalDevice;
-		VkAllocationCallbacks* mAllocationCallbacks;
 
 		std::vector<VkDescriptorSetLayoutBinding> mLayoutBindings;
 

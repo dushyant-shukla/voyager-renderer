@@ -11,7 +11,7 @@ namespace vr
 		DepthBuffer();
 		~DepthBuffer();
 
-		void CreateDefault(const VkPhysicalDevice& physicalDevice, const VkDevice& device, VkAllocationCallbacks* allocationCallbacks, const VkExtent2D& swapchainExtent);
+		void CreateDefault(const VkExtent2D& swapchainExtent);
 
 		const VkImageView& GetImageView();
 		const VkFormat& GetFormat();
@@ -21,10 +21,6 @@ namespace vr
 		void ChooseSupportedFormat();
 
 	private:
-
-		VkPhysicalDevice mPhysicalDevice;
-		VkDevice mLogicalDevice;
-		VkAllocationCallbacks* mAllocationCallbacks;
 
 		VkFormat mFormat;
 		VkImage mImage = VK_NULL_HANDLE;

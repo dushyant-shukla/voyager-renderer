@@ -1,16 +1,14 @@
 #include "MemoryUtility.h"
 #include "RendererCoreUtility.h"
+#include "RendererState.h"
 
 namespace vr
 {
-	VkPhysicalDevice MemoryUtility::sPhysicalDevice = VK_NULL_HANDLE;
-	VkDevice MemoryUtility::sLogicalDevice = VK_NULL_HANDLE;
-
 	unsigned int MemoryUtility::FindMemoryTypeIndex(unsigned int allowedTypes, VkMemoryPropertyFlags propertyFlags)
 	{
 		// Get properties of the physical device memory
 		VkPhysicalDeviceMemoryProperties memoryProperties = {};
-		vkGetPhysicalDeviceMemoryProperties(sPhysicalDevice, &memoryProperties);
+		vkGetPhysicalDeviceMemoryProperties(PHYSICAL_DEVICE, &memoryProperties);
 
 		for (unsigned int i = 0; i < memoryProperties.memoryTypeCount; ++i)
 		{
@@ -33,11 +31,11 @@ namespace vr
 		bufferInfo.usage = bufferUsageFlags;						// multiple types of buffers possible, we need vertex buffer
 		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;			// similar to swapchain, images can share vertex buffers
 
-		CHECK_RESULT(vkCreateBuffer(sLogicalDevice, &bufferInfo, allocationCallbacks, buffer), "RESOURCE CREATION FAILED: VERTEX BUFFER");
+		CHECK_RESULT(vkCreateBuffer(LOGICAL_DEVICE, &bufferInfo, ALLOCATION_CALLBACK, buffer), "RESOURCE CREATION FAILED: VERTEX BUFFER");
 
 		// get buffer memory requirements
 		VkMemoryRequirements memRequirements = {};
-		vkGetBufferMemoryRequirements(sLogicalDevice, *buffer, &memRequirements);
+		vkGetBufferMemoryRequirements(LOGICAL_DEVICE, *buffer, &memRequirements);
 
 		// allocate memory to buffer
 		VkMemoryAllocateInfo memoryAllocateInfo = {};
@@ -45,9 +43,9 @@ namespace vr
 		memoryAllocateInfo.allocationSize = memRequirements.size;			// Index of memory type on physical device that has required bit flags
 		memoryAllocateInfo.memoryTypeIndex = FindMemoryTypeIndex(memRequirements.memoryTypeBits, bufferProperties);
 		// Allocate memory to VkDeviceMemory
-		CHECK_RESULT(vkAllocateMemory(sLogicalDevice, &memoryAllocateInfo, allocationCallbacks, bufferMemory), "RESOURCE ALLOCATION FAILED: VERTEX BUFFER MEMORY");
+		CHECK_RESULT(vkAllocateMemory(LOGICAL_DEVICE, &memoryAllocateInfo, ALLOCATION_CALLBACK, bufferMemory), "RESOURCE ALLOCATION FAILED: VERTEX BUFFER MEMORY");
 		// Bind memory to vertex buffer
-		CHECK_RESULT(vkBindBufferMemory(sLogicalDevice, *buffer, *bufferMemory, 0), "VERTEX BUFFER MEMORY FAILED TO BE BOUND TO VERTEX BUFFER");
+		CHECK_RESULT(vkBindBufferMemory(LOGICAL_DEVICE, *buffer, *bufferMemory, 0), "VERTEX BUFFER MEMORY FAILED TO BE BOUND TO VERTEX BUFFER");
 	}
 
 	VkCommandBuffer MemoryUtility::BeginCommandBuffer(VkCommandPool commandPool)
@@ -62,7 +60,7 @@ namespace vr
 		allocInfo.commandBufferCount = 1;
 
 		// allocate command buffer from pool
-		vkAllocateCommandBuffers(sLogicalDevice, &allocInfo, &commandBuffer);
+		vkAllocateCommandBuffers(LOGICAL_DEVICE, &allocInfo, &commandBuffer);
 
 		// Information to being the command buffer record
 		VkCommandBufferBeginInfo beginInfo = {};
@@ -91,7 +89,7 @@ namespace vr
 		vkQueueWaitIdle(queue);
 
 		// free command buffer
-		vkFreeCommandBuffers(sLogicalDevice, commandPool, 1, &commandBuffer);
+		vkFreeCommandBuffers(LOGICAL_DEVICE, commandPool, 1, &commandBuffer);
 	}
 
 	void MemoryUtility::CopyBuffer(const VkQueue& queue, const VkCommandPool& commandPool, const VkBuffer& srcBuffer, const VkBuffer& dstBuffer, VkDeviceSize bufferSize)

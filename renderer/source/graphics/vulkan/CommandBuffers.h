@@ -17,7 +17,7 @@ namespace vr
 		CommandBuffers();
 		~CommandBuffers();
 
-		void Create(const VkDevice& logicalDevice, VkAllocationCallbacks* allocationCallbacks, const int& queueFamilyIndex, const int& count);
+		void Create(const int& queueFamilyIndex, const int& count);
 		VkCommandBuffer& operator[](const unsigned int& index);
 		size_t Size();
 
@@ -27,9 +27,6 @@ namespace vr
 		void AllocateCommandbuffers(const int& count);
 
 	private:
-
-		VkDevice mLogicalDevice;
-		VkAllocationCallbacks* mAllocationCallbacks;
 
 		VkCommandPool mCommandPool = VK_NULL_HANDLE;
 		std::vector<VkCommandBuffer> mCommandbuffers;

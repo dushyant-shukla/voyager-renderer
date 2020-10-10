@@ -22,7 +22,7 @@ namespace vr
 			return sPhysicalDevice;
 		}
 
-		static const VkAllocationCallbacks* GetAllocationCallbacks()
+		static VkAllocationCallbacks* GetAllocationCallbacks()
 		{
 			return sAllocationCallbacks;
 		}

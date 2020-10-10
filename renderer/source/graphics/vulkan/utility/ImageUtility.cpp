@@ -1,11 +1,10 @@
 #include "ImageUtility.h"
 #include "RendererCoreUtility.h"
 #include "MemoryUtility.h"
+#include "RendererState.h"
 
 namespace vr
 {
-	VkDevice ImageUtility::sLogicalDevice = VK_NULL_HANDLE;
-
 	void ImageUtility::CreateImage(const unsigned int& width, const unsigned int& height, const VkFormat& format, const VkImageTiling& tiling, const VkImageUsageFlags usageFlags, const VkMemoryPropertyFlags memoryFlags, VkImage& image, VkDeviceMemory& memory)
 	{
 		VkImageCreateInfo imageCreateInfo = {};
@@ -23,20 +22,20 @@ namespace vr
 		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;	// number of samples for multi-sampling
 		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;	// whether the image can be shared between queues
 
-		CHECK_RESULT(vkCreateImage(sLogicalDevice, &imageCreateInfo, nullptr, &image), "RESOURCE CREATION FAILED: IMAGE");
+		CHECK_RESULT(vkCreateImage(LOGICAL_DEVICE, &imageCreateInfo, ALLOCATION_CALLBACK, &image), "RESOURCE CREATION FAILED: IMAGE");
 
 		VkMemoryRequirements memRequirements = {};
-		vkGetImageMemoryRequirements(sLogicalDevice, image, &memRequirements);
+		vkGetImageMemoryRequirements(LOGICAL_DEVICE, image, &memRequirements);
 
 		VkMemoryAllocateInfo memAllocateInfo = {};
 		memAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		memAllocateInfo.allocationSize = memRequirements.size;
 		memAllocateInfo.memoryTypeIndex = MemoryUtility::FindMemoryTypeIndex(memRequirements.memoryTypeBits, memoryFlags);
 
-		CHECK_RESULT(vkAllocateMemory(sLogicalDevice, &memAllocateInfo, nullptr, &memory), "RESOURCE ALLOCATION FAILED: IMAGE MEMORY");
+		CHECK_RESULT(vkAllocateMemory(LOGICAL_DEVICE, &memAllocateInfo, ALLOCATION_CALLBACK, &memory), "RESOURCE ALLOCATION FAILED: IMAGE MEMORY");
 
 		// connect allocated memory to image
-		CHECK_RESULT(vkBindImageMemory(sLogicalDevice, image, memory, 0), "FAILED TO BIND ALLOCATED MEMORY TO IMAGE!");
+		CHECK_RESULT(vkBindImageMemory(LOGICAL_DEVICE, image, memory, 0), "FAILED TO BIND ALLOCATED MEMORY TO IMAGE!");
 	}
 
 	void ImageUtility::CreateImageView(const VkImage& image, const VkFormat format, const VkImageAspectFlags aspectFlags, VkImageView& imageView)
@@ -59,7 +58,7 @@ namespace vr
 		imageViewCreateInfo.subresourceRange.layerCount = 1;							// number of array levels to view
 
 		// create an image view
-		CHECK_RESULT(vkCreateImageView(sLogicalDevice, &imageViewCreateInfo, nullptr, &imageView), "RESOURCE CREATION FAILED: IMAGE VIEW");
+		CHECK_RESULT(vkCreateImageView(LOGICAL_DEVICE, &imageViewCreateInfo, ALLOCATION_CALLBACK, &imageView), "RESOURCE CREATION FAILED: IMAGE VIEW");
 	}
 
 	void ImageUtility::TransitionImageLayout(const VkQueue& queue, const VkCommandPool commandPool, VkImage& image, VkFormat format, const VkImageLayout& oldLayout, const VkImageLayout& newLayout)

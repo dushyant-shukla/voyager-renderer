@@ -14,7 +14,7 @@ namespace vr
 		SynchronizationPrimitives();
 		~SynchronizationPrimitives();
 
-		void Create(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks);
+		void Create();
 
 		const VkSemaphore& GetImageAvailableSemaphore(const unsigned int& index);
 		const VkSemaphore& GetRenderFinishedSemaphore(const unsigned int& index);
@@ -23,9 +23,6 @@ namespace vr
 	private:
 
 	private:
-
-		VkDevice mLogicalDevice;
-		VkAllocationCallbacks* mAllocationCallbacks;
 
 		std::vector<VkSemaphore> mImageAvailable;
 		std::vector<VkSemaphore> mRenderFinished;

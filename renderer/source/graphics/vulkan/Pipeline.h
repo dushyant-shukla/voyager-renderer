@@ -14,8 +14,6 @@ namespace vr
 		Pipeline();
 		~Pipeline();
 
-		Pipeline& Create(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks);
-
 		Pipeline& AddShaderStage(const VkShaderStageFlagBits& shaderStage, std::string filename);
 
 		Pipeline& AddVertexInputBindingDescription(const unsigned int binding, const unsigned int stride, const VkVertexInputRate& inputRate);
@@ -57,9 +55,6 @@ namespace vr
 		VkPipeline& GetVulkanPipeline();
 
 	private:
-
-		VkDevice mLogicalDevice;
-		VkAllocationCallbacks* mAllocationCallbacks;
 
 		// SHADER STAGES
 		std::vector<VkPipelineShaderStageCreateInfo> mShaderStages;

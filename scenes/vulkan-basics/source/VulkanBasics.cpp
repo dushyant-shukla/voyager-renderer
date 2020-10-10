@@ -33,8 +33,8 @@ namespace vr
 
 	void VulkanBasics::InitializeScene()
 	{
-		mVertexBuffer.Create(mDevice->GetLogicalDevice().device, mDevice->GetLogicalDevice().transferQueue, mTransferCommandPool.GetVulkanCommandPool(), nullptr, VERTICES, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-		mIndexBuffer.Create(mDevice->GetLogicalDevice().device, mDevice->GetLogicalDevice().transferQueue, mTransferCommandPool.GetVulkanCommandPool(), nullptr, INDICES, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+		mVertexBuffer.Create(mDevice->GetLogicalDevice().transferQueue, mTransferCommandPool.GetVulkanCommandPool(), VERTICES, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+		mIndexBuffer.Create(mDevice->GetLogicalDevice().transferQueue, mTransferCommandPool.GetVulkanCommandPool(), INDICES, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
 		VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 		mMvpBuffers.resize(mSwapchain->GetSwapchainImages().size());
@@ -46,8 +46,8 @@ namespace vr
 				nullptr, &mMvpBuffers[i], &mMvpBuffersMemory[i]);
 		}
 
-		mCross.Create("statue.jpg", mDevice->GetLogicalDevice().device, nullptr, mTransferCommandPool.GetVulkanCommandPool(), mDevice->GetLogicalDevice().transferQueue);
-		mTextureSampler.CreateDefault(mDevice->GetLogicalDevice().device, nullptr);
+		mCross.Create("statue.jpg", mTransferCommandPool.GetVulkanCommandPool(), mDevice->GetLogicalDevice().transferQueue);
+		mTextureSampler.CreateDefault();
 
 		SetupDescriptors();
 
@@ -60,11 +60,11 @@ namespace vr
 
 	void VulkanBasics::SetupPipeline()
 	{
-		mPipelineLayout.Create(mDevice->GetLogicalDevice().device, nullptr)
+		mPipelineLayout
 			.AddDescriptorSetLayout(mDescriptorSetLayout.GetVkDescriptorSetLayout())
 			.Configure();
 
-		mPipeline.Create(mDevice->GetLogicalDevice().device, nullptr)
+		mPipeline
 			.AddShaderStage(VK_SHADER_STAGE_VERTEX_BIT, "../../assets/shaders/vert.spv")
 			.AddShaderStage(VK_SHADER_STAGE_FRAGMENT_BIT, "../../assets/shaders/frag.spv")
 			.ConfigureInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE, 0, nullptr)
@@ -80,7 +80,6 @@ namespace vr
 
 	void VulkanBasics::CleanupScene()
 	{
-		mPipelineLayout.Cleanup();
 	}
 
 	void VulkanBasics::Draw()
@@ -251,11 +250,12 @@ namespace vr
 
 	void VulkanBasics::SetupDescriptors()
 	{
-		mDescriptorSetLayout.AddLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr)
+		mDescriptorSetLayout
+			.AddLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr)
 			.AddLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr)
-			.Create(mDevice->GetLogicalDevice().device, nullptr, 0, nullptr);
+			.Create(0, nullptr);
 
-		mDescriptorPool.Initialize(mDevice->GetLogicalDevice().device, nullptr)
+		mDescriptorPool
 			.AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<unsigned int>(mSwapchain->GetSwapchainImages().size()))
 			.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<unsigned int>(mSwapchain->GetSwapchainImages().size()))
 			.Create(0, static_cast<unsigned int>(mSwapchain->GetSwapchainImages().size()), nullptr);

@@ -1,5 +1,6 @@
 #include "SynchronizationPrimitives.h"
 #include "utility/RendererCoreUtility.h"
+#include "RendererState.h"
 #include "assertions.h"
 
 namespace vr
@@ -14,20 +15,17 @@ namespace vr
 		{
 			for (size_t i = 0; i < MAX_FRAME_DRAWS; ++i)
 			{
-				vkDestroySemaphore(mLogicalDevice, mRenderFinished[i], nullptr);
-				vkDestroySemaphore(mLogicalDevice, mImageAvailable[i], nullptr);
-				vkDestroyFence(mLogicalDevice, mDrawFences[i], nullptr);
+				vkDestroySemaphore(LOGICAL_DEVICE, mRenderFinished[i], ALLOCATION_CALLBACK);
+				vkDestroySemaphore(LOGICAL_DEVICE, mImageAvailable[i], ALLOCATION_CALLBACK);
+				vkDestroyFence(LOGICAL_DEVICE, mDrawFences[i], ALLOCATION_CALLBACK);
 			}
 
 			RENDERER_DEBUG("RESOURCES DESTROYED: SYNCHRONIZATION PRIMITIVES");
 		}
 	}
 
-	void SynchronizationPrimitives::Create(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks)
+	void SynchronizationPrimitives::Create()
 	{
-		mLogicalDevice = device;
-		mAllocationCallbacks = allocationCallbacks;
-
 		mImageAvailable.resize(MAX_FRAME_DRAWS);
 		mRenderFinished.resize(MAX_FRAME_DRAWS);
 		mDrawFences.resize(MAX_FRAME_DRAWS);
@@ -43,9 +41,9 @@ namespace vr
 
 		for (size_t i = 0; i < MAX_FRAME_DRAWS; ++i)
 		{
-			CHECK_RESULT(vkCreateSemaphore(mLogicalDevice, &semaphoreCreateInfo, mAllocationCallbacks, &mImageAvailable[i]), "RESOURCE CREATION FAILED: IMAGE AVAILABLE SEMAPHORE");
-			CHECK_RESULT(vkCreateSemaphore(mLogicalDevice, &semaphoreCreateInfo, mAllocationCallbacks, &mRenderFinished[i]), "RESOURCE CREATION FAILED: RENDER FINISHED SEMAPHORE");
-			CHECK_RESULT(vkCreateFence(mLogicalDevice, &fenceCreateInfo, mAllocationCallbacks, &mDrawFences[i]), "RESOURCE CREATION FAILED: DRAW FENCES SEMAPHORE");
+			CHECK_RESULT(vkCreateSemaphore(LOGICAL_DEVICE, &semaphoreCreateInfo, ALLOCATION_CALLBACK, &mImageAvailable[i]), "RESOURCE CREATION FAILED: IMAGE AVAILABLE SEMAPHORE");
+			CHECK_RESULT(vkCreateSemaphore(LOGICAL_DEVICE, &semaphoreCreateInfo, ALLOCATION_CALLBACK, &mRenderFinished[i]), "RESOURCE CREATION FAILED: RENDER FINISHED SEMAPHORE");
+			CHECK_RESULT(vkCreateFence(LOGICAL_DEVICE, &fenceCreateInfo, ALLOCATION_CALLBACK, &mDrawFences[i]), "RESOURCE CREATION FAILED: DRAW FENCES SEMAPHORE");
 		}
 
 		RENDERER_DEBUG("RESOURCES CREATED: SYNCHRONIZATION PRIMITIVES");

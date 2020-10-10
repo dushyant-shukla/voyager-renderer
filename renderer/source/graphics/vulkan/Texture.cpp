@@ -3,6 +3,7 @@
 #include "utility/MemoryUtility.h"
 #include "utility/ImageUtility.h"
 #include "utility/RendererCoreUtility.h"
+#include "RendererState.h"
 
 namespace vr
 {
@@ -14,28 +15,25 @@ namespace vr
 	{
 		if (mImage != VK_NULL_HANDLE)
 		{
-			vkDestroyImage(mLogicalDevice, mImage, nullptr);
+			vkDestroyImage(LOGICAL_DEVICE, mImage, nullptr);
 			RENDERER_DEBUG("RESOURCE DESTROYED: TEXTURE IMAGE");
 		}
 
 		if (mImageView != VK_NULL_HANDLE)
 		{
-			vkDestroyImageView(mLogicalDevice, mImageView, nullptr);
+			vkDestroyImageView(LOGICAL_DEVICE, mImageView, nullptr);
 			RENDERER_DEBUG("RESOURCE DESTROYED: TEXTURE IMAGE VIEW");
 		}
 
 		if (mMemory != VK_NULL_HANDLE)
 		{
-			vkFreeMemory(mLogicalDevice, mMemory, nullptr);
+			vkFreeMemory(LOGICAL_DEVICE, mMemory, nullptr);
 			RENDERER_DEBUG("RESOURCE FREED: TEXTURE IMAGE MEMORY");
 		}
 	}
 
-	void Texture::Create(const char* filename, VkDevice logicalDevice, VkAllocationCallbacks* allocationCallbacks, VkCommandPool transferCommandPool, VkQueue transferQueue)
+	void Texture::Create(const char* filename, VkCommandPool transferCommandPool, VkQueue transferQueue)
 	{
-		mLogicalDevice = logicalDevice;
-		mAllocationCallbacks = allocationCallbacks;
-
 		int width, height;
 		VkDeviceSize imageSize;
 
@@ -44,13 +42,13 @@ namespace vr
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingMemory;
 		MemoryUtility::CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, mAllocationCallbacks,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, ALLOCATION_CALLBACK,
 			&stagingBuffer, &stagingMemory);
 
 		void* data;
-		vkMapMemory(mLogicalDevice, stagingMemory, 0, imageSize, 0, &data);
+		vkMapMemory(LOGICAL_DEVICE, stagingMemory, 0, imageSize, 0, &data);
 		memcpy(data, imageData, static_cast<unsigned int>(imageSize));
-		vkUnmapMemory(mLogicalDevice, stagingMemory);
+		vkUnmapMemory(LOGICAL_DEVICE, stagingMemory);
 
 		stbi_image_free(imageData);
 
@@ -70,8 +68,8 @@ namespace vr
 
 		ImageUtility::CreateImageView(mImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mImageView);
 
-		vkDestroyBuffer(mLogicalDevice, stagingBuffer, nullptr);
-		vkFreeMemory(mLogicalDevice, stagingMemory, nullptr);
+		vkDestroyBuffer(LOGICAL_DEVICE, stagingBuffer, nullptr);
+		vkFreeMemory(LOGICAL_DEVICE, stagingMemory, nullptr);
 
 		RENDERER_DEBUG("RESOURCE CREATED: IMAGE TEXTURE (" + std::string(filename) + ")");
 	}

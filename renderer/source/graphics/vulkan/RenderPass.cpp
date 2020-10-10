@@ -1,6 +1,7 @@
 #include "RenderPass.h"
 
 #include "utility/RendererCoreUtility.h"
+#include "RendererState.h"
 
 vr::RenderPass::RenderPass()
 {
@@ -10,15 +11,13 @@ vr::RenderPass::~RenderPass()
 {
 	if (mRenderPass != VK_NULL_HANDLE)
 	{
-		vkDestroyRenderPass(mLogicalDevice, mRenderPass, mAllocationCallbacks);
+		vkDestroyRenderPass(LOGICAL_DEVICE, mRenderPass, ALLOCATION_CALLBACK);
 		RENDERER_DEBUG("RESOURCE DESTROYED: RENDER PASS");
 	}
 }
 
-void vr::RenderPass::SetupDefaultRenderPass(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks, const VkSurfaceFormatKHR& surfaceFormat, const VkFormat& depthBufferFormat)
+void vr::RenderPass::SetupDefaultRenderPass(const VkSurfaceFormatKHR& surfaceFormat, const VkFormat& depthBufferFormat)
 {
-	mLogicalDevice = device;
-	mAllocationCallbacks = allocationCallbacks;
 	mSwapchainFormat = surfaceFormat;
 
 	VkAttachmentDescription colorAttachment = {};
@@ -93,7 +92,7 @@ void vr::RenderPass::SetupDefaultRenderPass(const VkDevice& device, VkAllocation
 	renderpassCreateInfo.dependencyCount = static_cast<unsigned int> (subpassDependencies.size());
 	renderpassCreateInfo.pDependencies = subpassDependencies.data();
 
-	CHECK_RESULT(vkCreateRenderPass(mLogicalDevice, &renderpassCreateInfo, nullptr, &mRenderPass), "RESOURCE CREATION FAILED: RENDER PASS");
+	CHECK_RESULT(vkCreateRenderPass(LOGICAL_DEVICE, &renderpassCreateInfo, ALLOCATION_CALLBACK, &mRenderPass), "RESOURCE CREATION FAILED: RENDER PASS");
 	RENDERER_DEBUG("RESOURCE CREATED: RENDER PASS");
 }
 

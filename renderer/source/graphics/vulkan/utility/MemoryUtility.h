@@ -21,11 +21,5 @@ namespace vr
 		static void CopyBuffer(const VkQueue& queue, const VkCommandPool& commandPool, const VkBuffer& srcBuffer, const VkBuffer& dstBuffer, VkDeviceSize bufferSize);
 
 		static void CopyBufferToImage(const VkQueue transferQueue, const VkCommandPool& transferCommandPool, const VkBuffer& srcBuffer, VkImage& dstImage, const unsigned int& width, const unsigned int& height);
-
-	public:
-
-		static VkPhysicalDevice sPhysicalDevice;
-		static VkDevice sLogicalDevice;
-		static VkAllocationCallbacks* AllocationCallbacks;
 	};
 }

@@ -1,5 +1,6 @@
 #include "DescriptorPool.h"
 #include "utility/RendererCoreUtility.h"
+#include "RendererState.h"
 
 namespace vr
 {
@@ -11,17 +12,9 @@ namespace vr
 	{
 		if (mPool != VK_NULL_HANDLE)
 		{
-			vkDestroyDescriptorPool(mLogicalDevice, mPool, mAllocationCallbacks);
+			vkDestroyDescriptorPool(LOGICAL_DEVICE, mPool, ALLOCATION_CALLBACK);
 			RENDERER_DEBUG("RESOURCE DESTROYED: DESCRIPTOR POOL");
 		}
-	}
-
-	DescriptorPool& DescriptorPool::Initialize(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks)
-	{
-		mLogicalDevice = device;
-		mAllocationCallbacks = allocationCallbacks;
-
-		return *this;
 	}
 
 	/*
@@ -37,7 +30,7 @@ namespace vr
 		createInfo.flags = flags;
 		createInfo.pNext = next;
 
-		CHECK_RESULT(vkCreateDescriptorPool(mLogicalDevice, &createInfo, mAllocationCallbacks, &mPool), "RESOURCE CREATION FAILED: DESCRIPTOR POOL");
+		CHECK_RESULT(vkCreateDescriptorPool(LOGICAL_DEVICE, &createInfo, ALLOCATION_CALLBACK, &mPool), "RESOURCE CREATION FAILED: DESCRIPTOR POOL");
 		RENDERER_DEBUG("RESOURCE CREATED: DESCRIPTOR POOL");
 	}
 

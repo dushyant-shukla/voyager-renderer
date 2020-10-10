@@ -11,16 +11,11 @@ namespace vr
 		TextureSampler();
 		~TextureSampler();
 
-		void CreateDefault(VkDevice logicalDevice, VkAllocationCallbacks* allocationCallbacks);
-
-		TextureSampler& Initialize(VkDevice logicalDevice, VkAllocationCallbacks* allocationCallbacks);
+		void CreateDefault();
 
 		const VkSampler& GetVulkanSampler();
 
 	private:
-
-		VkDevice mLogicalDevice;
-		VkAllocationCallbacks* mAllocationCallbacks;
 
 		VkSamplerCreateInfo mSamplerInfo;
 

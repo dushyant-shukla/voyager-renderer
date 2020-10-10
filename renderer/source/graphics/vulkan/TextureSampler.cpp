@@ -1,5 +1,6 @@
 #include "TextureSampler.h"
 #include "utility/RendererCoreUtility.h"
+#include "RendererState.h"
 
 namespace vr
 {
@@ -11,16 +12,13 @@ namespace vr
 	{
 		if (mSampler != VK_NULL_HANDLE)
 		{
-			vkDestroySampler(mLogicalDevice, mSampler, mAllocationCallbacks);
+			vkDestroySampler(LOGICAL_DEVICE, mSampler, ALLOCATION_CALLBACK);
 			RENDERER_DEBUG("RESOURCE DESCTROYED: TEXTURE SAMPLER");
 		}
 	}
 
-	void TextureSampler::CreateDefault(VkDevice logicalDevice, VkAllocationCallbacks* allocationCallbacks)
+	void TextureSampler::CreateDefault()
 	{
-		mLogicalDevice = logicalDevice;
-		mAllocationCallbacks = allocationCallbacks;
-
 		mSamplerInfo = {};
 		mSamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 		mSamplerInfo.magFilter = VK_FILTER_LINEAR;									// how to render when image is magnified on screen
@@ -39,13 +37,8 @@ namespace vr
 		mSamplerInfo.compareEnable = VK_FALSE;										// If a comparison function is enabled, then texels will first be compared to a value, and the result of that comparison is used in filtering operations.
 		mSamplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
 
-		CHECK_RESULT(vkCreateSampler(mLogicalDevice, &mSamplerInfo, nullptr, &mSampler), "RESOURCE CREATION FAILED: TEXTURE SAMPLER");
+		CHECK_RESULT(vkCreateSampler(LOGICAL_DEVICE, &mSamplerInfo, ALLOCATION_CALLBACK, &mSampler), "RESOURCE CREATION FAILED: TEXTURE SAMPLER");
 		RENDERER_DEBUG("RESOURCE CREATED: TEXTURE SAMPLER");
-	}
-
-	TextureSampler& TextureSampler::Initialize(VkDevice logicalDevice, VkAllocationCallbacks* allocationCallbacks)
-	{
-		return *this;
 	}
 
 	const VkSampler& TextureSampler::GetVulkanSampler()

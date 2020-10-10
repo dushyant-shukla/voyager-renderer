@@ -1,5 +1,6 @@
 #include "CommandPool.h"
 #include "utility/RendererCoreUtility.h"
+#include "RendererState.h"
 
 namespace vr
 {
@@ -11,21 +12,18 @@ namespace vr
 	{
 		if (mPool != VK_NULL_HANDLE)
 		{
-			vkDestroyCommandPool(mLogicalDevice, mPool, mAllocationCallbacks);
+			vkDestroyCommandPool(LOGICAL_DEVICE, mPool, ALLOCATION_CALLBACK);
 			RENDERER_DEBUG("RESOURCE DESTROYED: COMMAND POOL");
 		}
 	}
 
-	void CommandPool::Create(const VkDevice& logicalDevice, VkAllocationCallbacks* allocationCallbacks, const int& queueFamilyIndex, VkCommandPoolCreateFlags flags)
+	void CommandPool::Create(const int& queueFamilyIndex, VkCommandPoolCreateFlags flags)
 	{
-		mLogicalDevice = logicalDevice;
-		mAllocationCallbacks = allocationCallbacks;
-
 		VkCommandPoolCreateInfo poolInfo = {};
 		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		poolInfo.flags = flags;
 		poolInfo.queueFamilyIndex = queueFamilyIndex;
-		CHECK_RESULT(vkCreateCommandPool(mLogicalDevice, &poolInfo, mAllocationCallbacks, &mPool), "RESOURCE CREATION FAILED: COMMAND POOL");
+		CHECK_RESULT(vkCreateCommandPool(LOGICAL_DEVICE, &poolInfo, ALLOCATION_CALLBACK, &mPool), "RESOURCE CREATION FAILED: COMMAND POOL");
 		RENDERER_DEBUG("RESOURCE CREATED: COMMAND POOL");
 	}
 

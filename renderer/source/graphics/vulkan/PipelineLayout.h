@@ -16,8 +16,6 @@ namespace vr
 
 		void Cleanup();
 
-		PipelineLayout& Create(VkDevice logicalDevice, VkAllocationCallbacks* allocationCallbacks);
-
 		PipelineLayout& AddDescriptorSetLayout(const VkDescriptorSetLayout& layout);
 
 		PipelineLayout& AddPushConstant(const VkShaderStageFlags flags, unsigned int offset, unsigned int size);
@@ -27,9 +25,6 @@ namespace vr
 		void Configure();
 
 	private:
-
-		VkDevice mLogicalDevice;
-		VkAllocationCallbacks* mAllocationCallbacks;
 
 		std::optional<VkPushConstantRange > mPushConstant;
 		std::vector<VkDescriptorSetLayout> mDescriptorSetLayouts;

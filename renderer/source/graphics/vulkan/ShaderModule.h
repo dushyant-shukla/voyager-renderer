@@ -9,7 +9,7 @@ namespace vr
 	{
 	public:
 
-		ShaderModule(const VkDevice& device, VkAllocationCallbacks* allocationCallbacks, std::string filename);
+		ShaderModule(std::string filename);
 		~ShaderModule();
 
 		const VkShaderModule GetShaderModule();
@@ -18,8 +18,6 @@ namespace vr
 
 	private:
 
-		VkDevice mLogicalDevice;
-		VkAllocationCallbacks* mAllocationCallbacks;
 		VkShaderModule mModule;
 
 		std::string mFilename;

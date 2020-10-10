@@ -11,15 +11,12 @@ namespace vr
 		Texture();
 		~Texture();
 
-		void Create(const char* filename, VkDevice logicalDevice, VkAllocationCallbacks* allocationCallbacks, VkCommandPool transferCommandPool, VkQueue transferQueue);
+		void Create(const char* filename, VkCommandPool transferCommandPool, VkQueue transferQueue);
 
 		const VkImageView& GetVulkanImageView();
 		const VkImage& GetVulkanImage();
 
 	private:
-
-		VkDevice mLogicalDevice;
-		VkAllocationCallbacks* mAllocationCallbacks;
 
 		VkImage mImage = VK_NULL_HANDLE;
 		VkImageView mImageView = VK_NULL_HANDLE;

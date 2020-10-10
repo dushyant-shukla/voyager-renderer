@@ -80,20 +80,14 @@ namespace vr
 		RendererState::SetPhysicalDevice(mDevice->GetPhysicalDevice().device);
 		RendererState::SetAllocationCallbacks(nullptr);
 
-		// initializing utilities
-		ImageUtility::sLogicalDevice = logicalDevice;
-
-		MemoryUtility::sLogicalDevice = logicalDevice;
-		MemoryUtility::sPhysicalDevice = physicalDevice;
-
 		mSwapchain = Swapchain::CreateSwapchain(mDevice, mSurface, mWindow->GetNativeWindow(), nullptr);
 
-		mDepthBuffer.CreateDefault(mDevice->GetPhysicalDevice().device, mDevice->GetLogicalDevice().device, nullptr, mSwapchain->GetSwapchainExtent());
-		mRenderpass.SetupDefaultRenderPass(logicalDevice, nullptr, mSwapchain->GetSurfaceFormat(), mDepthBuffer.GetFormat());
+		mDepthBuffer.CreateDefault(mSwapchain->GetSwapchainExtent());
+		mRenderpass.SetupDefaultRenderPass(mSwapchain->GetSurfaceFormat(), mDepthBuffer.GetFormat());
 		mFramebuffers.Create(mSwapchain->GetSwapchainImages(), mSwapchain->GetSwapchainExtent(), mDepthBuffer.GetImageView(), mRenderpass.GetVulkanRenderPass());
-		mTransferCommandPool.Create(logicalDevice, nullptr, mDevice->GetPhysicalDevice().queueFamilies.transfer.value(), VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
-		mGraphicsCommandBuffers.Create(logicalDevice, nullptr, mDevice->GetPhysicalDevice().queueFamilies.graphics.value(), mSwapchain->GetSwapchainImages().size());
-		mSynchronizationPrimitives.Create(logicalDevice, nullptr);
+		mTransferCommandPool.Create(mDevice->GetPhysicalDevice().queueFamilies.transfer.value(), VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
+		mGraphicsCommandBuffers.Create(mDevice->GetPhysicalDevice().queueFamilies.graphics.value(), mSwapchain->GetSwapchainImages().size());
+		mSynchronizationPrimitives.Create();
 	}
 
 	void Application::Wait()
