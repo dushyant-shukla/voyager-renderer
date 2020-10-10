@@ -7,6 +7,7 @@
 #include "graphics/vulkan/Swapchain.h"
 #include "graphics/vulkan/utility/ImageUtility.h"
 #include "graphics/vulkan/utility/MemoryUtility.h"
+#include "RendererState.h"
 
 namespace vr
 {
@@ -75,6 +76,10 @@ namespace vr
 		VkDevice logicalDevice = mDevice->GetLogicalDevice().device;
 		VkPhysicalDevice physicalDevice = mDevice->GetPhysicalDevice().device;
 
+		RendererState::SetLogicalDevice(mDevice->GetLogicalDevice().device);
+		RendererState::SetPhysicalDevice(mDevice->GetPhysicalDevice().device);
+		RendererState::SetAllocationCallbacks(nullptr);
+
 		// initializing utilities
 		ImageUtility::sLogicalDevice = logicalDevice;
 
@@ -85,7 +90,7 @@ namespace vr
 
 		mDepthBuffer.CreateDefault(mDevice->GetPhysicalDevice().device, mDevice->GetLogicalDevice().device, nullptr, mSwapchain->GetSwapchainExtent());
 		mRenderpass.SetupDefaultRenderPass(logicalDevice, nullptr, mSwapchain->GetSurfaceFormat(), mDepthBuffer.GetFormat());
-		mFramebuffers.Create(logicalDevice, nullptr, mSwapchain->GetSwapchainImages(), mSwapchain->GetSwapchainExtent(), mDepthBuffer.GetImageView(), mRenderpass.GetVulkanRenderPass());
+		mFramebuffers.Create(mSwapchain->GetSwapchainImages(), mSwapchain->GetSwapchainExtent(), mDepthBuffer.GetImageView(), mRenderpass.GetVulkanRenderPass());
 		mTransferCommandPool.Create(logicalDevice, nullptr, mDevice->GetPhysicalDevice().queueFamilies.transfer.value(), VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
 		mGraphicsCommandBuffers.Create(logicalDevice, nullptr, mDevice->GetPhysicalDevice().queueFamilies.graphics.value(), mSwapchain->GetSwapchainImages().size());
 		mSynchronizationPrimitives.Create(logicalDevice, nullptr);

@@ -14,15 +14,12 @@ namespace vr
 		Framebuffers();
 		~Framebuffers();
 
-		void Create(const VkDevice& logicalDevice, VkAllocationCallbacks* allocationCallbacks, const std::vector<SwapchainImage> swapchainImages, const VkExtent2D& swapchainExtent, const VkImageView& depthbufferImageView, const VkRenderPass& renderPass);
+		void Create(const std::vector<SwapchainImage> swapchainImages, const VkExtent2D& swapchainExtent, const VkImageView& depthbufferImageView, const VkRenderPass& renderPass);
 		VkFramebuffer& operator[](const unsigned int& index);
 
 	private:
 
 	private:
-
-		VkDevice mLogicalDevice;
-		VkAllocationCallbacks* mAllocationCallbacks;
 
 		std::vector<VkFramebuffer> mFramebuffers;
 	};

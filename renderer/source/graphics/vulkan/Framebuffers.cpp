@@ -1,5 +1,7 @@
 #include "Framebuffers.h"
 #include "utility/RendererCoreUtility.h"
+#include "RendererState.h"
+
 #include <array>
 
 namespace vr
@@ -14,7 +16,7 @@ namespace vr
 		{
 			for (auto framebuffer : mFramebuffers)
 			{
-				vkDestroyFramebuffer(mLogicalDevice, framebuffer, mAllocationCallbacks);
+				vkDestroyFramebuffer(LOGICAL_DEVICE, framebuffer, ALLOCATION_CALLBACK);
 			}
 
 			RENDERER_DEBUG("RESOURCE DESTROYED: FRAME BUFFERS");
@@ -26,11 +28,8 @@ namespace vr
 		return mFramebuffers[index];
 	}
 
-	void Framebuffers::Create(const VkDevice& logicalDevice, VkAllocationCallbacks* allocationCallbacks, const std::vector<SwapchainImage> swapchainImages, const VkExtent2D& swapchainExtent, const VkImageView& depthbufferImageView, const VkRenderPass& renderPass)
+	void Framebuffers::Create(const std::vector<SwapchainImage> swapchainImages, const VkExtent2D& swapchainExtent, const VkImageView& depthbufferImageView, const VkRenderPass& renderPass)
 	{
-		mLogicalDevice = logicalDevice;
-		mAllocationCallbacks = allocationCallbacks;
-
 		mFramebuffers.resize(swapchainImages.size());
 
 		for (size_t i = 0; i < swapchainImages.size(); ++i)
@@ -49,7 +48,7 @@ namespace vr
 			framebufferCreateInfo.height = swapchainExtent.height;
 			framebufferCreateInfo.layers = 1;
 
-			CHECK_RESULT(vkCreateFramebuffer(mLogicalDevice, &framebufferCreateInfo, nullptr, &mFramebuffers[i]), "RESOURCE CREATION FAILED: FRAME BUFFERS");
+			CHECK_RESULT(vkCreateFramebuffer(LOGICAL_DEVICE, &framebufferCreateInfo, ALLOCATION_CALLBACK, &mFramebuffers[i]), "RESOURCE CREATION FAILED: FRAME BUFFERS");
 		}
 
 		RENDERER_DEBUG("RESOURCE CREATED: FRAME BUFFERS");
