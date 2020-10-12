@@ -4,12 +4,11 @@
 #include "utility/ImageUtility.h"
 #include "utility/RendererCoreUtility.h"
 #include "RendererState.h"
+#include "Model.h"
 
 namespace vr
 {
-	Texture::Texture()
-	{
-	}
+	Texture::Texture() {}
 
 	Texture::~Texture()
 	{
@@ -32,7 +31,7 @@ namespace vr
 		}
 	}
 
-	void Texture::Create(const char* filename, VkCommandPool transferCommandPool, VkQueue transferQueue)
+	void Texture::LoadFromFile(const char* filename, VkCommandPool transferCommandPool, VkQueue transferQueue)
 	{
 		int width, height;
 		VkDeviceSize imageSize;

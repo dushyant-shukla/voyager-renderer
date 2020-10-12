@@ -23,10 +23,13 @@ namespace vr
 
 	private:
 
-	private:
+	public:
 
 		VkBuffer mBuffer = VK_NULL_HANDLE;
 		VkDeviceMemory mMemory = VK_NULL_HANDLE;
+		VkDescriptorBufferInfo descriptor;
+		VkDeviceSize size = 0;
+		VkDeviceSize alignment = 0;
 	};
 
 	template<typename T>

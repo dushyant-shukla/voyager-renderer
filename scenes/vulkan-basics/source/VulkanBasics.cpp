@@ -46,7 +46,7 @@ namespace vr
 				nullptr, &mMvpBuffers[i], &mMvpBuffersMemory[i]);
 		}
 
-		mCross.Create("statue.jpg", mTransferCommandPool.GetVulkanCommandPool(), mDevice->GetLogicalDevice().transferQueue);
+		mCross.LoadFromFile("statue.jpg", mTransferCommandPool.GetVulkanCommandPool(), mDevice->GetLogicalDevice().transferQueue);
 		mTextureSampler.CreateDefault();
 
 		SetupDescriptors();
@@ -257,7 +257,7 @@ namespace vr
 
 		mDescriptorPool
 			.AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<unsigned int>(mSwapchain->GetSwapchainImages().size()))
-			.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<unsigned int>(mSwapchain->GetSwapchainImages().size()))
+			.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, /*static_cast<unsigned int>(mSwapchain->GetSwapchainImages().size())*/1)
 			.Create(0, static_cast<unsigned int>(mSwapchain->GetSwapchainImages().size()), nullptr);
 
 		std::vector<VkDescriptorSetLayout> layouts(mSwapchain->GetSwapchainImages().size(), mDescriptorSetLayout.GetVkDescriptorSetLayout());

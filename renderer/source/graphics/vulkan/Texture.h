@@ -11,7 +11,10 @@ namespace vr
 		Texture();
 		~Texture();
 
-		void Create(const char* filename, VkCommandPool transferCommandPool, VkQueue transferQueue);
+		/*
+			Must update descriptor set while loading the texture
+		*/
+		void LoadFromFile(const char* filename, VkCommandPool transferCommandPool, VkQueue transferQueue);
 
 		const VkImageView& GetVulkanImageView();
 		const VkImage& GetVulkanImage();
@@ -21,5 +24,6 @@ namespace vr
 		VkImage mImage = VK_NULL_HANDLE;
 		VkImageView mImageView = VK_NULL_HANDLE;
 		VkDeviceMemory mMemory = VK_NULL_HANDLE;
+		VkDescriptorSet mDescriptorSet = VK_NULL_HANDLE;
 	};
 }

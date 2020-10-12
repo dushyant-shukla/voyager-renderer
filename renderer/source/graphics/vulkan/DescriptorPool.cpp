@@ -40,7 +40,7 @@ namespace vr
 	DescriptorPool& DescriptorPool::AddPoolSize(const VkDescriptorType type, unsigned int count)
 	{
 		VkDescriptorPoolSize poolSize = {};
-		poolSize.descriptorCount = type;
+		poolSize.type = type;
 		poolSize.descriptorCount = count;
 		mPoolSizes.push_back(poolSize);
 		return *this;
