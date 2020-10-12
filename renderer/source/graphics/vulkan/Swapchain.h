@@ -42,7 +42,7 @@ namespace vr
 		*/
 		VkExtent2D ChooseSwapExtent();
 
-	private:
+	public:
 
 		Surface* mSurface;
 		Device* mDevice;

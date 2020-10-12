@@ -33,8 +33,8 @@ namespace vr
 
 	void VulkanBasics::InitializeScene()
 	{
-		mVertexBuffer.Create(mDevice->GetLogicalDevice().transferQueue, mTransferCommandPool.GetVulkanCommandPool(), VERTICES, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-		mIndexBuffer.Create(mDevice->GetLogicalDevice().transferQueue, mTransferCommandPool.GetVulkanCommandPool(), INDICES, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+		mVertexBuffer.Create(VERTICES, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+		mIndexBuffer.Create(INDICES, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
 		VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 		mMvpBuffers.resize(mSwapchain->GetSwapchainImages().size());
@@ -46,7 +46,7 @@ namespace vr
 				nullptr, &mMvpBuffers[i], &mMvpBuffersMemory[i]);
 		}
 
-		mCross.LoadFromFile("statue.jpg", mTransferCommandPool.GetVulkanCommandPool(), mDevice->GetLogicalDevice().transferQueue);
+		mCross.LoadFromFile("statue.jpg");
 		mTextureSampler.CreateDefault();
 
 		SetupDescriptors();
@@ -89,24 +89,23 @@ namespace vr
 		// 3# present image to screen when it has signalled finished rendering.
 
 		// wait for given fence to signal (open) from last draw before continuing
-		vkWaitForFences(mDevice->GetLogicalDevice().device, 1, &mSynchronizationPrimitives.GetDrawFence(mCurrentFrame), VK_TRUE, std::numeric_limits<uint64_t>::max());
+		vkWaitForFences(LOGICAL_DEVICE, 1, &mSyncPrimitives.mDrawFences[mCurrentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
 		// close the fense for current frame
-		vkResetFences(mDevice->GetLogicalDevice().device, 1, &mSynchronizationPrimitives.GetDrawFence(mCurrentFrame));
+		vkResetFences(LOGICAL_DEVICE, 1, &mSyncPrimitives.mDrawFences[mCurrentFrame]);
 
 		// 1# Get next image and signal when the image is available for drawing
 		unsigned int imageIndex;
-		vkAcquireNextImageKHR(mDevice->GetLogicalDevice().device, mSwapchain->GetVulkanSwapChain(), std::numeric_limits<uint64_t>::max(), mSynchronizationPrimitives.GetImageAvailableSemaphore(mCurrentFrame), VK_NULL_HANDLE, &imageIndex);
+		vkAcquireNextImageKHR(mDevice->GetLogicalDevice().device, mSwapchain->GetVulkanSwapChain(), std::numeric_limits<uint64_t>::max(), mSyncPrimitives.GetImageAvailableSemaphore(mCurrentFrame), VK_NULL_HANDLE, &imageIndex);
 
-		UpdateUniformBuffer(imageIndex);
 		//RecordCommands(imageIndex);
-		//UpdateUniformBuffers(imageIndex);
+		UpdateUniformBuffer(imageIndex);
 
 		// 2# submit command buffer to render
 		// Queue submission information
 		VkSubmitInfo submitInfo = {};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submitInfo.waitSemaphoreCount = 1;
-		submitInfo.pWaitSemaphores = &mSynchronizationPrimitives.GetImageAvailableSemaphore(mCurrentFrame);
+		submitInfo.pWaitSemaphores = &mSyncPrimitives.mImageAvailable[mCurrentFrame];
 		VkPipelineStageFlags waitFlags[] = {
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
 		};
@@ -114,10 +113,10 @@ namespace vr
 		submitInfo.commandBufferCount = 1;									// number of command buffer to submit
 		submitInfo.pCommandBuffers = &mGraphicsCommandBuffers[imageIndex];			// command buffer to submit
 		submitInfo.signalSemaphoreCount = 1;								// number of semaphores to signal
-		submitInfo.pSignalSemaphores = &mSynchronizationPrimitives.GetRenderFinishedSemaphore(mCurrentFrame);	// semaphore to signal when the command buffer finishes
+		submitInfo.pSignalSemaphores = &mSyncPrimitives.mRenderFinished[mCurrentFrame];	// semaphore to signal when the command buffer finishes
 
 		// submit command buffer to queue
-		VkResult result = vkQueueSubmit(mDevice->GetLogicalDevice().graphicsQueue, 1, &submitInfo, mSynchronizationPrimitives.GetDrawFence(mCurrentFrame));
+		VkResult result = vkQueueSubmit(GRAPHICS_QUEUE, 1, &submitInfo, mSyncPrimitives.mDrawFences[mCurrentFrame]);
 		if (result != VK_SUCCESS)
 		{
 			throw std::runtime_error("Failed to submit command buffer to queue!!");
@@ -127,7 +126,7 @@ namespace vr
 		VkPresentInfoKHR presentInfo = {};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		presentInfo.waitSemaphoreCount = 1;											// number of semaphore to wait on
-		presentInfo.pWaitSemaphores = &mSynchronizationPrimitives.GetRenderFinishedSemaphore(mCurrentFrame);			// semaphore to wait on
+		presentInfo.pWaitSemaphores = &mSyncPrimitives.mRenderFinished[mCurrentFrame];			// semaphore to wait on
 		presentInfo.swapchainCount = 1;												// number of swapchain to present to
 		presentInfo.pSwapchains = &mSwapchain->GetVulkanSwapChain();										// swapchain to present to
 		presentInfo.pImageIndices = &imageIndex;									// index of image in swapchain to present

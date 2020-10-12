@@ -37,6 +37,8 @@ namespace vr
 		void SetupDescriptorSets();
 		void SetupUniformBufferObjects();
 		void SetupTextureSampler();
+		void LoadAssets();
+		void UpdateUniformBuffers(const unsigned int& imageIndex);
 
 	private:
 
@@ -69,17 +71,29 @@ namespace vr
 		*/
 		struct
 		{
-			glm::mat4 projectionViewMatrix;
-			glm::vec3 viewPosition;
+			alignas(16) glm::mat4 projectionViewMatrix;
+			alignas(16) glm::vec3 viewPosition;
 		} mViewUBO;
+		std::vector<VkBuffer> mViewUboBuffers;// don't forget to destroy this
+		std::vector<VkDeviceMemory> mViewUboBuffersMemory; // don't forget to free this
 
 		/*
 			Push constant descriptor
 		*/
 		struct
 		{
+			glm::mat4 model;
 		} mPerModelData;
 
-		std::vector<vrassimp::Model> mModels;
+		std::vector<vrassimp::Model*> mModels;
+
+		struct ImageInfo
+		{
+			int binding;
+			VkDescriptorImageInfo info;
+		};
+		std::vector<ImageInfo> imageInfos;
+
+		int mCurrentFrame = 0;
 	};
 }

@@ -76,6 +76,7 @@ namespace vr
 		VkDevice logicalDevice = mDevice->GetLogicalDevice().device;
 		VkPhysicalDevice physicalDevice = mDevice->GetPhysicalDevice().device;
 
+		// NOTE:: DO NOT CHANGE THE STATE INITIALIZATION ORDER
 		RendererState::SetLogicalDevice(mDevice->GetLogicalDevice().device);
 		RendererState::SetPhysicalDevice(mDevice->GetPhysicalDevice().device);
 		RendererState::SetAllocationCallbacks(nullptr);
@@ -87,7 +88,12 @@ namespace vr
 		mFramebuffers.Create(mSwapchain->GetSwapchainImages(), mSwapchain->GetSwapchainExtent(), mDepthBuffer.GetImageView(), mRenderpass.GetVulkanRenderPass());
 		mTransferCommandPool.Create(mDevice->GetPhysicalDevice().queueFamilies.transfer.value(), VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
 		mGraphicsCommandBuffers.Create(mDevice->GetPhysicalDevice().queueFamilies.graphics.value(), mSwapchain->GetSwapchainImages().size());
-		mSynchronizationPrimitives.Create();
+		mSyncPrimitives.Create();
+
+		RendererState::SetGraphicsCommandPool(mGraphicsCommandBuffers.mCommandPool);
+		RendererState::SetGraphicsQueue(mDevice->GetLogicalDevice().graphicsQueue);
+		RendererState::SetTransferCommandPool(mTransferCommandPool.GetVulkanCommandPool());
+		RendererState::SetTransferQueue(mDevice->GetLogicalDevice().transferQueue);
 	}
 
 	void Application::Wait()

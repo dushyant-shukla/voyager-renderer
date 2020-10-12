@@ -74,7 +74,7 @@ namespace vr
 		Framebuffers mFramebuffers;
 		CommandBuffers mGraphicsCommandBuffers;
 		CommandPool mTransferCommandPool;
-		SynchronizationPrimitives mSynchronizationPrimitives;
+		SynchronizationPrimitives mSyncPrimitives;
 
 		// Stores the features available on the selected physical device
 		VkPhysicalDeviceFeatures deviceFeatures;

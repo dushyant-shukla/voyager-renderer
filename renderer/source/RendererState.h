@@ -5,6 +5,10 @@
 #define LOGICAL_DEVICE			vr::RendererState::GetLogicalDevice()
 #define PHYSICAL_DEVICE			vr::RendererState::GetPhysicalDevice()
 #define ALLOCATION_CALLBACK		vr::RendererState::GetAllocationCallbacks()
+#define GRAPHICS_QUEUE			vr::RendererState::GetGraphicsQueue()
+#define GRAPHICS_CMD_POOL		vr::RendererState::GetGraphicsCommandPool()
+#define TRANSFER_QUEUE			vr::RendererState::GetTransferQueue()
+#define TRANSFER_CMD_POOL		vr::RendererState::GetTransferCommandPool()
 
 namespace vr
 {
@@ -40,6 +44,42 @@ namespace vr
 		static void SetAllocationCallbacks(VkAllocationCallbacks* allocationCallbacks)
 		{
 			sAllocationCallbacks = allocationCallbacks;
+		}
+
+		static void SetGraphicsQueue(const VkQueue& graphicsQueue)
+		{
+			sGraphicsQueue = graphicsQueue;
+		}
+		static const VkQueue& GetGraphicsQueue()
+		{
+			return sGraphicsQueue;
+		}
+
+		static void SetGraphicsCommandPool(const VkCommandPool& graphicsCommandPool)
+		{
+			sGraphicsCommandPool = graphicsCommandPool;
+		}
+		static const VkCommandPool& GetGraphicsCommandPool()
+		{
+			return sGraphicsCommandPool;
+		}
+
+		static void SetTransferQueue(const VkQueue& transferQueue)
+		{
+			sTransferQueue = transferQueue;
+		}
+		static const VkQueue& GetTransferQueue()
+		{
+			return sTransferQueue;
+		}
+
+		static void SetTransferCommandPool(const VkCommandPool& transferCommandPool)
+		{
+			sTransferCommandPool = transferCommandPool;
+		}
+		static const VkCommandPool& GetTransferCommandPool()
+		{
+			return sTransferCommandPool;
 		}
 
 	private:

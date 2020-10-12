@@ -17,7 +17,7 @@ namespace vr
 		Buffer();
 		~Buffer();
 
-		void Create(const VkQueue& transferQueue, const VkCommandPool& commandPool, const std::vector<T>& vertices, VkBufferUsageFlagBits flags);
+		void Create(const std::vector<T>& vertices, VkBufferUsageFlagBits flags);
 
 		const VkBuffer& GetVulkanBuffer();
 
@@ -54,7 +54,7 @@ namespace vr
 	}
 
 	template<typename T>
-	inline void Buffer<T>::Create(const VkQueue& transferQueue, const VkCommandPool& commandPool, const std::vector<T>& vertices, VkBufferUsageFlagBits flags)
+	inline void Buffer<T>::Create(const std::vector<T>& vertices, VkBufferUsageFlagBits flags)
 	{
 		VkDeviceSize bufferSize = sizeof(T) * vertices.size();
 
@@ -78,7 +78,7 @@ namespace vr
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			ALLOCATION_CALLBACK, &mBuffer, &mMemory);
 
-		MemoryUtility::CopyBuffer(transferQueue, commandPool, stagingBuffer, mBuffer, bufferSize);
+		MemoryUtility::CopyBuffer(TRANSFER_QUEUE, TRANSFER_CMD_POOL, stagingBuffer, mBuffer, bufferSize);
 
 		vkDestroyBuffer(LOGICAL_DEVICE, stagingBuffer, ALLOCATION_CALLBACK);
 		RENDERER_DEBUG("RESOURCE DESTROYED: STAGING BUFFER");

@@ -22,7 +22,7 @@ namespace vr
 
 	private:
 
-	private:
+	public:
 
 		std::vector<VkSemaphore> mImageAvailable;
 		std::vector<VkSemaphore> mRenderFinished;

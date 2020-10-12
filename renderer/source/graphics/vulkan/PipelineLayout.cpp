@@ -26,11 +26,10 @@ namespace vr
 	// TODO: Test this
 	PipelineLayout& PipelineLayout::AddPushConstant(const VkShaderStageFlags flags, unsigned int offset, unsigned int size)
 	{
+		mPushConstant = VkPushConstantRange();
 		mPushConstant->stageFlags = flags;
 		mPushConstant->offset = offset;
 		mPushConstant->size = size;
-
-		// mPushConstant.has_value() check
 		return *this;
 	}
 

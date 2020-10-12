@@ -4,21 +4,48 @@
 
 namespace vrassimp
 {
-	Texture::Texture() {}
+	Texture::Texture() : texture(nullptr) {}
 
 	Texture::Texture(Type _type, std::string _path)
-		: type(_type), path(_path)
+		: type(_type), path(_path), texture(nullptr)
 	{}
+
+	Texture::~Texture()
+	{
+		if (texture != nullptr)
+		{
+			delete texture;
+		}
+	}
 
 	Mesh::Mesh() {}
 
-	Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)
+	Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture*> textures)
 		: vertices(vertices), indices(indices), textures(textures)
 	{
 	}
 
-	void Mesh::Draw()
+	Mesh::~Mesh()
 	{
+		for (auto& texture : textures)
+		{
+			if (texture != nullptr)
+			{
+				delete texture;
+			}
+		}
+	}
+
+	void Mesh::Draw(const VkCommandBuffer& cmdBuffer)
+	{
+		VkBuffer vertexBuffers[] = { buffers.vertex.GetVulkanBuffer() };	// buffers to bind
+		VkDeviceSize offsets[] = { 0 };										// offsets into buffers being bound
+		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, vertexBuffers, offsets);	// command to bind vertex buffers before drawing with them
+
+																			// bind mesh index buffer
+		vkCmdBindIndexBuffer(cmdBuffer, buffers.index.GetVulkanBuffer(), 0, VK_INDEX_TYPE_UINT32);
+
+		vkCmdDrawIndexed(cmdBuffer, indices.size(), 1, 0, 0, 0);
 	}
 
 	VertexLayout::VertexLayout(std::vector<VertexLayoutComponentType> components) : layoutComponents(std::move(components)) {}
@@ -52,6 +79,17 @@ namespace vrassimp
 		}
 
 		return stride;
+	}
+
+	Model::~Model()
+	{
+		for (auto& mesh : meshes)
+		{
+			if (mesh != nullptr)
+			{
+				delete mesh;
+			}
+		}
 	}
 
 	void Model::LoadFromFile(std::string filename, ModelCreateInfo* createInfo)
@@ -123,62 +161,65 @@ namespace vrassimp
 		mAnimation->ProcessNode(scene->mRootNode, scene);
 	}
 
-	void Model::QueryMeshData(const unsigned int& meshIndex, const aiMesh* mesh, const aiScene* scene)
+	void Model::QueryMeshData(const unsigned int& meshIndex, const aiMesh* aiMesh, const aiScene* scene)
 	{
-		meshes[meshIndex].vertices.resize(mesh->mNumVertices);
+		Mesh* mesh = new Mesh();
+		mesh->vertices.resize(aiMesh->mNumVertices);
 
 		// vertex attributes
-		for (size_t vertIndex = 0; vertIndex < mesh->mNumVertices; ++vertIndex)
+		for (size_t vertIndex = 0; vertIndex < aiMesh->mNumVertices; ++vertIndex)
 		{
-			meshes[meshIndex].vertices[vertIndex].position = { mesh->mVertices[vertIndex].x, mesh->mVertices[vertIndex].y , mesh->mVertices[vertIndex].z };
+			mesh->vertices[vertIndex].position = { aiMesh->mVertices[vertIndex].x, aiMesh->mVertices[vertIndex].y , aiMesh->mVertices[vertIndex].z };
 
-			meshes[meshIndex].vertices[vertIndex].normal = { mesh->mNormals[vertIndex].x, mesh->mNormals[vertIndex].y, mesh->mNormals[vertIndex].z };
+			mesh->vertices[vertIndex].normal = { aiMesh->mNormals[vertIndex].x, aiMesh->mNormals[vertIndex].y, aiMesh->mNormals[vertIndex].z };
 
-			const aiVector3D* pTexCoord = (mesh->HasTextureCoords(0)) ? &(mesh->mTextureCoords[0][vertIndex]) : &Zero3D;
-			meshes[meshIndex].vertices[vertIndex].uv = { pTexCoord->x, pTexCoord->y };
+			const aiVector3D* pTexCoord = (aiMesh->HasTextureCoords(0)) ? &(aiMesh->mTextureCoords[0][vertIndex]) : &Zero3D;
+			mesh->vertices[vertIndex].uv = { pTexCoord->x, pTexCoord->y };
 
-			const aiVector3D* pTangent = (mesh->HasTangentsAndBitangents()) ? &(mesh->mTangents[vertIndex]) : &Zero3D;
-			meshes[meshIndex].vertices[vertIndex].tangent = { pTangent->x, pTangent->y, pTangent->z };
+			const aiVector3D* pTangent = (aiMesh->HasTangentsAndBitangents()) ? &(aiMesh->mTangents[vertIndex]) : &Zero3D;
+			mesh->vertices[vertIndex].tangent = { pTangent->x, pTangent->y, pTangent->z };
 
 			if (isAnimationAvailable)
 			{
 				for (unsigned int boneIndex = 0; boneIndex < MAX_BONES_PER_VERTX; ++boneIndex)
 				{
-					meshes[meshIndex].vertices[vertIndex].boneWeights[boneIndex] = mAnimation->mBones[meshIndex][vertIndex].weights[boneIndex];
+					mesh->vertices[vertIndex].boneWeights[boneIndex] = mAnimation->mBones[meshIndex][vertIndex].weights[boneIndex];
 				}
 
 				for (unsigned int boneIndex = 0; boneIndex < MAX_BONES_PER_VERTX; ++boneIndex)
 				{
-					meshes[meshIndex].vertices[vertIndex].boneIds[boneIndex] = mAnimation->mBones[meshIndex][vertIndex].ids[boneIndex];
+					mesh->vertices[vertIndex].boneIds[boneIndex] = mAnimation->mBones[meshIndex][vertIndex].ids[boneIndex];
 				}
 			}
 			else
 			{
 				for (unsigned int boneIndex = 0; boneIndex < MAX_BONES_PER_VERTX; ++boneIndex)
 				{
-					meshes[meshIndex].vertices[vertIndex].boneWeights[boneIndex] = 0.0f;
+					mesh->vertices[vertIndex].boneWeights[boneIndex] = 0.0f;
 				}
 
 				for (unsigned int boneIndex = 0; boneIndex < MAX_BONES_PER_VERTX; ++boneIndex)
 				{
-					meshes[meshIndex].vertices[vertIndex].boneIds[boneIndex] = 0.0f;
+					mesh->vertices[vertIndex].boneIds[boneIndex] = 0.0f;
 				}
 			}
 
 			aiColor3D pColor(0.f, 0.f, 0.f);
-			scene->mMaterials[mesh->mMaterialIndex]->Get(AI_MATKEY_COLOR_DIFFUSE, pColor);
-			meshes[meshIndex].vertices[vertIndex].color = { pColor.r, pColor.g, pColor.b };
+			scene->mMaterials[aiMesh->mMaterialIndex]->Get(AI_MATKEY_COLOR_DIFFUSE, pColor);
+			mesh->vertices[vertIndex].color = { pColor.r, pColor.g, pColor.b };
 		}
 
 		// mesh indices
-		for (size_t i = 0; i < mesh->mNumFaces; ++i)
+		for (size_t i = 0; i < aiMesh->mNumFaces; ++i)
 		{
-			aiFace face = mesh->mFaces[i];
+			aiFace face = aiMesh->mFaces[i];
 			for (size_t j = 0; j < face.mNumIndices; ++j)
 			{
-				meshes[meshIndex].indices.push_back(face.mIndices[j]);
+				mesh->indices.push_back(face.mIndices[j]);
 			}
 		}
+
+		this->meshes[meshIndex] = mesh;
 	}
 
 	void Model::QueryMeshMaterial(const unsigned int& meshIndex, const aiMesh* mesh, const aiScene* scene)
@@ -199,8 +240,8 @@ namespace vrassimp
 					}
 					std::string filename = std::string(path.data).substr(index + 1);
 
-					Texture texture(Texture::Type::DIFFUSE, path.data);
-					meshes[meshIndex].textures.push_back(texture);
+					Texture* texture = new Texture(Texture::Type::DIFFUSE, filename);
+					meshes[meshIndex]->textures.push_back(texture);
 				}
 			}
 
@@ -215,8 +256,8 @@ namespace vrassimp
 					}
 					std::string filename = std::string(path.data).substr(index + 1);
 
-					Texture texture(Texture::Type::EMISSIVE, path.data);
-					meshes[meshIndex].textures.push_back(texture);
+					Texture* texture = new Texture(Texture::Type::EMISSIVE, filename);
+					meshes[meshIndex]->textures.push_back(texture);
 				}
 			}
 		}

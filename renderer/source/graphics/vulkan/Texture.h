@@ -14,16 +14,17 @@ namespace vr
 		/*
 			Must update descriptor set while loading the texture
 		*/
-		void LoadFromFile(const char* filename, VkCommandPool transferCommandPool, VkQueue transferQueue);
+		void LoadFromFile(const char* filename);
+		void LoadFromFile(const char* filename, const VkSampler& sampler);
 
 		const VkImageView& GetVulkanImageView();
 		const VkImage& GetVulkanImage();
 
-	private:
+	public:
 
 		VkImage mImage = VK_NULL_HANDLE;
 		VkImageView mImageView = VK_NULL_HANDLE;
 		VkDeviceMemory mMemory = VK_NULL_HANDLE;
-		VkDescriptorSet mDescriptorSet = VK_NULL_HANDLE;
+		VkDescriptorImageInfo mImageInfo = {};
 	};
 }

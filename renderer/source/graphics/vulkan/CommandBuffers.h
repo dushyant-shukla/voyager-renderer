@@ -26,7 +26,7 @@ namespace vr
 		void CreateCommandPool(const int& queueFamilyIndex);
 		void AllocateCommandbuffers(const int& count);
 
-	private:
+	public:
 
 		VkCommandPool mCommandPool = VK_NULL_HANDLE;
 		std::vector<VkCommandBuffer> mCommandbuffers;

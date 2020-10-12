@@ -50,8 +50,9 @@ namespace vrassimp
 
 		static std::vector<VkVertexInputAttributeDescription> GetVertexInputAttributeDescriptions()
 		{
-			std::vector<VkVertexInputAttributeDescription> mInputAttributeDescriptions(4);
+			std::vector<VkVertexInputAttributeDescription> mInputAttributeDescriptions(7);
 
+			// TODO: in what scenario binding here will be other than '0'
 			mInputAttributeDescriptions[0].binding = 0;
 			mInputAttributeDescriptions[0].location = 0;
 			mInputAttributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
@@ -72,20 +73,20 @@ namespace vrassimp
 			mInputAttributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
 			mInputAttributeDescriptions[3].offset = offsetof(Vertex, normal);
 
-			mInputAttributeDescriptions[3].binding = 0;
-			mInputAttributeDescriptions[3].location = 3;
-			mInputAttributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
-			mInputAttributeDescriptions[3].offset = offsetof(Vertex, tangent);
+			mInputAttributeDescriptions[4].binding = 0;
+			mInputAttributeDescriptions[4].location = 4;
+			mInputAttributeDescriptions[4].format = VK_FORMAT_R32G32B32_SFLOAT;
+			mInputAttributeDescriptions[4].offset = offsetof(Vertex, tangent);
 
-			mInputAttributeDescriptions[3].binding = 0;
-			mInputAttributeDescriptions[3].location = 3;
-			mInputAttributeDescriptions[3].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-			mInputAttributeDescriptions[3].offset = offsetof(Vertex, boneIds);
+			mInputAttributeDescriptions[5].binding = 0;
+			mInputAttributeDescriptions[5].location = 5;
+			mInputAttributeDescriptions[5].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+			mInputAttributeDescriptions[5].offset = offsetof(Vertex, boneIds);
 
-			mInputAttributeDescriptions[3].binding = 0;
-			mInputAttributeDescriptions[3].location = 3;
-			mInputAttributeDescriptions[3].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-			mInputAttributeDescriptions[3].offset = offsetof(Vertex, boneWeights);
+			mInputAttributeDescriptions[6].binding = 0;
+			mInputAttributeDescriptions[6].location = 6;
+			mInputAttributeDescriptions[6].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+			mInputAttributeDescriptions[6].offset = offsetof(Vertex, boneWeights);
 
 			return mInputAttributeDescriptions;
 		}
@@ -162,10 +163,11 @@ namespace vrassimp
 
 		Type type;
 		std::string path;
-		vr::Texture texture;
+		vr::Texture* texture;
 
 		Texture();
 		Texture(Type _type, std::string _path);
+		~Texture();
 	};
 
 	struct Animation
@@ -217,7 +219,7 @@ namespace vrassimp
 	{
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indices;
-		std::vector<Texture> textures;
+		std::vector<Texture*> textures;
 
 		struct
 		{
@@ -226,16 +228,19 @@ namespace vrassimp
 		} buffers;
 
 		Mesh();
-		Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
+		Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture*> textures);
+		~Mesh();
 
 		/*
 			record draw commands in the command buffer
 		*/
-		void Draw();
+		void Draw(const VkCommandBuffer& cmdBuffer);
 	};
 
 	struct Model
 	{
+		~Model();
+
 		/*
 			Used for parameterizing model loading
 		*/
@@ -254,7 +259,7 @@ namespace vrassimp
 		Animation* mAnimation = nullptr;
 		bool isAnimationAvailable = false;
 
-		std::vector<Mesh> meshes;
+		std::vector<Mesh*> meshes;
 
 		void LoadFromFile(std::string filename, ModelCreateInfo* createInfo);
 		void QueryAnimationData(Assimp::Importer& Importer, const aiScene* scene);
