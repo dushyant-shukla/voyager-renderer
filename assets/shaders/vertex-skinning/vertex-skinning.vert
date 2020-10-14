@@ -1,6 +1,7 @@
 #version 460 core
 
 #extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
 
 
 layout(location = 0) in vec3 position;
@@ -8,14 +9,18 @@ layout(location = 1) in vec3 color;
 layout(location = 2) in vec2 uv;
 layout(location = 3) in vec3 normal;
 layout(location = 4) in vec3 tangent;
-layout(location = 5) in vec4 bone_ids;
+layout(location = 5) in ivec4 bone_ids;
 layout(location = 6) in vec4 bone_weights;
 
-layout(set = 0, binding = 0) uniform UniformBufferObject
+#define MAX_BONES 100
+
+layout(set = 0, binding = 0) uniform UBO
 {
-    mat4 view_projection;
+    mat4 projection;
+    mat4 view;
+    mat4 bones[MAX_BONES];
     vec3 view_position;
-} vp_buffer;
+} ubo;
 
 layout (location = 0) out VS_OUT
 {
@@ -31,7 +36,23 @@ layout (push_constant) uniform PushModel
 
 void main() 
 {
-    gl_Position = vp_buffer.view_projection * push_model.model * vec4(position, 1.0);
+    mat4 bone_transform = ubo.bones[bone_ids[0]] * bone_weights[0];
+    bone_transform     += ubo.bones[bone_ids[1]] * bone_weights[1];
+    bone_transform     += ubo.bones[bone_ids[2]] * bone_weights[2];
+    bone_transform     += ubo.bones[bone_ids[3]] * bone_weights[3];
+
+    gl_Position = ubo.projection 
+                  * ubo.view
+                  * push_model.model
+                  * bone_transform
+                  * vec4(position, 1.0);
+
+    
+    //gl_Position = ubo.projection 
+    //              * ubo.view
+    //              * push_model.model
+    //              * vec4(position, 1.0);
+
     vs_out.color = color;
     vs_out.uv = uv;
     vs_out.normal = normal;

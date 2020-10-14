@@ -11,6 +11,18 @@ namespace vr
 		eCamera.SetPosition(glm::vec3(0.0f, 0.75f, -2.0f));
 		eCamera.SetRotation(glm::vec3(0.0f, 0.0f, 0.0f));
 		eCamera.SetPerspective(glm::radians(60.0f), (float)Window::WIDTH / Window::HEIGHT, 0.1f, 1024.0f);
+
+		//animationTimer.emplace_back(0.0f, 2233.33325f); // nathan
+
+		animationTimer.emplace_back(0.0f, 99.0f); // wolverine
+
+		//animationTimer.emplace_back(0.0f, 95.99f);
+		//animationTimer.emplace_back(96.0f, 191.99f);
+		//animationTimer.emplace_back(191.99f, 287.98f);
+		//animationTimer.emplace_back(287.98f, 384.0f);
+		//animationTimer.emplace_back(384.0f, 480.97f);
+		//animationTimer.emplace_back(480.97f, 575.97f);
+		//animationTimer.emplace_back(575.97f, 671.97f);
 	}
 
 	AnimationKeyframes::~AnimationKeyframes()
@@ -22,9 +34,10 @@ namespace vr
 				delete model;
 			}
 
-			for (size_t i = 0; i < mSwapchain->GetSwapchainImages().size(); i++) {
-				vkDestroyBuffer(LOGICAL_DEVICE, mViewUboBuffers[i], nullptr);
-				vkFreeMemory(LOGICAL_DEVICE, mViewUboBuffersMemory[i], nullptr);
+			for (size_t i = 0; i < mSwapchain->GetSwapchainImages().size(); i++)
+			{
+				vkDestroyBuffer(LOGICAL_DEVICE, uboBuffers[i], nullptr);
+				vkFreeMemory(LOGICAL_DEVICE, uboBuffersMemory[i], nullptr);
 			}
 			RENDERER_DEBUG("RESOURCE DESTROYED: UNIFORM BUFFER");
 			RENDERER_DEBUG("RESOURCE FREED: UNIFORM BUFFER MEMORY");
@@ -35,7 +48,6 @@ namespace vr
 	{
 		// do not change the order of setup calls
 		SetupTextureSampler();
-
 		SetupUniformBufferObjects();
 
 		SetupDescriptorSets();
@@ -43,14 +55,16 @@ namespace vr
 
 		LoadAssets();
 
-		mViewUBO.projectionViewMatrix = eCamera.matrices.projection;
-		mViewUBO.projectionViewMatrix *= eCamera.matrices.view;
-		mViewUBO.viewPosition = eCamera.orientation.viewPosition;
+		ubo.projection = eCamera.matrices.projection;
+		ubo.view = eCamera.matrices.view;
+		ubo.viewPosition = eCamera.orientation.viewPosition;
+		UpdateBoneTransforms();
 
 		// NATHAN
 		glm::mat4 model(1.0f);/* = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));*/
 		model = glm::translate(model, glm::vec3(0.0, 0.0, 0.0));
 		model = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		//model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f)); // nathan
 		model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f)); // nathan
 		mPerModelData.model = model;
 
@@ -300,9 +314,9 @@ namespace vr
 		for (size_t i = 0; i < mDescriptors.uniformBufferSets.size(); ++i)
 		{
 			VkDescriptorBufferInfo bufferInfo = {};
-			bufferInfo.buffer = mViewUboBuffers[i];
+			bufferInfo.buffer = uboBuffers[i];
 			bufferInfo.offset = 0;
-			bufferInfo.range = sizeof(mViewUBO);
+			bufferInfo.range = sizeof(ubo);
 
 			VkWriteDescriptorSet writeBufferInfo = {};
 			writeBufferInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -334,14 +348,14 @@ namespace vr
 
 	void AnimationKeyframes::SetupUniformBufferObjects()
 	{
-		VkDeviceSize bufferSize = sizeof(mViewUBO);
-		mViewUboBuffers.resize(mSwapchain->GetSwapchainImages().size());
-		mViewUboBuffersMemory.resize(mSwapchain->GetSwapchainImages().size());
+		VkDeviceSize bufferSize = sizeof(ubo);
+		uboBuffers.resize(mSwapchain->GetSwapchainImages().size());
+		uboBuffersMemory.resize(mSwapchain->GetSwapchainImages().size());
 		for (size_t i = 0; i < mSwapchain->GetSwapchainImages().size(); ++i)
 		{
 			MemoryUtility::CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				nullptr, &mViewUboBuffers[i], &mViewUboBuffersMemory[i]);
+				nullptr, &uboBuffers[i], &uboBuffersMemory[i]);
 		}
 	}
 
@@ -367,6 +381,7 @@ namespace vr
 		//model->LoadFromFile("wolf-ii\\Wolf_dae.dae", &modelCreateInfo);
 		//model->LoadFromFile("iron-man-fortnite\\scene.gltf", &modelCreateInfo);
 		model->LoadFromFile("nathan\\scene.gltf", &modelCreateInfo); // works - loads correctly
+		//model->LoadFromFile("bengal-tiger\\tiger.fbx", &modelCreateInfo); // works - loads correctly
 		//model->LoadFromFile("myth-creature\\myth-creature.fbx", &modelCreateInfo); // works - loads correctly
 		mModels.push_back(model);
 
@@ -378,6 +393,7 @@ namespace vr
 			for (size_t meshIndex = 0; meshIndex < mModels[modelIndex]->meshes.size(); ++meshIndex)
 			{
 				vrassimp::Mesh* currentMesh = mModels[modelIndex]->meshes[meshIndex];
+
 				currentMesh->buffers.vertex.Create(currentMesh->vertices, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 				currentMesh->buffers.index.Create(currentMesh->indices, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
@@ -435,14 +451,34 @@ namespace vr
 
 	void AnimationKeyframes::UpdateUniformBuffers(const unsigned int& imageIndex)
 	{
-		mViewUBO.projectionViewMatrix = eCamera.matrices.projection;
-		mViewUBO.projectionViewMatrix *= eCamera.matrices.view;
-		mViewUBO.viewPosition = eCamera.orientation.viewPosition;
+		ubo.projection = eCamera.matrices.projection;
+		ubo.view = eCamera.matrices.view;
+		ubo.viewPosition = eCamera.orientation.viewPosition;
+		UpdateBoneTransforms();
 
 		void* data;
-		vkMapMemory(LOGICAL_DEVICE, mViewUboBuffersMemory[imageIndex], 0, sizeof(mViewUBO), 0, &data);
-		memcpy(data, &mViewUBO, sizeof(mViewUBO));
-		vkUnmapMemory(LOGICAL_DEVICE, mViewUboBuffersMemory[imageIndex]);
+		vkMapMemory(LOGICAL_DEVICE, uboBuffersMemory[imageIndex], 0, sizeof(ubo), 0, &data);
+		memcpy(data, &ubo, sizeof(ubo));
+		vkUnmapMemory(LOGICAL_DEVICE, uboBuffersMemory[imageIndex]);
+	}
+
+	void AnimationKeyframes::UpdateBoneTransforms()
+	{
+		timer += 0.2f;
+		if (timer > animationTimer[animationCount].end)
+		{
+			timer = animationTimer[animationCount].start;
+		}
+
+		for (unsigned int i = 0; i < mModels.size(); ++i)
+		{
+			mModels[i]->mAnimation->BoneTransform(timer, boneTransforms);
+		}
+
+		for (unsigned int i = 0; i < boneTransforms.size(); ++i)
+		{
+			ubo.bones[i] = glm::transpose(glm::make_mat4(&(boneTransforms[i].a1)));
+		}
 	}
 
 	Application* CreateApplication()

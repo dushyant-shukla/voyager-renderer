@@ -37,7 +37,7 @@ namespace vrassimp
 		glm::vec2 uv;
 		glm::vec3 normal;
 		glm::vec3 tangent;
-		glm::vec4 boneIds;				// each vertex is influenced by 4 bones at max
+		glm::ivec4 boneIds;				// each vertex is influenced by 4 bones at max
 		glm::vec4 boneWeights;
 
 		static VkVertexInputBindingDescription GetVertexInputBindingDescription()
@@ -81,7 +81,7 @@ namespace vrassimp
 
 			mInputAttributeDescriptions[5].binding = 0;
 			mInputAttributeDescriptions[5].location = 5;
-			mInputAttributeDescriptions[5].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+			mInputAttributeDescriptions[5].format = VK_FORMAT_R32G32B32A32_SINT;
 			mInputAttributeDescriptions[5].offset = offsetof(Vertex, boneIds);
 
 			mInputAttributeDescriptions[6].binding = 0;
@@ -197,7 +197,7 @@ namespace vrassimp
 		aiAnimation* mActiveAnimation;
 
 		void SetAnimation(unsigned int animationIndex);
-		void ProcessNode(aiNode* node, const aiScene* scene);
+		//void ProcessNode(aiNode* node, const aiScene* scene);
 		void ProcessMesh(int meshIndex, aiMesh* mesh, const aiScene* scene);
 		void BoneTransform(double seconds, std::vector<aiMatrix4x4>& transforms);
 		void ReadNodeHierarchy(float parentAnimationTime, const aiNode* parentNode, const aiMatrix4x4 parentTransform);

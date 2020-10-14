@@ -15,6 +15,8 @@
 #include "graphics/vulkan/TextureSampler.h"
 #include "graphics/vulkan/Model.h"
 
+#define MAX_BONES 100
+
 namespace vr
 {
 	class AnimationKeyframes
@@ -39,6 +41,7 @@ namespace vr
 		void SetupTextureSampler();
 		void LoadAssets();
 		void UpdateUniformBuffers(const unsigned int& imageIndex);
+		void UpdateBoneTransforms();
 
 	private:
 
@@ -81,11 +84,15 @@ namespace vr
 		*/
 		struct
 		{
-			alignas(16) glm::mat4 projectionViewMatrix;
+			alignas(16) glm::mat4 projection;
+			alignas(16) glm::mat4 view;
+			alignas(16) glm::mat4 bones[MAX_BONES];
 			alignas(16) glm::vec3 viewPosition;
-		} mViewUBO;
-		std::vector<VkBuffer> mViewUboBuffers;// don't forget to destroy this
-		std::vector<VkDeviceMemory> mViewUboBuffersMemory; // don't forget to free this
+		} ubo;
+		std::vector<VkBuffer> uboBuffers;// don't forget to destroy this
+		std::vector<VkDeviceMemory> uboBuffersMemory; // don't forget to free this
+		std::vector<aiMatrix4x4> boneTransforms;
+		float timer = 0;
 
 		/*
 			Push constant descriptor
@@ -103,6 +110,17 @@ namespace vr
 			VkDescriptorImageInfo info;
 		};
 		std::vector<ImageInfo> imageInfos;
+
+		struct AnimationTime
+		{
+			float start;
+			float end;
+
+			AnimationTime(float s, float e) : start(s), end(e)
+			{}
+		};
+		std::vector <AnimationTime> animationTimer;
+		unsigned int animationCount = 0;
 
 		int mCurrentFrame = 0;
 	};
