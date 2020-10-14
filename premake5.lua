@@ -266,6 +266,11 @@ project "animation-keyframes"
   {
     "renderer"
   }
+  
+  postbuildcommands
+  {
+	("{COPY} $(SolutionDir)assets $(SolutionDir)bin/assets")
+  }
 
   filter "system:windows"
 	cppdialect "C++17"

@@ -35,6 +35,9 @@ namespace vr
 
 		GLFWwindow* GetNativeWindow();
 
+		static inline const int WIDTH = 1280;
+		static inline const int HEIGHT = 720;
+
 	private:
 
 		Window(const WindowProperties& properties);

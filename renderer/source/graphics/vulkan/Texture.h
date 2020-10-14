@@ -9,6 +9,7 @@ namespace vr
 	public:
 
 		Texture();
+		Texture(unsigned int binding);
 		~Texture();
 
 		/*
@@ -26,5 +27,6 @@ namespace vr
 		VkImageView mImageView = VK_NULL_HANDLE;
 		VkDeviceMemory mMemory = VK_NULL_HANDLE;
 		VkDescriptorImageInfo mImageInfo = {};
+		unsigned int mBinding;
 	};
 }

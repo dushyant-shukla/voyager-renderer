@@ -14,7 +14,9 @@ namespace vr
 	Application::Application(std::string name) :
 		mName(name),
 		mDepthBuffer()
-	{}
+	{
+		mInputManager = InputManager::GetInstance();
+	}
 
 	Application::~Application()
 	{}
@@ -33,6 +35,7 @@ namespace vr
 		}
 		catch (std::runtime_error& error)
 		{
+			Wait();
 			RENDERER_CRITICAL(error.what());
 		}
 	}
@@ -44,7 +47,10 @@ namespace vr
 		{
 			framerateController->FrameStart();
 			mWindow->Update();
+			mCamera.Update(framerateController->GetFrameTime());
+			eCamera.Update(framerateController->GetFrameTime());
 			Draw();
+			mInputManager->LateUpdate(framerateController->GetFrameTime());
 			framerateController->FrameEnd();
 		}
 

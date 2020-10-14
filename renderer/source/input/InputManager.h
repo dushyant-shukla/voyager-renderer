@@ -37,7 +37,9 @@ namespace vr {
 		bool IsMouseButtonPressed(const int& mouseButton);
 		bool IsMouseButtonReleased(const int& mouseButton);
 
+		void UpdateScrollOffset(const double& offsetX, const double& offsetY);
 		void UpdateCursorPosition(const double& positionX, const double& positionY);
+		glm::vec2 GetScrollOffset();
 		const glm::vec2& GetCursorPosition() const;
 		const double GetMousePositionX();
 		const double GetMousePositionY();
@@ -62,5 +64,6 @@ namespace vr {
 
 		glm::vec2 m_cursorPosition;
 		glm::vec2 m_cursorMaxPosition;
+		glm::vec2 m_scrollOffset;
 	};
 }

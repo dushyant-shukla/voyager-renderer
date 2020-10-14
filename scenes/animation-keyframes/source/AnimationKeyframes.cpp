@@ -1,10 +1,16 @@
 #include "AnimationKeyframes.h"
 #include "RendererState.h"
+#include "window/Window.h"
 
 namespace vr
 {
 	AnimationKeyframes::AnimationKeyframes(std::string name) : Application(name)
 	{
+		eCamera.type = EditingModeCamera::Type::look_at;
+		eCamera.matrices.flipY = true;
+		eCamera.SetPosition(glm::vec3(0.0f, 0.75f, -2.0f));
+		eCamera.SetRotation(glm::vec3(0.0f, 0.0f, 0.0f));
+		eCamera.SetPerspective(glm::radians(60.0f), (float)Window::WIDTH / Window::HEIGHT, 0.1f, 1024.0f);
 	}
 
 	AnimationKeyframes::~AnimationKeyframes()
@@ -27,22 +33,41 @@ namespace vr
 
 	void AnimationKeyframes::InitializeScene()
 	{
+		// do not change the order of setup calls
 		SetupTextureSampler();
-		LoadAssets();
+
 		SetupUniformBufferObjects();
-
-		mViewUBO.projectionViewMatrix = glm::perspective(glm::radians(45.0f),
-			(float)mSwapchain->mExtent.width / (float)mSwapchain->mExtent.height,
-			0.1f, 100.0f);
-		mViewUBO.projectionViewMatrix[1][1] *= -1;
-		mViewUBO.projectionViewMatrix *= glm::lookAt(glm::vec3(20.0f, 20.0f, 60.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-		glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
-		mPerModelData.model = model;
 
 		SetupDescriptorSets();
 		SetupPipeline();
+
+		LoadAssets();
+
+		mViewUBO.projectionViewMatrix = eCamera.matrices.projection;
+		mViewUBO.projectionViewMatrix *= eCamera.matrices.view;
+		mViewUBO.viewPosition = eCamera.orientation.viewPosition;
+
+		// NATHAN
+		glm::mat4 model(1.0f);/* = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));*/
+		model = glm::translate(model, glm::vec3(0.0, 0.0, 0.0));
+		model = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f)); // nathan
+		mPerModelData.model = model;
+
+		// BLADE
+		//glm::mat4 model(1.0f);/* = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));*/
+		//model = glm::translate(model, glm::vec3(0.0, 0.0, 0.0));
+		//model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		//model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
+		//mPerModelData.model = model;
+
+		// wolf
+		//glm::mat4 model(1.0f);/* = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));*/
+		//model = glm::translate(model, glm::vec3(0.0, 0.0, 0.0));
+		//model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		//model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
+		//mPerModelData.model = model;
+
 		isReady = true;
 	}
 
@@ -94,9 +119,9 @@ namespace vr
 		VkPresentInfoKHR presentInfo = {};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		presentInfo.waitSemaphoreCount = 1;																	// number of semaphore to wait on
-		presentInfo.pWaitSemaphores = &mSyncPrimitives.mRenderFinished[mCurrentFrame];			// semaphore to wait on
+		presentInfo.pWaitSemaphores = &mSyncPrimitives.mRenderFinished[mCurrentFrame];						// semaphore to wait on
 		presentInfo.swapchainCount = 1;																		// number of swapchain to present to
-		presentInfo.pSwapchains = &mSwapchain->mSwapchain;										// swapchain to present to
+		presentInfo.pSwapchains = &mSwapchain->mSwapchain;													// swapchain to present to
 		presentInfo.pImageIndices = &imageIndex;															// index of image in swapchain to present
 
 		result = vkQueuePresentKHR(mDevice->GetLogicalDevice().presentationQueue, &presentInfo);
@@ -134,7 +159,8 @@ namespace vr
 		//								1. descriptor layout
 		//								2. push constant for model matrix
 		mPipelineLayouts.pipelineLayout
-			.AddDescriptorSetLayout(mDescriptors.layout.GetVkDescriptorSetLayout())
+			.AddDescriptorSetLayout(mDescriptors.uniformBufferLayout.GetVkDescriptorSetLayout())
+			.AddDescriptorSetLayout(mDescriptors.textureLayout.mLayout)
 			.AddPushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(mPerModelData))
 			.Configure();
 
@@ -148,7 +174,14 @@ namespace vr
 			.ConfigureViewport(mSwapchain->GetSwapchainExtent())
 			.ConfigureRasterizer(VK_FALSE, VK_FALSE, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f, 0, nullptr)
 			.ConfigureMultiSampling(VK_SAMPLE_COUNT_1_BIT, VK_FALSE, 1.0f, nullptr, 0, VK_FALSE, VK_FALSE, nullptr)
-			.AddColorBlendAttachmentState(VK_FALSE, VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD, VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT)
+			.AddColorBlendAttachmentState(VK_TRUE,
+				VK_BLEND_FACTOR_SRC_ALPHA,
+				VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+				VK_BLEND_OP_ADD,
+				VK_BLEND_FACTOR_SRC_ALPHA,
+				VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+				VK_BLEND_OP_SUBTRACT,
+				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT)
 			.ConfigureColorBlend(nullptr, 0, VK_FALSE, VK_LOGIC_OP_COPY, 0.0f, 0.0f, 0.0f, 0.0f)
 			.Configure(mPipelineLayouts.pipelineLayout.GetVulkanPipelineLayout(), mRenderpass.GetVulkanRenderPass(), 0, 0);
 	}
@@ -211,13 +244,23 @@ namespace vr
 
 			for (size_t j = 0; j < currentModel->meshes.size(); ++j)
 			{
+				vrassimp::Mesh* currentMesh = currentModel->meshes[j];
+
+				std::vector<VkDescriptorSet> descriptorSets = { mDescriptors.uniformBufferSets[currentImage] }; //, currentMesh->mDescriptorSets[0] };
+
+				if (!currentMesh->textures.empty())
+				{
+					descriptorSets.push_back(currentMesh->mDescriptorSets[0]);
+				}
+
 				vkCmdBindDescriptorSets(mGraphicsCommandBuffers[currentImage],
 					VK_PIPELINE_BIND_POINT_GRAPHICS,
 					mPipelineLayouts.pipelineLayout.GetVulkanPipelineLayout(),
 					0,
-					1, &mDescriptors.sets[currentImage], 0, nullptr);
+					static_cast<unsigned int>(descriptorSets.size()),
+					descriptorSets.data(), 0, nullptr);
 
-				vrassimp::Mesh* currentMesh = currentModel->meshes[j];
+				//vrassimp::Mesh* currentMesh = currentModel->meshes[j];
 				currentMesh->Draw(mGraphicsCommandBuffers[currentImage]); // bind vertex and index buffer, cmdIndexedDraw()
 			}
 		}
@@ -233,36 +276,29 @@ namespace vr
 
 	void AnimationKeyframes::SetupDescriptorSets()
 	{
-		mDescriptors.pool
+		mDescriptors.uniformBufferPool
 			.AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
-			.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
-			.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
-			.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
 			.Create(0, static_cast<unsigned> (mSwapchain->GetSwapchainImages().size()), nullptr);
 
-		mDescriptors.layout
+		mDescriptors.uniformBufferLayout
 			.AddLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr)				// view projection ubo
-			.AddLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr)	// sampler diffuse
-			.AddLayoutBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr)	// sampler specular
-			.AddLayoutBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr)	// sampler emission
 			.Create(0, nullptr);
 
 		// Allocating descriptor sets
-		std::vector<VkDescriptorSetLayout> layouts(mSwapchain->GetSwapchainImages().size(), mDescriptors.layout.GetVkDescriptorSetLayout());
+		std::vector<VkDescriptorSetLayout> layouts(mSwapchain->GetSwapchainImages().size(), mDescriptors.uniformBufferLayout.GetVkDescriptorSetLayout());
 		VkDescriptorSetAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		allocInfo.descriptorPool = mDescriptors.pool.GetVulkanDescriptorPool();
+		allocInfo.descriptorPool = mDescriptors.uniformBufferPool.GetVulkanDescriptorPool();
 		allocInfo.descriptorSetCount = static_cast<uint32_t>(mSwapchain->GetSwapchainImages().size());
 		allocInfo.pSetLayouts = layouts.data();
-		mDescriptors.sets.resize(mSwapchain->GetSwapchainImages().size());
-		CHECK_RESULT(vkAllocateDescriptorSets(mDevice->GetLogicalDevice().device, &allocInfo, mDescriptors.sets.data()), "RESOURCE ALLOCATION FAILED: DESCRIPTOR SETS");
+		mDescriptors.uniformBufferSets.resize(mSwapchain->GetSwapchainImages().size());
+		CHECK_RESULT(vkAllocateDescriptorSets(mDevice->GetLogicalDevice().device, &allocInfo, mDescriptors.uniformBufferSets.data()), "RESOURCE ALLOCATION FAILED: DESCRIPTOR SETS");
 		RENDERER_DEBUG("RESOURCE ALLOCATED: DESCRIPTOR SETS");
 
 		// configuring allocated descriptor sets with buffer and image information
-		for (size_t i = 0; i < mDescriptors.sets.size(); ++i)
+		std::vector<VkWriteDescriptorSet> descriptorWrites = {};
+		for (size_t i = 0; i < mDescriptors.uniformBufferSets.size(); ++i)
 		{
-			std::vector<VkWriteDescriptorSet> descriptorWrites = {};
-
 			VkDescriptorBufferInfo bufferInfo = {};
 			bufferInfo.buffer = mViewUboBuffers[i];
 			bufferInfo.offset = 0;
@@ -270,7 +306,7 @@ namespace vr
 
 			VkWriteDescriptorSet writeBufferInfo = {};
 			writeBufferInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			writeBufferInfo.dstSet = mDescriptors.sets[i];
+			writeBufferInfo.dstSet = mDescriptors.uniformBufferSets[i];
 			writeBufferInfo.dstBinding = 0;
 			writeBufferInfo.dstArrayElement = 0;
 			writeBufferInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -280,25 +316,20 @@ namespace vr
 			writeBufferInfo.pTexelBufferView = nullptr; // Optional
 
 			descriptorWrites.push_back(writeBufferInfo);
-
-			for (size_t j = 0; j < imageInfos.size(); ++j)
-			{
-				VkWriteDescriptorSet writeImageInfo = {};
-				writeImageInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				writeImageInfo.dstSet = mDescriptors.sets[i];
-				writeImageInfo.dstBinding = imageInfos[j].binding;
-				writeImageInfo.dstArrayElement = 0;
-				writeImageInfo.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				writeImageInfo.descriptorCount = 1;
-				writeImageInfo.pBufferInfo = nullptr;
-				writeImageInfo.pImageInfo = &imageInfos[j].info; // Optional
-				writeImageInfo.pTexelBufferView = nullptr; // Optional
-
-				descriptorWrites.push_back(writeImageInfo);
-			}
-
-			vkUpdateDescriptorSets(LOGICAL_DEVICE, static_cast<unsigned int>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 		}
+		vkUpdateDescriptorSets(LOGICAL_DEVICE, static_cast<unsigned int>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+
+		mDescriptors.texturePool
+			.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
+			.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
+			.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
+			.Create(0, 50, nullptr); // it will be read only resource, a descriptor set does not need to have exclusive write privilege
+
+		mDescriptors.textureLayout
+			.AddLayoutBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr)	// sampler diffuse
+			.AddLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr)	// sampler specular
+			.AddLayoutBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr)	// sampler emission
+			.Create(0, nullptr);
 	}
 
 	void AnimationKeyframes::SetupUniformBufferObjects()
@@ -326,7 +357,17 @@ namespace vr
 		vrassimp::Model::ModelCreateInfo modelCreateInfo(1.0, 1.0f, 0.0f);
 
 		vrassimp::Model* model = new vrassimp::Model();
-		model->LoadFromFile("wolf\\scene.gltf", &modelCreateInfo);
+		//model->LoadFromFile("blade\\scene.gltf", &modelCreateInfo);
+		//model->LoadFromFile("wolf\\scene.gltf", &modelCreateInfo);
+		//model->LoadFromFile("alpha-wolf\\alpha-wolf.fbx", &modelCreateInfo);
+		//model->LoadFromFile("wolverine\\wolverine.fbx", &modelCreateInfo);
+		//model->LoadFromFile("wolverine\\scene.gltf", &modelCreateInfo);
+		//model->LoadFromFile("alpha-wolf\\scene.gltf", &modelCreateInfo);
+		//model->LoadFromFile("jumping.fbx", &modelCreateInfo);
+		//model->LoadFromFile("wolf-ii\\Wolf_dae.dae", &modelCreateInfo);
+		//model->LoadFromFile("iron-man-fortnite\\scene.gltf", &modelCreateInfo);
+		model->LoadFromFile("nathan\\scene.gltf", &modelCreateInfo); // works - loads correctly
+		//model->LoadFromFile("myth-creature\\myth-creature.fbx", &modelCreateInfo); // works - loads correctly
 		mModels.push_back(model);
 
 		/*
@@ -336,40 +377,57 @@ namespace vr
 		{
 			for (size_t meshIndex = 0; meshIndex < mModels[modelIndex]->meshes.size(); ++meshIndex)
 			{
-				mModels[modelIndex]->meshes[meshIndex]->buffers.vertex.Create(mModels[modelIndex]->meshes[meshIndex]->vertices, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-				mModels[modelIndex]->meshes[meshIndex]->buffers.index.Create(mModels[modelIndex]->meshes[meshIndex]->indices, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+				vrassimp::Mesh* currentMesh = mModels[modelIndex]->meshes[meshIndex];
+				currentMesh->buffers.vertex.Create(currentMesh->vertices, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+				currentMesh->buffers.index.Create(currentMesh->indices, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
-				for (size_t textureIndex = 0; textureIndex < mModels[modelIndex]->meshes[meshIndex]->textures.size(); ++textureIndex)
+				if (!currentMesh->textures.empty())
 				{
-					vrassimp::Texture* texture = mModels[modelIndex]->meshes[meshIndex]->textures[textureIndex];
-					Texture* t;
-					ImageInfo info;
-					switch (texture->type)
+					// allocate a descritor set to hold per mesh data (texture data for now...)
+					currentMesh->mDescriptorSets.Setup(mDescriptors.textureLayout.mLayout, mDescriptors.texturePool.mPool, 1);
+					std::vector<VkWriteDescriptorSet> descriptorWrites;
+					descriptorWrites.reserve(currentMesh->textures.size());
+
+					for (size_t textureIndex = 0; textureIndex < currentMesh->textures.size(); ++textureIndex)
 					{
-					case vrassimp::Texture::Type::DIFFUSE:
-						t = new Texture();
-						t->LoadFromFile(texture->path.c_str(), mSamplers.diffuse.GetVulkanSampler());
-						texture->texture = t;
-						info = { 1, t->mImageInfo };
-						imageInfos.push_back(info);
-						break;
-					case vrassimp::Texture::Type::SPECULAR:
-						t = new Texture();
-						t->LoadFromFile(texture->path.c_str(), mSamplers.specular.GetVulkanSampler());
-						texture->texture = t;
-						info = { 2, t->mImageInfo };
-						imageInfos.push_back(info);
-						break;
-					case vrassimp::Texture::Type::EMISSIVE:
-						t = new Texture();
-						t->LoadFromFile(texture->path.c_str(), mSamplers.emission.GetVulkanSampler());
-						texture->texture = t;
-						info = { 3, t->mImageInfo };
-						imageInfos.push_back(info);
-						break;
-					default:
-						break;
+						vrassimp::Texture* texture = mModels[modelIndex]->meshes[meshIndex]->textures[textureIndex];
+						Texture* t = nullptr;
+						switch (texture->type)
+						{
+						case vrassimp::Texture::Type::DIFFUSE:
+							t = new Texture(0);
+							t->LoadFromFile(texture->path.c_str(), mSamplers.diffuse.GetVulkanSampler());
+							texture->texture = t;
+							break;
+						case vrassimp::Texture::Type::SPECULAR:
+							t = new Texture(1);
+							t->LoadFromFile(texture->path.c_str(), mSamplers.specular.GetVulkanSampler());
+							texture->texture = t;
+							break;
+						case vrassimp::Texture::Type::EMISSIVE:
+							t = new Texture(2);
+							t->LoadFromFile(texture->path.c_str(), mSamplers.emission.GetVulkanSampler());
+							texture->texture = t;
+							break;
+						default:
+							break;
+						}
+
+						if (t != nullptr)
+						{
+							VkWriteDescriptorSet writeImageInfo = {};
+							writeImageInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+							writeImageInfo.dstSet = currentMesh->mDescriptorSets[0];
+							writeImageInfo.dstBinding = t->mBinding;
+							writeImageInfo.dstArrayElement = 0;
+							writeImageInfo.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+							writeImageInfo.descriptorCount = 1;
+							writeImageInfo.pImageInfo = &t->mImageInfo;
+
+							descriptorWrites.push_back(writeImageInfo);
+						}
 					}
+					vkUpdateDescriptorSets(LOGICAL_DEVICE, static_cast<unsigned int>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 				}
 			}
 		}
@@ -377,6 +435,10 @@ namespace vr
 
 	void AnimationKeyframes::UpdateUniformBuffers(const unsigned int& imageIndex)
 	{
+		mViewUBO.projectionViewMatrix = eCamera.matrices.projection;
+		mViewUBO.projectionViewMatrix *= eCamera.matrices.view;
+		mViewUBO.viewPosition = eCamera.orientation.viewPosition;
+
 		void* data;
 		vkMapMemory(LOGICAL_DEVICE, mViewUboBuffersMemory[imageIndex], 0, sizeof(mViewUBO), 0, &data);
 		memcpy(data, &mViewUBO, sizeof(mViewUBO));

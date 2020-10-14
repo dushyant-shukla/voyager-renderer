@@ -22,7 +22,7 @@ namespace vr
 
 		const VkDescriptorSetLayout& GetVkDescriptorSetLayout();
 
-	private:
+	public:
 
 		std::vector<VkDescriptorSetLayoutBinding> mLayoutBindings;
 

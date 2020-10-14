@@ -19,6 +19,7 @@
 #include "Texture.h"
 #include "maths/Quaternions.h"
 #include "Buffer.h"
+#include "DescriptorSets.h"
 
 const unsigned int MAX_BONES = 66;
 const unsigned int MAX_BONES_PER_VERTX = 4;
@@ -221,6 +222,11 @@ namespace vrassimp
 		std::vector<unsigned int> indices;
 		std::vector<Texture*> textures;
 
+		/*
+			Each mesh must own its descriptor set to send its unique data(mostly textures for now) to shader
+		*/
+		vr::DescriptorSets mDescriptorSets;
+
 		struct
 		{
 			vr::Buffer<Vertex> vertex;
@@ -271,7 +277,7 @@ namespace vrassimp
 	private:
 
 		// utility constant
-		static inline const int DEFAUTL_FLAGS = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | /*aiProcess_ConvertToLeftHanded |*/ aiProcess_GlobalScale;
+		static inline const int DEFAUTL_FLAGS = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_ConvertToLeftHanded | aiProcess_GlobalScale;
 		static inline const aiVector3D Zero3D = aiVector3D(0.0f, 0.0f, 0.0f);
 	};
 }

@@ -98,9 +98,21 @@ namespace vr {
 		m_cursorPosition.y = (float)positionY;
 	}
 
+	void InputManager::UpdateScrollOffset(const double& offsetX, const double& offsetY) {
+		m_scrollOffset.x = (float)offsetX;
+		m_scrollOffset.y = (float)offsetY;
+	}
+
 	const glm::vec2& InputManager::GetCursorPosition() const
 	{
 		return m_cursorPosition;
+	}
+
+	glm::vec2 InputManager::GetScrollOffset()
+	{
+		glm::vec2 temp = glm::vec2(0.0f);
+		std::swap(temp, m_scrollOffset);
+		return temp;
 	}
 
 	const double InputManager::GetMousePositionX()

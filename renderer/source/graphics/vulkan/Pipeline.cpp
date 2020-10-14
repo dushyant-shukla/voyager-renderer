@@ -168,14 +168,32 @@ namespace vr
 		const VkBlendOp& alphaBlendOp, VkColorComponentFlags colorWriteMask)
 	{
 		VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
-		colorBlendAttachment.colorWriteMask = colorWriteMask;
-		colorBlendAttachment.blendEnable = blendEnable;
-		colorBlendAttachment.srcColorBlendFactor = srcColorBlendFactor; // Optional
-		colorBlendAttachment.dstColorBlendFactor = dstColorBlendFactor; // Optional
-		colorBlendAttachment.colorBlendOp = colorBlendOp; // Optional
-		colorBlendAttachment.srcAlphaBlendFactor = srcAlphaBlendFactor; // Optional
-		colorBlendAttachment.dstAlphaBlendFactor = dstAlphaBlendFactor; // Optional
-		colorBlendAttachment.alphaBlendOp = alphaBlendOp; // Optional
+		//colorBlendAttachment.colorWriteMask = colorWriteMask;
+		//colorBlendAttachment.blendEnable = blendEnable;
+		//colorBlendAttachment.srcColorBlendFactor = srcColorBlendFactor; // Optional
+		//colorBlendAttachment.dstColorBlendFactor = dstColorBlendFactor; // Optional
+		//colorBlendAttachment.colorBlendOp = colorBlendOp; // Optional
+		//colorBlendAttachment.srcAlphaBlendFactor = srcAlphaBlendFactor; // Optional
+		//colorBlendAttachment.dstAlphaBlendFactor = dstAlphaBlendFactor; // Optional
+		//colorBlendAttachment.alphaBlendOp = alphaBlendOp; // Optional
+
+		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		colorBlendAttachment.blendEnable = VK_TRUE;
+		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA; // Optional
+		//colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_DST_ALPHA; // Optional
+		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA; // Optional
+		//colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA; // Optional
+		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD; // Optional
+		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
+		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
+		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; // Optional
+
+		//srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+		//	dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+		//	colorBlendOp = VK_BLEND_OP_ADD,
+		//	srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+		//	dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+		//	alphaBlendOp = VK_BLEND_OP_ADD
 
 		mColorBlendAttachments.push_back(colorBlendAttachment);
 
@@ -188,8 +206,8 @@ namespace vr
 	{
 		mColorBlending = {};
 		mColorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-		mColorBlending.logicOpEnable = VK_FALSE;
-		mColorBlending.logicOp = VK_LOGIC_OP_COPY; // Optional
+		mColorBlending.logicOpEnable = logicOpEnable;
+		mColorBlending.logicOp = logicOp; // Optional
 		mColorBlending.attachmentCount = static_cast<unsigned int>(mColorBlendAttachments.size());
 		mColorBlending.pAttachments = mColorBlendAttachments.empty() ? nullptr : mColorBlendAttachments.data();
 		mColorBlending.blendConstants[0] = blendConstant0; // Optional

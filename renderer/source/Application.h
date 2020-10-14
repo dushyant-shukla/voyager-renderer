@@ -9,6 +9,9 @@
 #include "graphics/vulkan/CommandBuffers.h"
 #include "graphics/vulkan/CommandPool.h"
 #include "graphics/vulkan/SynchronizationPrimitives.h"
+#include "camera/Camera.h"
+#include "input/InputManager.h"
+#include "camera/EditingModeCamera.h"
 
 namespace vr
 {
@@ -83,6 +86,10 @@ namespace vr
 		VkPhysicalDeviceFeatures enabledFeatures{};
 
 		bool isReady = false;
+
+		Camera mCamera;
+		EditingModeCamera eCamera;
+		InputManager* mInputManager;
 
 	private:
 

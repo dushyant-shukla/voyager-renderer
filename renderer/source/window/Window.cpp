@@ -103,6 +103,11 @@ namespace vr
 			properties.mInput->UpdateCursorPosition(positionX, positionY);
 			});
 
+		glfwSetScrollCallback(mWindow, [](GLFWwindow* window, double xOffset, double yOffset) {
+			WindowProperties& properties = *(WindowProperties*)glfwGetWindowUserPointer(window);
+			properties.mInput->UpdateScrollOffset(xOffset, yOffset);
+			});
+
 		glfwSetWindowSizeCallback(mWindow, [](GLFWwindow* window, int width, int height)
 			{
 				WindowProperties& properties = *(WindowProperties*)glfwGetWindowUserPointer(window);

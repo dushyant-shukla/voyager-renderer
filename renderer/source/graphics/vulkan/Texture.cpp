@@ -10,6 +10,10 @@ namespace vr
 {
 	Texture::Texture() {}
 
+	Texture::Texture(unsigned int binding) : mBinding(binding)
+	{
+	}
+
 	Texture::~Texture()
 	{
 		if (mImage != VK_NULL_HANDLE)

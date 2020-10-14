@@ -18,7 +18,7 @@ namespace vr
 
 		const VkDescriptorPool& GetVulkanDescriptorPool();
 
-	private:
+	public:
 
 		VkDescriptorPool mPool = VK_NULL_HANDLE;
 		std::vector<VkDescriptorPoolSize> mPoolSizes;

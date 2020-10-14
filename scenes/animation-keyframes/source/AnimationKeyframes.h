@@ -44,9 +44,19 @@ namespace vr
 
 		struct
 		{
-			DescriptorPool pool;
-			DescriptorSetLayout layout;
-			std::vector<VkDescriptorSet> sets;
+			/*
+				Uniform buffer data would be same for all geometries drawn in one frame
+			*/
+			DescriptorPool uniformBufferPool;
+			DescriptorSetLayout uniformBufferLayout;
+			std::vector<VkDescriptorSet> uniformBufferSets;
+
+			/*
+				Textures will change on per mesh basis.
+				A descriptor set will be owned by each mesh with common pool and layout.
+			*/
+			DescriptorPool texturePool;
+			DescriptorSetLayout textureLayout;
 		} mDescriptors;
 
 		struct

@@ -1,49 +1,110 @@
 #include "Camera.h"
+#include "input/InputManager.h"
+#include "window/Window.h"
 
-Camera::Camera()
+namespace vr
 {
-	position = glm::vec3(0.0f, -1.0f, 0.0f);
-}
+	Camera::Camera()
+	{
+		rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+		position = glm::vec3(0.0f, 0.0f, 3.0f);
+		up = glm::vec3(0.0f, 1.0f, 0.0f);
+		front = glm::vec3(0.0f, 0.0f, -1.0f);
+		speed = 5.0f;
+		yaw = -90.0;
+		pitch = 0.0;
 
-Camera::~Camera()
-{
-}
+		fov = 45.0f;
+		znear = 0.1f;
+		zfar = 100.0f;
 
-void Camera::UpdateViewMatrix()
-{
-	glm::mat4 rotM = glm::mat4(1.0f);
-	glm::mat4 transM;
+		view = glm::lookAt(position, position + front, up);
+		project = glm::perspective(glm::radians(fov), (float)Window::WIDTH / Window::HEIGHT, znear, zfar);
 
-	rotM = glm::rotate(rotM, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-	rotM = glm::rotate(rotM, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-	rotM = glm::rotate(rotM, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+		mInput = InputManager::GetInstance();
 
-	transM = glm::translate(glm::mat4(1.0f), position);
+		firstMove = true;
+		currentCursorPosition = glm::vec2(0.0f, 0.0f);
+	}
 
-	view = rotM * transM;
+	Camera::~Camera()
+	{
+	}
 
-	updated = true;
-}
+	void Camera::UpdateViewMatrix()
+	{
+		glm::mat4 rotM = glm::mat4(1.0f);
+		glm::mat4 transM;
 
-void Camera::Update(float deltaTime)
-{
-	updated = false;
+		rotM = glm::rotate(rotM, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+		rotM = glm::rotate(rotM, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+		rotM = glm::rotate(rotM, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
-	camFront.x = -cos(glm::radians(rotation.x)) * sin(glm::radians(rotation.y));
-	camFront.y = sin(glm::radians(rotation.x));
-	camFront.z = cos(glm::radians(rotation.x)) * cos(glm::radians(rotation.y));
-	camFront = glm::normalize(camFront);
+		transM = glm::translate(glm::mat4(1.0f), position);
 
-	moveSpeed = deltaTime * movementSpeed;
+		view = rotM * transM;
 
-	if (keys.up)
-		position += camFront * moveSpeed;
-	if (keys.down)
-		position -= camFront * moveSpeed;
-	if (keys.left)
-		position -= glm::normalize(glm::cross(camFront, glm::vec3(0.0f, 1.0f, 0.0f))) * moveSpeed;
-	if (keys.right)
-		position += glm::normalize(glm::cross(camFront, glm::vec3(0.0f, 1.0f, 0.0f))) * moveSpeed;
+		bool updated = true;
+	}
 
-	UpdateViewMatrix();
+	void Camera::Update(float deltaTime)
+	{
+		float adjustedSpeed = speed * deltaTime;
+
+		if (mInput->IsKeyPressed(KEY_W))
+		{
+			position += adjustedSpeed * front;
+		}
+		if (mInput->IsKeyPressed(KEY_S))
+		{
+			position -= adjustedSpeed * front;
+		}
+		if (mInput->IsKeyPressed(KEY_A))
+		{
+			position -= glm::normalize(glm::cross(front, up)) * adjustedSpeed;
+		}
+		if (mInput->IsKeyPressed(KEY_D))
+		{
+			position += glm::normalize(glm::cross(front, up)) * adjustedSpeed;
+		}
+
+		currentCursorPosition = mInput->GetCursorPosition();
+		if (firstMove)
+		{
+			lastCursorPosition = currentCursorPosition;
+			firstMove = false;
+		}
+
+		float xOffset = currentCursorPosition.x - lastCursorPosition.x;
+		float yOffset = lastCursorPosition.y - currentCursorPosition.y;
+
+		const float senstivity = 0.05f;
+		xOffset *= senstivity;
+		yOffset *= senstivity;
+
+		yaw += xOffset;
+		pitch += yOffset;
+
+		pitch = pitch > PITCH_MAX ? PITCH_MAX : pitch;
+		pitch = pitch < PITCH_MIN ? PITCH_MIN : pitch;
+
+		glm::vec3 direction;
+		direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		direction.y = sin(glm::radians(pitch));
+		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		front = glm::normalize(direction);
+
+		if (mInput->IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+		{
+			rotation.x += xOffset * rotationSpeed;
+			rotation.y -= yOffset * rotationSpeed;
+			rotation += glm::vec3(yOffset * rotationSpeed, -xOffset * rotationSpeed, 0.0f);
+		}
+
+		view = glm::lookAt(position, position + front, up);
+		project = glm::perspective(glm::radians(fov), (float)Window::WIDTH / Window::HEIGHT, znear, zfar);
+
+		lastCursorPosition.x = currentCursorPosition.x;
+		lastCursorPosition.y = currentCursorPosition.y;
+	}
 }
