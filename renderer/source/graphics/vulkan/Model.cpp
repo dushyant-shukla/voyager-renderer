@@ -149,6 +149,14 @@ namespace vrassimp
 		mAnimation->mScene = Importer.GetOrphanedScene();
 		mAnimation->SetAnimation(0);
 		mAnimation->mGlobalInverseTransform = scene->mRootNode->mTransformation;
+
+		for (size_t i = 0; i < scene->mNumAnimations; ++i)
+		{
+			double start = (i == 0 ? 0 : mAnimation->animationTimes[i - 1].end);
+			double end = (start + scene->mAnimations[i]->mDuration / scene->mAnimations[i]->mTicksPerSecond) - 0.1f;
+			mAnimation->animationTimes.emplace_back(scene->mAnimations[i]->mDuration, std::string(scene->mAnimations[i]->mName.data), scene->mAnimations[i]->mTicksPerSecond, start, end);
+		}
+
 		if (scene->mAnimations[0]->mTicksPerSecond != 0.0)
 		{
 			mAnimation->mTicksPerSecond = scene->mAnimations[0]->mTicksPerSecond;
@@ -157,8 +165,6 @@ namespace vrassimp
 		{
 			mAnimation->mTicksPerSecond = 25.0f;
 		}
-
-		//mAnimation->ProcessNode(scene->mRootNode, scene);
 
 		/*
 			Process animation data for all meshes here
@@ -195,7 +201,7 @@ namespace vrassimp
 			/*
 				Add bone-id(s) and weight(s) for each mesh vertex.
 			*/
-			if (isAnimationAvailable)
+			if (mAnimation && !mAnimation->mBones[meshIndex].empty())//isAnimationAvailable)
 			{
 				for (unsigned int boneIndex = 0; boneIndex < MAX_BONES_PER_VERTX; ++boneIndex)
 				{
@@ -321,19 +327,6 @@ namespace vrassimp
 		THROW("ANIMATION FAILURE: INVALID INDEX PASSED");
 	}
 
-	//void Animation::ProcessNode(aiNode* node, const aiScene* scene)
-	//{
-	//	mBones.resize(scene->mNumMeshes);
-	//	for (int i = 0; i < scene->mNumMeshes; ++i)
-	//	{
-	//		aiMesh* mesh = scene->mMeshes[i];
-	//		if (mesh->mNumBones > 0)
-	//		{
-	//			ProcessMesh(i, mesh, scene);
-	//		}
-	//	}
-	//}
-
 	void Animation::ProcessMesh(int meshIndex, aiMesh* mesh, const aiScene* scene)
 	{
 		mBones[meshIndex].resize(mesh->mNumVertices);
@@ -373,14 +366,13 @@ namespace vrassimp
 
 	void Animation::BoneTransform(double seconds, std::vector<aiMatrix4x4>& transforms)
 	{
-		aiMatrix4x4 identityMatrix;
-
 		double timeInTicks = seconds * mTicksPerSecond;
-		float animationTime = fmod(timeInTicks, mScene->mAnimations[0]->mDuration);
+		float animationTime = fmod(timeInTicks, (float)mScene->mAnimations[currentIndex]->mDuration);
 
 		tempCount.clear();
-		tempCount.resize(100);
+		tempCount.resize(MAX_BONES);
 
+		aiMatrix4x4 identityMatrix = aiMatrix4x4();
 		ReadNodeHierarchy(animationTime, mScene->mRootNode, identityMatrix);
 
 		transforms.resize(mBoneCount);
@@ -397,7 +389,7 @@ namespace vrassimp
 	{
 		std::string nodeName(parentNode->mName.data);
 
-		const aiAnimation* animation = mScene->mAnimations[0];
+		const aiAnimation* animation = mScene->mAnimations[currentIndex];
 		aiMatrix4x4 nodeTransform(parentNode->mTransformation);
 
 		const aiNodeAnim* nodeAnimation = FindNodeAnim(animation, nodeName);

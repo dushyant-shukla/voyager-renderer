@@ -14,7 +14,7 @@ namespace vr
 
 		//animationTimer.emplace_back(0.0f, 2233.33325f); // nathan
 
-		animationTimer.emplace_back(0.0f, 99.0f); // wolverine
+		//animationTimer.emplace_back(0.0f, 99.0f); // wolverine
 
 		//animationTimer.emplace_back(0.0f, 95.99f);
 		//animationTimer.emplace_back(96.0f, 191.99f);
@@ -64,8 +64,9 @@ namespace vr
 		glm::mat4 model(1.0f);/* = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));*/
 		model = glm::translate(model, glm::vec3(0.0, 0.0, 0.0));
 		model = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.50f)); // tiger
 		//model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f)); // nathan
-		model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f)); // nathan
+		//model = glm::scale(model, glm::vec3(3.00f, 3.0f, 3.0f)); // spidey
 		mPerModelData.model = model;
 
 		// BLADE
@@ -89,7 +90,7 @@ namespace vr
 	{
 	}
 
-	void AnimationKeyframes::Draw()
+	void AnimationKeyframes::Draw(const double& frametime)
 	{
 		// 1# Get the next available image to draw to and set something to signal when the image is ready to draw to (a semaphore)
 		// 2# Submit command buffer to queue for execution, making sure it waits for the image to be available before drawing and signal when it has finished rendering to the image
@@ -147,6 +148,8 @@ namespace vr
 		//vkQueueWaitIdle(mDevice->GetLogicalDevice().presentationQueue);
 		// Get next frame (% keeps value below MAX_FRAME_DRAWS)
 		mCurrentFrame = (mCurrentFrame + 1) % SynchronizationPrimitives::MAX_FRAME_DRAWS;
+
+		timer += frametime * 0.75;
 	}
 
 	VkPhysicalDeviceFeatures AnimationKeyframes::CheckRequiredFeatures()
@@ -380,9 +383,10 @@ namespace vr
 		//model->LoadFromFile("jumping.fbx", &modelCreateInfo);
 		//model->LoadFromFile("wolf-ii\\Wolf_dae.dae", &modelCreateInfo);
 		//model->LoadFromFile("iron-man-fortnite\\scene.gltf", &modelCreateInfo);
-		model->LoadFromFile("nathan\\scene.gltf", &modelCreateInfo); // works - loads correctly
-		//model->LoadFromFile("bengal-tiger\\tiger.fbx", &modelCreateInfo); // works - loads correctly
+		//model->LoadFromFile("nathan\\scene.gltf", &modelCreateInfo); // works - loads correctly
+		model->LoadFromFile("bengal-tiger\\tiger.fbx", &modelCreateInfo); // works - loads correctly
 		//model->LoadFromFile("myth-creature\\myth-creature.fbx", &modelCreateInfo); // works - loads correctly
+		//model->LoadFromFile("spiderman\\spiderman.fbx", &modelCreateInfo); // works - loads correctly
 		mModels.push_back(model);
 
 		/*
@@ -464,14 +468,15 @@ namespace vr
 
 	void AnimationKeyframes::UpdateBoneTransforms()
 	{
-		timer += 0.2f;
-		if (timer > animationTimer[animationCount].end)
-		{
-			timer = animationTimer[animationCount].start;
-		}
-
 		for (unsigned int i = 0; i < mModels.size(); ++i)
 		{
+			vrassimp::Animation* animation = mModels[i]->mAnimation;
+			if (timer > animation->animationTimes[animation->currentIndex].end)
+			{
+				animation->currentIndex = (animation->currentIndex + 1) % animation->animationTimes.size();
+				RENDERER_INFO("CURRENT ANIMATION: {0}", animation->currentIndex);
+				timer = animation->animationTimes[animation->currentIndex].start;
+			}
 			mModels[i]->mAnimation->BoneTransform(timer, boneTransforms);
 		}
 

@@ -15,7 +15,7 @@ namespace vr
 	void ModelLoading::CleanupScene()
 	{
 	}
-	void ModelLoading::Draw()
+	void ModelLoading::Draw(const double& frametime)
 	{
 	}
 	VkPhysicalDeviceFeatures ModelLoading::CheckRequiredFeatures()

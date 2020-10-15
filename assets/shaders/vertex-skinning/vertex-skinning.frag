@@ -20,5 +20,5 @@ void main()
     //frag_color = texture(texture_sampler, fs_in.uv);
     frag_color = texture(texture_sampler, fs_in.uv);
     //frag_color = vec4(fs_in.color, 1.0);
-    if (frag_color.w < 0.6) { discard; }
+    //if (frag_color.w < 0.6) { discard; }
 }

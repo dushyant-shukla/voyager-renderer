@@ -110,6 +110,7 @@ namespace vr {
 
 	glm::vec2 InputManager::GetScrollOffset()
 	{
+		// TODO: This is only a quick fix for endless zoom problem. Think of a better solution.
 		glm::vec2 temp = glm::vec2(0.0f);
 		std::swap(temp, m_scrollOffset);
 		return temp;

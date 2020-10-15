@@ -82,7 +82,7 @@ namespace vr
 	{
 	}
 
-	void VulkanBasics::Draw()
+	void VulkanBasics::Draw(const double& frametime)
 	{
 		// 1# Get the next available image to draw to and set something to signal when the image is ready to draw to (a semaphore)
 		// 2# Submit command buffer to queue for execution, making sure it waits for the image to be available before drawing and signal when it has finished rendering to the image

@@ -26,7 +26,7 @@ namespace vr
 
 		virtual void InitializeScene() override;
 		virtual void CleanupScene() override;
-		virtual void Draw() override;
+		virtual void Draw(const double& frametime) override;
 		virtual VkPhysicalDeviceFeatures CheckRequiredFeatures() override;
 
 	private:

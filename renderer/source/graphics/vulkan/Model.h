@@ -21,7 +21,7 @@
 #include "Buffer.h"
 #include "DescriptorSets.h"
 
-const unsigned int MAX_BONES = 66;
+const unsigned int MAX_BONES = 100;
 const unsigned int MAX_BONES_PER_VERTX = 4;
 const unsigned int MAX_SAMPLER_DESCRIPTOR_COUNT = 150;
 
@@ -195,6 +195,20 @@ namespace vrassimp
 
 		const aiScene* mScene;
 		aiAnimation* mActiveAnimation;
+
+		struct AnimationTimer
+		{
+			double duration;
+			std::string name;
+			double ticksPerSecond;
+			double start;
+			double end;
+
+			AnimationTimer(double d, std::string n, double t, double s, double e) : duration(d), name(n), ticksPerSecond(t), start(s), end(e)
+			{}
+		};
+		std::vector<AnimationTimer> animationTimes;
+		unsigned int currentIndex = 0;
 
 		void SetAnimation(unsigned int animationIndex);
 		//void ProcessNode(aiNode* node, const aiScene* scene);

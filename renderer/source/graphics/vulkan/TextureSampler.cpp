@@ -26,7 +26,7 @@ namespace vr
 		mSamplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;					// how to handle texture wrap in U(x) direction
 		mSamplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;					// how to handle texture wrap in V(y) direction
 		mSamplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;					// how to handle texture wrap in W(z) direction
-		mSamplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;				// border beyond texture, used when address mode is set to CLAMP TO BORDER
+		mSamplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;				// border beyond texture, used when address mode is set to CLAMP TO BORDER
 		mSamplerInfo.unnormalizedCoordinates = VK_FALSE;							// normalized coordinates = TRUE
 		mSamplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;					// mip map interpolation mode
 		mSamplerInfo.mipLodBias = 0.0f;												// level of detail bias for mip level

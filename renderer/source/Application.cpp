@@ -49,7 +49,7 @@ namespace vr
 			mWindow->Update();
 			mCamera.Update(framerateController->GetFrameTime());
 			eCamera.Update(framerateController->GetFrameTime());
-			Draw();
+			Draw(framerateController->GetFrameTime());
 			mInputManager->LateUpdate(framerateController->GetFrameTime());
 			framerateController->FrameEnd();
 		}
@@ -91,6 +91,7 @@ namespace vr
 
 		mDepthBuffer.CreateDefault(mSwapchain->GetSwapchainExtent());
 		mRenderpass.SetupDefaultRenderPass(mSwapchain->GetSurfaceFormat(), mDepthBuffer.GetFormat());
+		mPipelineCache.Setup();
 		mFramebuffers.Create(mSwapchain->GetSwapchainImages(), mSwapchain->GetSwapchainExtent(), mDepthBuffer.GetImageView(), mRenderpass.GetVulkanRenderPass());
 		mTransferCommandPool.Create(mDevice->GetPhysicalDevice().queueFamilies.transfer.value(), VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
 		mGraphicsCommandBuffers.Create(mDevice->GetPhysicalDevice().queueFamilies.graphics.value(), mSwapchain->GetSwapchainImages().size());

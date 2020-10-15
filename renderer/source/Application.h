@@ -9,6 +9,7 @@
 #include "graphics/vulkan/CommandBuffers.h"
 #include "graphics/vulkan/CommandPool.h"
 #include "graphics/vulkan/SynchronizationPrimitives.h"
+#include "graphics/vulkan/PipelineCache.h"
 #include "camera/Camera.h"
 #include "input/InputManager.h"
 #include "camera/EditingModeCamera.h"
@@ -35,7 +36,7 @@ namespace vr
 
 		void Render();
 
-		virtual void Draw() = 0;
+		virtual void Draw(const double& frametime) = 0;
 		virtual void InitializeScene() = 0;
 		virtual VkPhysicalDeviceFeatures CheckRequiredFeatures();
 
@@ -74,6 +75,7 @@ namespace vr
 		Swapchain* mSwapchain = { nullptr };
 		DepthBuffer mDepthBuffer;
 		RenderPass mRenderpass;
+		PipelineCache mPipelineCache;
 		Framebuffers mFramebuffers;
 		CommandBuffers mGraphicsCommandBuffers;
 		CommandPool mTransferCommandPool;

@@ -29,7 +29,7 @@ namespace vr
 
 		virtual void InitializeScene() override;
 		virtual void CleanupScene() override;
-		virtual void Draw() override;
+		virtual void Draw(const double& frametime) override;
 		virtual VkPhysicalDeviceFeatures CheckRequiredFeatures() override;
 
 	private:
@@ -110,17 +110,6 @@ namespace vr
 			VkDescriptorImageInfo info;
 		};
 		std::vector<ImageInfo> imageInfos;
-
-		struct AnimationTime
-		{
-			float start;
-			float end;
-
-			AnimationTime(float s, float e) : start(s), end(e)
-			{}
-		};
-		std::vector <AnimationTime> animationTimer;
-		unsigned int animationCount = 0;
 
 		int mCurrentFrame = 0;
 	};
