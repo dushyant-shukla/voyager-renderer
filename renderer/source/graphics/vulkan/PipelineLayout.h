@@ -24,7 +24,7 @@ namespace vr
 
 		void Configure();
 
-	private:
+	public:
 
 		std::optional<VkPushConstantRange > mPushConstant;
 		std::vector<VkDescriptorSetLayout> mDescriptorSetLayouts;

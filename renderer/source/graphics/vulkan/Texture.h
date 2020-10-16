@@ -17,6 +17,7 @@ namespace vr
 		*/
 		void LoadFromFile(const char* filename);
 		void LoadFromFile(const char* filename, const VkSampler& sampler);
+		void LoadWithData(const unsigned char* data, const VkDeviceSize size, const int width, const int height, const VkSampler& sampler);
 
 		const VkImageView& GetVulkanImageView();
 		const VkImage& GetVulkanImage();

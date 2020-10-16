@@ -86,6 +86,49 @@ namespace vr
 		mImageInfo.sampler = sampler;
 	}
 
+	void Texture::LoadWithData(const unsigned char* data, const VkDeviceSize size, const int width, const int height, const VkSampler& sampler)
+	{
+		VkBuffer stagingBuffer;
+		VkDeviceMemory stagingMemory;
+		MemoryUtility::CreateBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, ALLOCATION_CALLBACK,
+			&stagingBuffer, &stagingMemory);
+
+		void* handle;
+		vkMapMemory(LOGICAL_DEVICE, stagingMemory, 0, size, 0, &handle);
+		memcpy(handle, data, static_cast<unsigned int>(size));
+		vkUnmapMemory(LOGICAL_DEVICE, stagingMemory);
+
+		ImageUtility::CreateImage(width, height,
+			VK_FORMAT_R8G8B8A8_SRGB,
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			mImage, mMemory);
+
+		// transition image to be DST for copy operation
+		ImageUtility::TransitionImageLayout(TRANSFER_QUEUE, TRANSFER_CMD_POOL, mImage, VK_FORMAT_R8G8B8A8_SRGB,
+			VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+		// copy data to image
+		MemoryUtility::CopyBufferToImage(TRANSFER_QUEUE, TRANSFER_CMD_POOL,
+			stagingBuffer, mImage, static_cast<unsigned int> (width), static_cast<unsigned int> (height));
+
+		// transition image to shader readable for shader usage
+		ImageUtility::TransitionImageLayout(TRANSFER_QUEUE, TRANSFER_CMD_POOL, mImage, VK_FORMAT_R8G8B8A8_SRGB,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+		ImageUtility::CreateImageView(mImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mImageView);
+
+		vkDestroyBuffer(LOGICAL_DEVICE, stagingBuffer, nullptr);
+		vkFreeMemory(LOGICAL_DEVICE, stagingMemory, nullptr);
+
+		mImageInfo = {};
+		mImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		mImageInfo.imageView = mImageView;
+		mImageInfo.sampler = sampler;
+	}
+
 	const VkImageView& Texture::GetVulkanImageView()
 	{
 		return mImageView;

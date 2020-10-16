@@ -13,6 +13,7 @@
 #include "camera/Camera.h"
 #include "input/InputManager.h"
 #include "camera/EditingModeCamera.h"
+#include "ui/UiOverlay.h"
 
 namespace vr
 {
@@ -39,6 +40,9 @@ namespace vr
 		virtual void Draw(const double& frametime) = 0;
 		virtual void InitializeScene() = 0;
 		virtual VkPhysicalDeviceFeatures CheckRequiredFeatures();
+		virtual void OnUpdateUIOverlay(UiOverlay* overlay);
+		virtual void CleanupScene() = 0;
+		void DrawUI(const VkCommandBuffer commandBuffer);
 
 	private:
 
@@ -60,7 +64,8 @@ namespace vr
 		*/
 		void InitializeRenderer();
 
-		virtual void CleanupScene() = 0;
+		void InitializeUI();
+		void UpdateUI(const double& frametime);
 
 		/*
 			wait for device to clean up
@@ -92,6 +97,12 @@ namespace vr
 		Camera mCamera;
 		EditingModeCamera eCamera;
 		InputManager* mInputManager;
+
+		struct
+		{
+			UiOverlay mUI;
+			bool active = true;
+		} mUiOverlay;
 
 	private:
 

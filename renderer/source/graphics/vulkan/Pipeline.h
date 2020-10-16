@@ -25,6 +25,7 @@ namespace vr
 		Pipeline& ConfigureInputAssembly(const VkPrimitiveTopology& topology, const VkBool32& primitiveRestartEnable, VkPipelineInputAssemblyStateCreateFlags flags, void* next);
 
 		Pipeline& ConfigureViewport(const VkExtent2D& swapchainExtent);
+		Pipeline& ConfigureViewport(unsigned int viewportCount, unsigned int scissorCount, const VkExtent2D swapchainExtent, VkPipelineViewportStateCreateFlags flags = 0);
 
 		Pipeline& ConfigureRasterizer(const VkBool32& depthClampEnable, const VkBool32& rasterizerDiscardEnable,
 			const VkPolygonMode& polygonMode, VkCullModeFlags cullMode, const VkFrontFace& frontface,
@@ -41,11 +42,12 @@ namespace vr
 			const VkBlendFactor& srcAlphaBlendFactor, const VkBlendFactor& dstAlphaBlendFactor,
 			const VkBlendOp& alphaBlendOp, VkColorComponentFlags colorWriteMask);
 
-		Pipeline& ConfigureColorBlend(void* pNext, VkPipelineColorBlendStateCreateFlags flags,
+		Pipeline& ConfigureColorBlendState(void* pNext, VkPipelineColorBlendStateCreateFlags flags,
 			VkBool32 logicOpEnable, VkLogicOp logicOp,
 			float blendConstant0, float blendConstant1, float blendConstant2, float blendConstant3);
 
-		// TODO: DEPTH TESTING CONFIGURATION
+		Pipeline& ConfigureDefaultDepthTesting();
+		Pipeline& ConfigureDepthTesting(const VkBool32 depthEnable, const VkBool32 depthWriteEnable, const VkCompareOp compareOp);
 
 		// TODO: TESELLATION STATE
 
@@ -77,6 +79,8 @@ namespace vr
 
 		// MULTISAMPLING
 		VkPipelineMultisampleStateCreateInfo mMultisampling;
+
+		VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo = {};
 
 		// COLOR BLENDING
 		std::vector<VkPipelineColorBlendAttachmentState> mColorBlendAttachments;

@@ -9,6 +9,8 @@
 #include "graphics/vulkan/utility/MemoryUtility.h"
 #include "RendererState.h"
 
+#include <imgui.h>
+
 namespace vr
 {
 	Application::Application(std::string name) :
@@ -19,7 +21,12 @@ namespace vr
 	}
 
 	Application::~Application()
-	{}
+	{
+		if (mUiOverlay.active)
+		{
+			mUiOverlay.mUI.FreeResources();
+		}
+	}
 
 	void Application::Run()
 	{
@@ -28,6 +35,7 @@ namespace vr
 			Logger::Init();
 			InitializeWindow();
 			InitializeRenderer();
+			InitializeUI();
 			InitializeScene();
 			Render();
 			CleanupScene();
@@ -51,6 +59,7 @@ namespace vr
 			eCamera.Update(framerateController->GetFrameTime());
 			Draw(framerateController->GetFrameTime());
 			mInputManager->LateUpdate(framerateController->GetFrameTime());
+			UpdateUI(framerateController->GetFrameTime());
 			framerateController->FrameEnd();
 		}
 
@@ -60,6 +69,40 @@ namespace vr
 	VkPhysicalDeviceFeatures Application::CheckRequiredFeatures()
 	{
 		return mDevice->GetPhysicalDevice().features;
+	}
+
+	void Application::OnUpdateUIOverlay(UiOverlay* overlay)
+	{
+	}
+
+	/*
+		This method must be called from Record commands method in sub-classes.
+	*/
+	void Application::DrawUI(const VkCommandBuffer commandBuffer)
+	{
+		if (mUiOverlay.active)
+		{
+			//VkViewport viewport;
+			//VkRect2D scissor;
+
+			//viewport = {};
+			//viewport.x = 0.0f;										// x origin
+			//viewport.y = 0.0f;										// y origin
+			//viewport.width = (float)mSwapchain->mExtent.width;			// viewport width
+			//viewport.height = (float)mSwapchain->mExtent.height;		// viewport height
+			//viewport.minDepth = 0.0f;								// min framebuffer depth
+			//viewport.maxDepth = 1.0f;								// max framebuffer depth
+
+			//// Scissor
+			//scissor = {};
+			//scissor.offset = { 0, 0 };								// offset to use region from
+			//scissor.extent = mSwapchain->mExtent;
+
+			//vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+			//vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+			mUiOverlay.mUI.Draw(commandBuffer);
+		}
 	}
 
 	void Application::InitializeWindow()
@@ -101,6 +144,58 @@ namespace vr
 		RendererState::SetGraphicsQueue(mDevice->GetLogicalDevice().graphicsQueue);
 		RendererState::SetTransferCommandPool(mTransferCommandPool.GetVulkanCommandPool());
 		RendererState::SetTransferQueue(mDevice->GetLogicalDevice().transferQueue);
+	}
+
+	void Application::InitializeUI()
+	{
+		mUiOverlay.mUI.PrepareResources();
+		mUiOverlay.mUI.PreparePipeline(mPipelineCache.mCache, mRenderpass.GetVulkanRenderPass(), mSwapchain->GetSwapchainExtent());
+	}
+
+	void Application::UpdateUI(const double& frametime)
+	{
+		if (!mUiOverlay.active)
+		{
+			return;
+		}
+
+		ImGuiIO& io = ImGui::GetIO();
+
+		io.DisplaySize = ImVec2((float)Window::WIDTH, (float)Window::HEIGHT);
+		io.DeltaTime = frametime;
+
+		glm::vec2 mousePosition = mInputManager->GetCursorPosition();
+		io.MousePos = ImVec2(mousePosition.x, mousePosition.y);
+		io.MouseDown[0] = mInputManager->IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+		io.MouseDown[1] = mInputManager->IsMouseButtonPressed(MOUSE_BUTTON_RIGHT);
+
+		ImGui::NewFrame();
+
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+		ImGui::SetNextWindowPos(ImVec2(10, 10));
+		ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiSetCond_FirstUseEver);
+		ImGui::Begin("Voyager Renderer", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+		ImGui::TextUnformatted(mName.c_str());
+		ImGui::TextUnformatted(mDevice->GetPhysicalDevice().properties.deviceName);
+		//ImGui::Text("%.2f ms/frame (%.1d fps)", (1000.0f / lastFPS), lastFPS);
+		ImGui::PushItemWidth(110.0f * mUiOverlay.mUI.mUiState.scale);
+
+		/*
+			Call to application specific UI elements
+		*/
+		OnUpdateUIOverlay(&mUiOverlay.mUI);
+
+		ImGui::PopItemWidth();
+
+		ImGui::End();
+		ImGui::PopStyleVar();
+		ImGui::Render();
+
+		if (mUiOverlay.mUI.Update() || mUiOverlay.mUI.mUiState.updated)
+		{
+			//buildCommandBuffers();
+			mUiOverlay.mUI.mUiState.updated = false;
+		}
 	}
 
 	void Application::Wait()

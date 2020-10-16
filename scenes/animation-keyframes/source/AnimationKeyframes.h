@@ -31,6 +31,7 @@ namespace vr
 		virtual void CleanupScene() override;
 		virtual void Draw(const double& frametime) override;
 		virtual VkPhysicalDeviceFeatures CheckRequiredFeatures() override;
+		virtual void OnUpdateUIOverlay(UiOverlay* overlay) override;
 
 	private:
 

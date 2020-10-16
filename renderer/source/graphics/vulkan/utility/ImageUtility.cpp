@@ -87,7 +87,7 @@ namespace vr
 			imageMemoryBarrier.srcAccessMask = 0;								// memory access stage transition must happen after ...
 			imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;	// memory access stage transition must happen before ...
 
-			srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			srcStage = VK_PIPELINE_STAGE_HOST_BIT /*VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT*/;
 			dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		}
 		// if transitioning from transfer destination to shader readable

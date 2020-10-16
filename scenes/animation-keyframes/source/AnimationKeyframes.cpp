@@ -191,6 +191,7 @@ namespace vr
 			.ConfigureViewport(mSwapchain->GetSwapchainExtent())
 			.ConfigureRasterizer(VK_FALSE, VK_FALSE, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f, 0, nullptr)
 			.ConfigureMultiSampling(VK_SAMPLE_COUNT_1_BIT, VK_FALSE, 1.0f, nullptr, 0, VK_FALSE, VK_FALSE, nullptr)
+			.ConfigureDefaultDepthTesting()
 			.AddColorBlendAttachmentState(VK_TRUE,
 				VK_BLEND_FACTOR_SRC_ALPHA,
 				VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
@@ -199,7 +200,7 @@ namespace vr
 				VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
 				VK_BLEND_OP_SUBTRACT,
 				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT)
-			.ConfigureColorBlend(nullptr, 0, VK_FALSE, VK_LOGIC_OP_COPY, 0.0f, 0.0f, 0.0f, 0.0f)
+			.ConfigureColorBlendState(nullptr, 0, VK_FALSE, VK_LOGIC_OP_COPY, 0.0f, 0.0f, 0.0f, 0.0f)
 			.Configure(mPipelineLayouts.pipelineLayout.GetVulkanPipelineLayout(), mRenderpass.GetVulkanRenderPass(), 0, 0);
 	}
 
@@ -281,6 +282,8 @@ namespace vr
 				currentMesh->Draw(mGraphicsCommandBuffers[currentImage]); // bind vertex and index buffer, cmdIndexedDraw()
 			}
 		}
+
+		DrawUI(mGraphicsCommandBuffers[currentImage]);
 
 		// end render pass
 		vkCmdEndRenderPass(mGraphicsCommandBuffers[currentImage]);
@@ -484,6 +487,10 @@ namespace vr
 		{
 			ubo.bones[i] = glm::transpose(glm::make_mat4(&(boneTransforms[i].a1)));
 		}
+	}
+
+	void AnimationKeyframes::OnUpdateUIOverlay(UiOverlay* overlay)
+	{
 	}
 
 	Application* CreateApplication()

@@ -74,6 +74,8 @@ namespace vr
 
 	void MemoryUtility::EndAndSubmitCommandBuffer(const VkCommandPool& commandPool, const VkQueue& queue, const VkCommandBuffer& commandBuffer)
 	{
+		// TODO: Checkout VulkanDevice.cpp line: 508 vulkan-examples for flush command buffer
+
 		// end commands
 		vkEndCommandBuffer(commandBuffer);
 

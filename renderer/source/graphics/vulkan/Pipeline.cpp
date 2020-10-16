@@ -121,6 +121,32 @@ namespace vr
 		return *this;
 	}
 
+	Pipeline& Pipeline::ConfigureViewport(unsigned int viewportCount, unsigned int scissorCount, const VkExtent2D swapchainExtent, VkPipelineViewportStateCreateFlags flags)
+	{
+		mViewport = {};
+		mViewport.x = 0.0f;										// x origin
+		mViewport.y = 0.0f;										// y origin
+		mViewport.width = (float)swapchainExtent.width;			// viewport width
+		mViewport.height = (float)swapchainExtent.height;		// viewport height
+		mViewport.minDepth = 0.0f;								// min framebuffer depth
+		mViewport.maxDepth = 1.0f;								// max framebuffer depth
+
+		// Scissor
+		mScissor = {};
+		mScissor.offset = { 0, 0 };								// offset to use region from
+		mScissor.extent = swapchainExtent;
+
+		mViewportStateCreateInfo = {};
+		mViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+		mViewportStateCreateInfo.viewportCount = 1;
+		mViewportStateCreateInfo.pViewports = &mViewport;
+		mViewportStateCreateInfo.scissorCount = 1;
+		mViewportStateCreateInfo.pScissors = &mScissor;
+		mViewportStateCreateInfo.flags = flags;
+
+		return *this;
+	}
+
 	Pipeline& Pipeline::ConfigureRasterizer(const VkBool32& depthClampEnable, const VkBool32& rasterizerDiscardEnable,
 		const VkPolygonMode& polygonMode, VkCullModeFlags cullMode, const VkFrontFace& frontface,
 		const VkBool32& depthBiasEnable, const float depthBiasConstantFactor, const float depthBiasClamp,
@@ -168,25 +194,25 @@ namespace vr
 		const VkBlendOp& alphaBlendOp, VkColorComponentFlags colorWriteMask)
 	{
 		VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
-		//colorBlendAttachment.colorWriteMask = colorWriteMask;
-		//colorBlendAttachment.blendEnable = blendEnable;
-		//colorBlendAttachment.srcColorBlendFactor = srcColorBlendFactor; // Optional
-		//colorBlendAttachment.dstColorBlendFactor = dstColorBlendFactor; // Optional
-		//colorBlendAttachment.colorBlendOp = colorBlendOp; // Optional
-		//colorBlendAttachment.srcAlphaBlendFactor = srcAlphaBlendFactor; // Optional
-		//colorBlendAttachment.dstAlphaBlendFactor = dstAlphaBlendFactor; // Optional
-		//colorBlendAttachment.alphaBlendOp = alphaBlendOp; // Optional
+		colorBlendAttachment.colorWriteMask = colorWriteMask;
+		colorBlendAttachment.blendEnable = blendEnable;
+		colorBlendAttachment.srcColorBlendFactor = srcColorBlendFactor; // Optional
+		colorBlendAttachment.dstColorBlendFactor = dstColorBlendFactor; // Optional
+		colorBlendAttachment.colorBlendOp = colorBlendOp; // Optional
+		colorBlendAttachment.srcAlphaBlendFactor = srcAlphaBlendFactor; // Optional
+		colorBlendAttachment.dstAlphaBlendFactor = dstAlphaBlendFactor; // Optional
+		colorBlendAttachment.alphaBlendOp = alphaBlendOp; // Optional
 
-		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-		colorBlendAttachment.blendEnable = VK_TRUE;
-		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
-		//colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_DST_ALPHA; // Optional
-		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA; // Optional
-		//colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA; // Optional
-		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD; // Optional
-		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
-		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
-		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; // Optional
+		//colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		//colorBlendAttachment.blendEnable = VK_TRUE;
+		//colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
+		////colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_DST_ALPHA; // Optional
+		//colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA; // Optional
+		////colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA; // Optional
+		//colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD; // Optional
+		//colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
+		//colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
+		//colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; // Optional
 
 		//srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
 		//	dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
@@ -200,7 +226,7 @@ namespace vr
 		return *this;
 	}
 
-	Pipeline& Pipeline::ConfigureColorBlend(void* pNext, VkPipelineColorBlendStateCreateFlags flags,
+	Pipeline& Pipeline::ConfigureColorBlendState(void* pNext, VkPipelineColorBlendStateCreateFlags flags,
 		VkBool32 logicOpEnable, VkLogicOp logicOp,
 		float blendConstant0, float blendConstant1, float blendConstant2, float blendConstant3)
 	{
@@ -217,6 +243,30 @@ namespace vr
 		mColorBlending.flags = flags;
 		mColorBlending.pNext = pNext;
 
+		return *this;
+	}
+
+	Pipeline& Pipeline::ConfigureDefaultDepthTesting()
+	{
+		pipelineDepthStencilStateCreateInfo = {};
+		pipelineDepthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		pipelineDepthStencilStateCreateInfo.depthTestEnable = VK_TRUE;			// enable depth test
+		pipelineDepthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;			// enable writing to depth buffer to replace old values
+		pipelineDepthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;	// comparison operation that allows an overwrite (new value is less than what is already stored)
+		pipelineDepthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;	// depth bounds test: does the depth value is between two bounds
+		pipelineDepthStencilStateCreateInfo.stencilTestEnable = VK_FALSE;		// enalble the stencil test
+
+		return *this;
+	}
+
+	Pipeline& Pipeline::ConfigureDepthTesting(const VkBool32 depthEnable, const VkBool32 depthWriteEnable, const VkCompareOp compareOp)
+	{
+		pipelineDepthStencilStateCreateInfo = {};
+		pipelineDepthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		pipelineDepthStencilStateCreateInfo.depthTestEnable = depthEnable;
+		pipelineDepthStencilStateCreateInfo.depthWriteEnable = depthWriteEnable;
+		pipelineDepthStencilStateCreateInfo.depthCompareOp = compareOp;
+		pipelineDepthStencilStateCreateInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
 		return *this;
 	}
 
@@ -242,15 +292,6 @@ namespace vr
 		dynamicState.pNext = nullptr;
 		dynamicState.flags = 0;
 
-		// DEPTH STENCIL TESTING : TODO
-		VkPipelineDepthStencilStateCreateInfo depthStencilCreateInfo = {};
-		depthStencilCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-		depthStencilCreateInfo.depthTestEnable = VK_TRUE;			// enable depth test
-		depthStencilCreateInfo.depthWriteEnable = VK_TRUE;			// enable writing to depth buffer to replace old values
-		depthStencilCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;	// comparison operation that allows an overwrite (new value is less than what is already stored)
-		depthStencilCreateInfo.depthBoundsTestEnable = VK_FALSE;	// depth bounds test: does the depth value is between two bounds
-		depthStencilCreateInfo.stencilTestEnable = VK_FALSE;		// enalble the stencil test
-
 		VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo = {};
 		graphicsPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 		graphicsPipelineCreateInfo.stageCount = static_cast<unsigned int>(mShaderStages.size());
@@ -261,7 +302,7 @@ namespace vr
 		graphicsPipelineCreateInfo.pDynamicState = nullptr;
 		graphicsPipelineCreateInfo.pRasterizationState = &mRasterizationStateCreateInfo;
 		graphicsPipelineCreateInfo.pColorBlendState = &mColorBlending;
-		graphicsPipelineCreateInfo.pDepthStencilState = &depthStencilCreateInfo;
+		graphicsPipelineCreateInfo.pDepthStencilState = &pipelineDepthStencilStateCreateInfo;
 		graphicsPipelineCreateInfo.pMultisampleState = &mMultisampling;
 		graphicsPipelineCreateInfo.layout = pipelineLayout;								// PIPELINE LAYOUT PIPELINE SHOULD USE
 		graphicsPipelineCreateInfo.renderPass = renderPass;								// RENDERPASS DESCRIPTION THE PIPELINE IS COMPATIBLE WITH
