@@ -2,6 +2,8 @@
 #include "RendererState.h"
 #include "window/Window.h"
 
+#include <imgui.h>
+
 namespace vr
 {
 	AnimationKeyframes::AnimationKeyframes(std::string name) : Application(name)
@@ -11,18 +13,6 @@ namespace vr
 		eCamera.SetPosition(glm::vec3(0.0f, 0.75f, -2.0f));
 		eCamera.SetRotation(glm::vec3(0.0f, 0.0f, 0.0f));
 		eCamera.SetPerspective(glm::radians(60.0f), (float)Window::WIDTH / Window::HEIGHT, 0.1f, 1024.0f);
-
-		//animationTimer.emplace_back(0.0f, 2233.33325f); // nathan
-
-		//animationTimer.emplace_back(0.0f, 99.0f); // wolverine
-
-		//animationTimer.emplace_back(0.0f, 95.99f);
-		//animationTimer.emplace_back(96.0f, 191.99f);
-		//animationTimer.emplace_back(191.99f, 287.98f);
-		//animationTimer.emplace_back(287.98f, 384.0f);
-		//animationTimer.emplace_back(384.0f, 480.97f);
-		//animationTimer.emplace_back(480.97f, 575.97f);
-		//animationTimer.emplace_back(575.97f, 671.97f);
 	}
 
 	AnimationKeyframes::~AnimationKeyframes()
@@ -64,8 +54,8 @@ namespace vr
 		glm::mat4 model(1.0f);/* = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));*/
 		model = glm::translate(model, glm::vec3(0.0, 0.0, 0.0));
 		model = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.50f)); // tiger
-		//model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f)); // nathan
+		//model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.50f)); // tiger
+		model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f)); // nathan
 		//model = glm::scale(model, glm::vec3(3.00f, 3.0f, 3.0f)); // spidey
 		mPerModelData.model = model;
 
@@ -149,7 +139,7 @@ namespace vr
 		// Get next frame (% keeps value below MAX_FRAME_DRAWS)
 		mCurrentFrame = (mCurrentFrame + 1) % SynchronizationPrimitives::MAX_FRAME_DRAWS;
 
-		timer += frametime * 0.75;
+		timer += frametime * animationSettings.speed;
 	}
 
 	VkPhysicalDeviceFeatures AnimationKeyframes::CheckRequiredFeatures()
@@ -386,11 +376,17 @@ namespace vr
 		//model->LoadFromFile("jumping.fbx", &modelCreateInfo);
 		//model->LoadFromFile("wolf-ii\\Wolf_dae.dae", &modelCreateInfo);
 		//model->LoadFromFile("iron-man-fortnite\\scene.gltf", &modelCreateInfo);
-		//model->LoadFromFile("nathan\\scene.gltf", &modelCreateInfo); // works - loads correctly
-		model->LoadFromFile("bengal-tiger\\tiger.fbx", &modelCreateInfo); // works - loads correctly
+		model->LoadFromFile("nathan\\scene.gltf", &modelCreateInfo); // works - loads correctly
+		//model->LoadFromFile("bengal-tiger\\tiger.fbx", &modelCreateInfo); // works - loads correctly
 		//model->LoadFromFile("myth-creature\\myth-creature.fbx", &modelCreateInfo); // works - loads correctly
 		//model->LoadFromFile("spiderman\\spiderman.fbx", &modelCreateInfo); // works - loads correctly
 		mModels.push_back(model);
+
+		for (size_t i = 0; i < model->mAnimation->animationTimes.size(); ++i)
+		{
+			animationSettings.animations += (model->mAnimation->animationTimes[i].name + '\0');
+		}
+		animationSettings.animations += '\0';
 
 		/*
 			Setup meshes' vertex buffers, index buffers and textures
@@ -474,9 +470,10 @@ namespace vr
 		for (unsigned int i = 0; i < mModels.size(); ++i)
 		{
 			vrassimp::Animation* animation = mModels[i]->mAnimation;
+			animation->currentIndex = animationSettings.id;
 			if (timer > animation->animationTimes[animation->currentIndex].end)
 			{
-				animation->currentIndex = (animation->currentIndex + 1) % animation->animationTimes.size();
+				//animation->currentIndex = (animation->currentIndex + 1) % animation->animationTimes.size();
 				RENDERER_INFO("CURRENT ANIMATION: {0}", animation->currentIndex);
 				timer = animation->animationTimes[animation->currentIndex].start;
 			}
@@ -491,6 +488,21 @@ namespace vr
 
 	void AnimationKeyframes::OnUpdateUIOverlay(UiOverlay* overlay)
 	{
+		ImGui::SetNextWindowPos(ImVec2(10, 200));
+		ImGui::Begin("Animation (Key-Frames)");
+		ImGui::Text("Settings:");
+		if (overlay->CheckBox("Enable animation", &mPerModelData.enableAnimation))
+		{
+			int a = 10;
+		}
+		if (overlay->InputFloat("speed", &animationSettings.speed, 0.5, 3))
+		{
+			int a = 10;
+		}
+		if (ImGui::Combo("track", &animationSettings.id, animationSettings.animations.c_str()))
+		{
+		}
+		ImGui::End();
 	}
 
 	Application* CreateApplication()

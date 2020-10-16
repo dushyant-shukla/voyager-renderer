@@ -59,8 +59,8 @@ namespace vr
 			eCamera.Update(framerateController->GetFrameTime());
 			Draw(framerateController->GetFrameTime());
 			mInputManager->LateUpdate(framerateController->GetFrameTime());
-			UpdateUI(framerateController->GetFrameTime());
 			framerateController->FrameEnd();
+			UpdateUI(framerateController->GetFrameTime());
 		}
 
 		Wait();
@@ -171,13 +171,33 @@ namespace vr
 
 		ImGui::NewFrame();
 
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding | ImGuiStyleVar_FrameRounding, 0);
 		ImGui::SetNextWindowPos(ImVec2(10, 10));
 		ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiSetCond_FirstUseEver);
 		ImGui::Begin("Voyager Renderer", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-		ImGui::TextUnformatted(mName.c_str());
 		ImGui::TextUnformatted(mDevice->GetPhysicalDevice().properties.deviceName);
-		//ImGui::Text("%.2f ms/frame (%.1d fps)", (1000.0f / lastFPS), lastFPS);
+		if (mUiOverlay.mUI.CheckBox("Enable frame-rate controller", &FramerateController::mControlFramerate))
+		{
+		}
+
+		/*
+			frame rate plotting
+		*/
+		{
+			std::rotate(mUiOverlay.frameTimes.begin(), mUiOverlay.frameTimes.begin() + 1, mUiOverlay.frameTimes.end());
+			float frameTime = 1000.0f / (frametime * 1000.0f);
+			mUiOverlay.frameTimes.back() = frameTime;
+			if (frameTime < mUiOverlay.frameTimeMin) {
+				mUiOverlay.frameTimeMin = frameTime;
+			}
+			if (frameTime > mUiOverlay.frameTimeMax) {
+				mUiOverlay.frameTimeMax = frameTime;
+			}
+
+			ImGui::PlotLines("frame rate", &mUiOverlay.frameTimes[0], 50, 0, "", mUiOverlay.frameTimeMin, mUiOverlay.frameTimeMax, ImVec2(0, 80), 4);
+		}
+		// frame rate plotting ends
+
 		ImGui::PushItemWidth(110.0f * mUiOverlay.mUI.mUiState.scale);
 
 		/*

@@ -49,43 +49,43 @@ namespace vr
 		return *this;
 	}
 
-	TextureSampler& TextureSampler::AddMagFilter(const VkFilter filter)
+	TextureSampler& TextureSampler::MagFilter(const VkFilter filter)
 	{
 		mSamplerInfo.magFilter = filter;
 		return *this;
 	}
 
-	TextureSampler& TextureSampler::AddMinFilter(const VkFilter filter)
+	TextureSampler& TextureSampler::MinFilter(const VkFilter filter)
 	{
 		mSamplerInfo.minFilter = filter;
 		return *this;
 	}
 
-	TextureSampler& TextureSampler::AddSamplerMipmapMode(const VkSamplerMipmapMode mode)
+	TextureSampler& TextureSampler::MipmapMode(const VkSamplerMipmapMode mode)
 	{
 		mSamplerInfo.mipmapMode = mode;
 		return *this;
 	}
 
-	TextureSampler& TextureSampler::AddSamplerAddressModeU(const VkSamplerAddressMode mode)
+	TextureSampler& TextureSampler::AddressModeU(const VkSamplerAddressMode mode)
 	{
 		mSamplerInfo.addressModeU = mode;
 		return *this;
 	}
 
-	TextureSampler& TextureSampler::AddSamplerAddressModeV(const VkSamplerAddressMode mode)
+	TextureSampler& TextureSampler::AddressModeV(const VkSamplerAddressMode mode)
 	{
 		mSamplerInfo.addressModeV = mode;
 		return *this;
 	}
 
-	TextureSampler& TextureSampler::AddSamplerAddressModeW(const VkSamplerAddressMode mode)
+	TextureSampler& TextureSampler::AddressModeW(const VkSamplerAddressMode mode)
 	{
 		mSamplerInfo.addressModeW = mode;
 		return *this;
 	}
 
-	TextureSampler& TextureSampler::AddMipLodBias(const float bias)
+	TextureSampler& TextureSampler::MipLodBias(const float bias)
 	{
 		mSamplerInfo.mipLodBias = bias;
 		return *this;
@@ -97,7 +97,7 @@ namespace vr
 		return *this;
 	}
 
-	TextureSampler& TextureSampler::AddMaxAnistropy(const float value)
+	TextureSampler& TextureSampler::MaxAnistropy(const float value)
 	{
 		mSamplerInfo.maxAnisotropy = value;
 		return *this;
@@ -109,31 +109,31 @@ namespace vr
 		return *this;
 	}
 
-	TextureSampler& TextureSampler::AddCompareOp(const VkCompareOp operation)
+	TextureSampler& TextureSampler::CompareOp(const VkCompareOp operation)
 	{
 		mSamplerInfo.compareOp = operation;
 		return *this;
 	}
 
-	TextureSampler& TextureSampler::AddMinLod(const float lod)
+	TextureSampler& TextureSampler::MinLod(const float lod)
 	{
 		mSamplerInfo.minLod = lod;
 		return *this;
 	}
 
-	TextureSampler& TextureSampler::AddMaxLod(const float lod)
+	TextureSampler& TextureSampler::MaxLod(const float lod)
 	{
 		mSamplerInfo.maxLod = lod;
 		return *this;
 	}
 
-	TextureSampler& TextureSampler::AddBorderColor(const VkBorderColor color)
+	TextureSampler& TextureSampler::BorderColor(const VkBorderColor color)
 	{
 		mSamplerInfo.borderColor = color;
 		return *this;
 	}
 
-	TextureSampler& TextureSampler::AddUnnormalizedCoordinates(const VkBool32 value)
+	TextureSampler& TextureSampler::UnnormalizedCoordinates(const VkBool32 value)
 	{
 		mSamplerInfo.unnormalizedCoordinates = value;
 		return *this;

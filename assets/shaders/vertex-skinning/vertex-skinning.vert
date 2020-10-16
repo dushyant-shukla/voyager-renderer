@@ -32,26 +32,31 @@ layout (location = 0) out VS_OUT
 layout (push_constant) uniform PushModel
 {
     mat4 model;
+    int enable_animation;
 } push_model;
 
 void main() 
 {
-    mat4 bone_transform = ubo.bones[bone_ids[0]] * bone_weights[0];
-    bone_transform     += ubo.bones[bone_ids[1]] * bone_weights[1];
-    bone_transform     += ubo.bones[bone_ids[2]] * bone_weights[2];
-    bone_transform     += ubo.bones[bone_ids[3]] * bone_weights[3];
+    if(push_model.enable_animation != 0)
+    {
+        mat4 bone_transform = ubo.bones[bone_ids[0]] * bone_weights[0];
+        bone_transform     += ubo.bones[bone_ids[1]] * bone_weights[1];
+        bone_transform     += ubo.bones[bone_ids[2]] * bone_weights[2];
+        bone_transform     += ubo.bones[bone_ids[3]] * bone_weights[3];
 
-    gl_Position = ubo.projection 
-                  * ubo.view
-                  * push_model.model
-                  * bone_transform
-                  * vec4(position, 1.0);
-
-    
-    //gl_Position = ubo.projection 
-    //              * ubo.view
-    //              * push_model.model
-    //              * vec4(position, 1.0);
+        gl_Position = ubo.projection 
+                      * ubo.view
+                      * push_model.model
+                      * bone_transform
+                      * vec4(position, 1.0);
+    }
+    else
+    {
+        gl_Position = ubo.projection 
+                      * ubo.view
+                      * push_model.model
+                      * vec4(position, 1.0);
+    }
 
     vs_out.color = color;
     vs_out.uv = uv;

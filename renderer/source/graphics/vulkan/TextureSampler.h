@@ -14,21 +14,21 @@ namespace vr
 		void CreateDefault();
 
 		TextureSampler& AddSamplerCreateFlags(const VkSamplerCreateFlags flags);
-		TextureSampler& AddMagFilter(const VkFilter filter);
-		TextureSampler& AddMinFilter(const VkFilter filter);
-		TextureSampler& AddSamplerMipmapMode(const VkSamplerMipmapMode mode);
-		TextureSampler& AddSamplerAddressModeU(const VkSamplerAddressMode mode);
-		TextureSampler& AddSamplerAddressModeV(const VkSamplerAddressMode mode);
-		TextureSampler& AddSamplerAddressModeW(const VkSamplerAddressMode mode);
-		TextureSampler& AddMipLodBias(const float bias);
+		TextureSampler& MagFilter(const VkFilter filter);
+		TextureSampler& MinFilter(const VkFilter filter);
+		TextureSampler& MipmapMode(const VkSamplerMipmapMode mode);
+		TextureSampler& AddressModeU(const VkSamplerAddressMode mode);
+		TextureSampler& AddressModeV(const VkSamplerAddressMode mode);
+		TextureSampler& AddressModeW(const VkSamplerAddressMode mode);
+		TextureSampler& MipLodBias(const float bias);
 		TextureSampler& EnableAnistropy(const VkBool32 enable);
-		TextureSampler& AddMaxAnistropy(const float value);
+		TextureSampler& MaxAnistropy(const float value);
 		TextureSampler& EnableCompare(const VkBool32 enable);
-		TextureSampler& AddCompareOp(const VkCompareOp operation);
-		TextureSampler& AddMinLod(const float lod);
-		TextureSampler& AddMaxLod(const float lod);
-		TextureSampler& AddBorderColor(const VkBorderColor color);
-		TextureSampler& AddUnnormalizedCoordinates(const VkBool32 value);
+		TextureSampler& CompareOp(const VkCompareOp operation);
+		TextureSampler& MinLod(const float lod);
+		TextureSampler& MaxLod(const float lod);
+		TextureSampler& BorderColor(const VkBorderColor color);
+		TextureSampler& UnnormalizedCoordinates(const VkBool32 value);
 		TextureSampler& AddNext(const void* next);
 		void Configure();
 

@@ -30,6 +30,8 @@ namespace vr
 		*/
 		const double& GetFrameTime() const;
 
+		static inline bool mControlFramerate = true;
+
 	private:
 
 		FramerateController(unsigned int maxFrameRate);

@@ -86,9 +86,18 @@ namespace vr
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &commandBuffer;
 
+		VkFenceCreateInfo fenceInfo = {};
+		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fenceInfo.flags = 0;
+		fenceInfo.pNext = nullptr;
+		VkFence fence = {};
+		vkCreateFence(LOGICAL_DEVICE, &fenceInfo, ALLOCATION_CALLBACK, &fence);
+
 		// submit transfer command to transfer queue and wait until it finished
-		vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
-		vkQueueWaitIdle(queue);
+		vkQueueSubmit(queue, 1, &submitInfo, fence);
+		vkWaitForFences(LOGICAL_DEVICE, 1, &fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+		vkDestroyFence(LOGICAL_DEVICE, fence, ALLOCATION_CALLBACK);
+		//vkQueueWaitIdle(queue);
 
 		// free command buffer
 		vkFreeCommandBuffers(LOGICAL_DEVICE, commandPool, 1, &commandBuffer);

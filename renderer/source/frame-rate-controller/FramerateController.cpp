@@ -34,10 +34,17 @@ namespace vr
 	void FramerateController::FrameEnd()
 	{
 		double elapsedTime = 0.0;
-		do
+		if (mControlFramerate)
+		{
+			do
+			{
+				elapsedTime = mClock.Mark();
+			} while (elapsedTime < mTicksPerFrame);
+		}
+		else
 		{
 			elapsedTime = mClock.Mark();
-		} while (elapsedTime < mTicksPerFrame);
+		}
 
 		mFrameTime = elapsedTime / 1000.0; // converting milliseconds to seconds
 

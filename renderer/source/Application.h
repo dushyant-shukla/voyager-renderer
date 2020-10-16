@@ -102,6 +102,9 @@ namespace vr
 		{
 			UiOverlay mUI;
 			bool active = true;
+			std::array<float, 50> frameTimes{};
+			float frameTimeMin = 9999.0f;
+			float frameTimeMax = 0.0f;
 		} mUiOverlay;
 
 	private:

@@ -20,16 +20,19 @@ namespace vr
 		ImGui::CreateContext();
 
 		glm::vec3 color = glm::vec3(0.03f, 0.3f, 1.0f);
-		//glm::vec3 color = glm::vec3(0.118f, 0.565f, 1.000f);
-		//glm::vec3 color = glm::vec3(0.001f, 0.1f, 1.000f);
-		//glm::vec4 color = glm::vec4(0.002f, 0.1617f, 0.30845f, 0.52736f);
-		//glm::vec3 color = glm::vec3(0.275f, 0.510f, 0.706f);
-		//glm::vec3 color = glm::vec3(0.098f, 0.098f, 0.439f);
-		//glm::vec3 color = glm::vec3(0.0f, 0.0f, 1.0f);
-		//glm::vec3 color = glm::vec3(0.255f, 0.412f, 0.882f);
+		{
+			//glm::vec3 color = glm::vec3(0.118f, 0.565f, 1.000f);
+			//glm::vec3 color = glm::vec3(0.001f, 0.1f, 1.000f);
+			//glm::vec4 color = glm::vec4(0.002f, 0.1617f, 0.30845f, 0.52736f);
+			//glm::vec3 color = glm::vec3(0.275f, 0.510f, 0.706f);
+			//glm::vec3 color = glm::vec3(0.098f, 0.098f, 0.439f);
+			//glm::vec3 color = glm::vec3(0.0f, 0.0f, 1.0f);
+			//glm::vec3 color = glm::vec3(0.255f, 0.412f, 0.882f);
+		}
 
 		// configuring color scheme
 		ImGuiStyle& style = ImGui::GetStyle();
+		style.Colors[ImGuiCol_WindowBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.97f);
 		style.Colors[ImGuiCol_TitleBg] = ImVec4(color.x, color.y, color.z, 1.0);
 		style.Colors[ImGuiCol_TitleBgActive] = ImVec4(color.x, color.y, color.z, 1.0);
 		style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(color.x, color.y, color.z, 0.7f);
@@ -102,21 +105,21 @@ namespace vr
 		VkDeviceSize uploadSize = textureWidth * textureHeight * 4 * sizeof(char);
 
 		mFont.sampler
-			.AddMagFilter(VK_FILTER_LINEAR)
-			.AddMinFilter(VK_FILTER_LINEAR)
-			.AddSamplerMipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR)
-			.AddSamplerAddressModeU(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE)
-			.AddSamplerAddressModeV(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE)
-			.AddSamplerAddressModeW(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE)
-			.AddBorderColor(VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE)
-			.AddUnnormalizedCoordinates(VK_FALSE)
-			.AddMipLodBias(0.0f)
-			.AddMinLod(0.0f)
-			.AddMaxLod(0.0f)
+			.MagFilter(VK_FILTER_LINEAR)
+			.MinFilter(VK_FILTER_LINEAR)
+			.MipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR)
+			.AddressModeU(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE)
+			.AddressModeV(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE)
+			.AddressModeW(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE)
+			.BorderColor(VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE)
+			.UnnormalizedCoordinates(VK_FALSE)
+			.MipLodBias(0.0f)
+			.MinLod(0.0f)
+			.MaxLod(0.0f)
 			.EnableAnistropy(VK_TRUE)
-			.AddMaxAnistropy(16)
+			.MaxAnistropy(16)
 			.EnableCompare(VK_FALSE)
-			.AddCompareOp(VK_COMPARE_OP_ALWAYS)
+			.CompareOp(VK_COMPARE_OP_ALWAYS)
 			.Configure();
 
 		mFont.texture.LoadWithData(fontData, uploadSize, textureWidth, textureHeight, mFont.sampler.GetVulkanSampler());
@@ -141,8 +144,8 @@ namespace vr
 		writeBufferInfo.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		writeBufferInfo.descriptorCount = 1;
 		writeBufferInfo.pBufferInfo = nullptr;
-		writeBufferInfo.pImageInfo = &mFont.texture.mImageInfo;	// Optional
-		writeBufferInfo.pTexelBufferView = nullptr;				// Optional
+		writeBufferInfo.pImageInfo = &mFont.texture.mImageInfo;
+		writeBufferInfo.pTexelBufferView = nullptr;
 
 		vkUpdateDescriptorSets(LOGICAL_DEVICE, 1, &writeBufferInfo, 0, nullptr);
 	}
@@ -171,6 +174,7 @@ namespace vr
 		if ((buffers.vertex.mBuffer == VK_NULL_HANDLE) || (buffers.vertexCount != imDrawData->TotalVtxCount))
 		{
 			buffers.vertex.Unmap();
+			vkQueueWaitIdle(GRAPHICS_QUEUE);
 			buffers.vertex.Destroy();
 			MemoryUtility::CreateBuffer(vertexBufferSize,
 				VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -191,6 +195,7 @@ namespace vr
 		if ((buffers.index.mBuffer == VK_NULL_HANDLE) || (buffers.indexCount < imDrawData->TotalIdxCount))
 		{
 			buffers.index.Unmap();
+			vkQueueWaitIdle(GRAPHICS_QUEUE);
 			buffers.index.Destroy();
 			MemoryUtility::CreateBuffer(indexBufferSize,
 				VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
@@ -246,7 +251,6 @@ namespace vr
 		VkDeviceSize offsets[1] = { 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &buffers.vertex.mBuffer, offsets);
 		vkCmdBindIndexBuffer(commandBuffer, buffers.index.mBuffer, 0, VK_INDEX_TYPE_UINT16);
-		//vkCmdBindIndexBuffer(commandBuffer, buffers.index.mBuffer, 0, VK_INDEX_TYPE_UINT32);
 
 		for (int32_t i = 0; i < imDrawData->CmdListsCount; i++)
 		{
@@ -276,8 +280,6 @@ namespace vr
 	void UiOverlay::FreeResources()
 	{
 		ImGui::DestroyContext();
-		buffers.index.Destroy();
-		buffers.vertex.Destroy();
 	}
 
 	bool UiOverlay::Header(const char* caption)

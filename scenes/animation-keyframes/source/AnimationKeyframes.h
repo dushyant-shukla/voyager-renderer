@@ -43,6 +43,7 @@ namespace vr
 		void LoadAssets();
 		void UpdateUniformBuffers(const unsigned int& imageIndex);
 		void UpdateBoneTransforms();
+		void Deserialize(const std::string archetype);
 
 	private:
 
@@ -101,6 +102,7 @@ namespace vr
 		struct
 		{
 			glm::mat4 model;
+			int enableAnimation = 1;
 		} mPerModelData;
 
 		std::vector<vrassimp::Model*> mModels;
@@ -111,6 +113,18 @@ namespace vr
 			VkDescriptorImageInfo info;
 		};
 		std::vector<ImageInfo> imageInfos;
+
+		struct
+		{
+			std::string name;
+		} archetypeInfo;
+
+		struct
+		{
+			float speed = 0.75;
+			int id = 0;
+			std::string animations = "";
+		} animationSettings;
 
 		int mCurrentFrame = 0;
 	};
