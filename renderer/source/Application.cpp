@@ -56,11 +56,16 @@ namespace vr
 			framerateController->FrameStart();
 			mWindow->Update();
 			mCamera.Update(framerateController->GetFrameTime());
-			eCamera.Update(framerateController->GetFrameTime());
 			Draw(framerateController->GetFrameTime());
 			mInputManager->LateUpdate(framerateController->GetFrameTime());
 			framerateController->FrameEnd();
 			UpdateUI(framerateController->GetFrameTime());
+			if (EditingModeCamera::UPDATE_CAMERA)
+			{
+				// TODO: this is a makeshift solution
+				// think of a better approach (layered architecture for processing input events could be a possibility)
+				eCamera.Update(framerateController->GetFrameTime());
+			}
 		}
 
 		Wait();
@@ -82,25 +87,6 @@ namespace vr
 	{
 		if (mUiOverlay.active)
 		{
-			//VkViewport viewport;
-			//VkRect2D scissor;
-
-			//viewport = {};
-			//viewport.x = 0.0f;										// x origin
-			//viewport.y = 0.0f;										// y origin
-			//viewport.width = (float)mSwapchain->mExtent.width;			// viewport width
-			//viewport.height = (float)mSwapchain->mExtent.height;		// viewport height
-			//viewport.minDepth = 0.0f;								// min framebuffer depth
-			//viewport.maxDepth = 1.0f;								// max framebuffer depth
-
-			//// Scissor
-			//scissor = {};
-			//scissor.offset = { 0, 0 };								// offset to use region from
-			//scissor.extent = mSwapchain->mExtent;
-
-			//vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-			//vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-
 			mUiOverlay.mUI.Draw(commandBuffer);
 		}
 	}
@@ -174,7 +160,7 @@ namespace vr
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding | ImGuiStyleVar_FrameRounding, 0);
 		ImGui::SetNextWindowPos(ImVec2(10, 10));
 		ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiSetCond_FirstUseEver);
-		ImGui::Begin("Voyager Renderer", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+		ImGui::Begin("Voyager Graphics Renderer", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 		ImGui::TextUnformatted(mDevice->GetPhysicalDevice().properties.deviceName);
 		if (mUiOverlay.mUI.CheckBox("Enable frame-rate controller", &FramerateController::mControlFramerate))
 		{
@@ -215,6 +201,11 @@ namespace vr
 		{
 			//buildCommandBuffers();
 			mUiOverlay.mUI.mUiState.updated = false;
+			EditingModeCamera::UPDATE_CAMERA = false;
+		}
+		else
+		{
+			EditingModeCamera::UPDATE_CAMERA = true;
 		}
 	}
 

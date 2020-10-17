@@ -194,7 +194,6 @@ namespace vrassimp
 		aiMatrix4x4 offset;
 		aiMatrix4x4 finalWorldTransform;
 		aiMatrix4x4 finalBoneTransform;
-		int index;
 	};
 
 	struct BoneLine
@@ -202,8 +201,8 @@ namespace vrassimp
 		aiMatrix4x4 parentBone;
 		aiMatrix4x4 childBone;
 
-		BoneLine(aiMatrix4x4 A, aiMatrix4x4 B) :
-			parentBone(A), childBone(B) {}
+		BoneLine(aiMatrix4x4 pBone, aiMatrix4x4 cBone) :
+			parentBone(pBone), childBone(cBone) {}
 	};
 
 	struct Texture
@@ -259,8 +258,7 @@ namespace vrassimp
 		std::map<std::string, int> mBoneMapping;
 		std::vector<BoneMatrix> mBoneMatrices;
 		std::vector<glm::vec3> mBonePosition;
-		std::vector <std::vector<int>> tempCount; // TODO: what the purpose of this variable
-		std::vector<BoneLine> boneLines;
+		std::vector<BoneLine> boneEndpointPositions;
 
 		bool mEnableSlerp;
 
@@ -359,7 +357,7 @@ namespace vrassimp
 
 		// these things are actually drawn
 		std::vector<Mesh*> meshes;
-		std::vector<glm::vec4> bonePos;
+		std::vector<glm::vec4> jointPositions;
 		std::vector<glm::vec4> linePos;
 
 		void LoadFromFile(std::string filename, ModelCreateInfo* createInfo);

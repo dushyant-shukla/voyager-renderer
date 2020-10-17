@@ -339,7 +339,9 @@ namespace vr
 					vkCmdBindPipeline(mGraphicsCommandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.joints.GetVulkanPipeline());
 
 					glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-					model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f));
+					//model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f)); // nathan
+					//model = glm::scale(model, glm::vec3(0.50f, 0.50f, 0.50f)); // tiger
+					model = glm::scale(model, glm::vec3(3.00f, 3.00f, 3.00f)); // spidey
 					mPrimtiveModelData.model = model;
 
 					// all meshes within a model will have the same model matrix
@@ -358,11 +360,10 @@ namespace vr
 						descriptorSets.data(), 0, nullptr);
 
 					// bind vertices
-					float vertices[] = { -0.5, 0.5, 0.0, 0.25, 1.0, 0.0, 0.5, 0.5, 0.0 };
 					jointVertexBuffer.Unmap();
 					vkQueueWaitIdle(GRAPHICS_QUEUE);
 					jointVertexBuffer.Destroy();
-					MemoryUtility::CreateBuffer(sizeof(currentModel->bonePos[0]) * currentModel->mAnimation->mBoneCount,
+					MemoryUtility::CreateBuffer(sizeof(currentModel->jointPositions[0]) * currentModel->mAnimation->mBoneCount,
 						VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
 						ALLOCATION_CALLBACK,
@@ -370,7 +371,7 @@ namespace vr
 						&jointVertexBuffer.mMemory);
 
 					jointVertexBuffer.Map();
-					jointVertexBuffer.CopyData(&currentModel->bonePos[0], sizeof(currentModel->bonePos[0]) * currentModel->mAnimation->mBoneCount);
+					jointVertexBuffer.CopyData(&currentModel->jointPositions[0], sizeof(currentModel->jointPositions[0]) * currentModel->mAnimation->mBoneCount);
 
 					VkBuffer vertexBuffers[] = { jointVertexBuffer.mBuffer };	// buffers to bind
 					VkDeviceSize offsets[] = { 0 };										// offsets into buffers being bound
@@ -383,46 +384,49 @@ namespace vr
 
 				// render bones
 				{
-					vkCmdBindPipeline(mGraphicsCommandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.bones.GetVulkanPipeline());
+					//vkCmdBindPipeline(mGraphicsCommandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.bones.GetVulkanPipeline());
 
-					glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-					model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f));
-					mPrimtiveModelData.model = model;
+					//glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+					////model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f)); // nathan
+					////model = glm::scale(model, glm::vec3(0.50f, 0.50f, 0.50f)); // tiger
+					//model = glm::scale(model, glm::vec3(3.00f, 3.00f, 3.00f)); // spidey
+					//mPrimtiveModelData.model = model;
 
-					// all meshes within a model will have the same model matrix
-					vkCmdPushConstants(mGraphicsCommandBuffers[currentImage],
-						mPipelineLayouts.joints.GetVulkanPipelineLayout(),
-						VK_SHADER_STAGE_VERTEX_BIT, 0,
-						sizeof(mPrimtiveModelData), &mPrimtiveModelData);	// we can also pass an array of data
+					//// all meshes within a model will have the same model matrix
+					//vkCmdPushConstants(mGraphicsCommandBuffers[currentImage],
+					//	mPipelineLayouts.joints.GetVulkanPipelineLayout(),
+					//	VK_SHADER_STAGE_VERTEX_BIT, 0,
+					//	sizeof(mPrimtiveModelData), &mPrimtiveModelData);	// we can also pass an array of data
 
-					std::vector<VkDescriptorSet> descriptorSets = { mDescriptors.primitiveUboSets[currentImage] };
+					//std::vector<VkDescriptorSet> descriptorSets = { mDescriptors.primitiveUboSets[currentImage] };
 
-					vkCmdBindDescriptorSets(mGraphicsCommandBuffers[currentImage],
-						VK_PIPELINE_BIND_POINT_GRAPHICS,
-						mPipelineLayouts.bones.GetVulkanPipelineLayout(),
-						0,
-						static_cast<unsigned int>(descriptorSets.size()),
-						descriptorSets.data(), 0, nullptr);
+					//vkCmdBindDescriptorSets(mGraphicsCommandBuffers[currentImage],
+					//	VK_PIPELINE_BIND_POINT_GRAPHICS,
+					//	mPipelineLayouts.bones.GetVulkanPipelineLayout(),
+					//	0,
+					//	static_cast<unsigned int>(descriptorSets.size()),
+					//	descriptorSets.data(), 0, nullptr);
 
-					vkQueueWaitIdle(GRAPHICS_QUEUE);
-					boneVertexBuffer.Destroy();
-					MemoryUtility::CreateBuffer(sizeof(currentModel->linePos[0]) * currentModel->mAnimation->mBoneCount * 2,
-						VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-						ALLOCATION_CALLBACK,
-						&boneVertexBuffer.mBuffer,
-						&boneVertexBuffer.mMemory);
+					//boneVertexBuffer.Unmap();
+					//vkQueueWaitIdle(GRAPHICS_QUEUE);
+					//boneVertexBuffer.Destroy();
+					//MemoryUtility::CreateBuffer(sizeof(currentModel->linePos[0]) * currentModel->mAnimation->mBoneCount * 2,
+					//	VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+					//	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+					//	ALLOCATION_CALLBACK,
+					//	&boneVertexBuffer.mBuffer,
+					//	&boneVertexBuffer.mMemory);
 
-					boneVertexBuffer.Map();
-					boneVertexBuffer.CopyData(&currentModel->linePos[0], sizeof(currentModel->linePos[0]) * currentModel->mAnimation->mBoneCount * 2);
+					//boneVertexBuffer.Map();
+					//boneVertexBuffer.CopyData(&currentModel->linePos[0], sizeof(currentModel->linePos[0]) * currentModel->mAnimation->mBoneCount * 2);
 
-					VkBuffer vertexBuffers[] = { boneVertexBuffer.mBuffer };
-					VkDeviceSize offsets[] = { 0 };
-					vkCmdBindVertexBuffers(mGraphicsCommandBuffers[currentImage], 0, 1, vertexBuffers, offsets);
+					//VkBuffer vertexBuffers[] = { boneVertexBuffer.mBuffer };
+					//VkDeviceSize offsets[] = { 0 };
+					//vkCmdBindVertexBuffers(mGraphicsCommandBuffers[currentImage], 0, 1, vertexBuffers, offsets);
 
-					vkCmdDraw(mGraphicsCommandBuffers[currentImage], currentModel->mAnimation->mBoneCount * 2, 1, 0, 0);
+					//vkCmdDraw(mGraphicsCommandBuffers[currentImage], currentModel->mAnimation->mBoneCount * 2, 1, 0, 0);
 
-					boneVertexBuffer.Unmap();
+					//boneVertexBuffer.Unmap();
 				}
 			}
 		}
@@ -586,16 +590,18 @@ namespace vr
 		//model->LoadFromFile("jumping.fbx", &modelCreateInfo);
 		//model->LoadFromFile("wolf-ii\\Wolf_dae.dae", &modelCreateInfo);
 		//model->LoadFromFile("iron-man-fortnite\\scene.gltf", &modelCreateInfo);
-		model->LoadFromFile("nathan\\scene.gltf", &modelCreateInfo); // works - loads correctly
+		//model->LoadFromFile("nathan\\scene.gltf", &modelCreateInfo); // works - loads correctly
 		//model->LoadFromFile("bengal-tiger\\tiger.fbx", &modelCreateInfo); // works - loads correctly
 		//model->LoadFromFile("myth-creature\\myth-creature.fbx", &modelCreateInfo); // works - loads correctly
-		//model->LoadFromFile("spiderman\\spiderman.fbx", &modelCreateInfo); // works - loads correctly
+		model->LoadFromFile("spiderman\\spiderman.fbx", &modelCreateInfo); // works - loads correctly
 
 		// TODO: read archetype file here for Nathan which will hold the name for model file, and transformation information
 		// mimic the behavior for now
 		model->mTransform.position = glm::vec3(0.0f, 0.0f, 0.0f);
 		model->mTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-		model->mTransform.scale = glm::vec3(0.01f, 0.01f, 0.01f);
+		//model->mTransform.scale = glm::vec3(0.01f, 0.01f, 0.01f); // nathan
+		//model->mTransform.scale = glm::vec3(0.5f, 0.5f, 0.50f);   // tiger
+		model->mTransform.scale = glm::vec3(3.00f, 3.0f, 3.0f);   // spidey
 
 		mModels.push_back(model);
 
@@ -701,6 +707,17 @@ namespace vr
 		mPerModelData.boneLine = 0;
 	}
 
+	glm::mat4 AnimationKeyframes::aiMatrix4x4ToGlm(aiMatrix4x4 ai_matr)
+	{
+		glm::mat4 result;
+		result[0].x = ai_matr.a1; result[0].y = ai_matr.b1; result[0].z = ai_matr.c1; result[0].w = ai_matr.d1;
+		result[1].x = ai_matr.a2; result[1].y = ai_matr.b2; result[1].z = ai_matr.c2; result[1].w = ai_matr.d2;
+		result[2].x = ai_matr.a3; result[2].y = ai_matr.b3; result[2].z = ai_matr.c3; result[2].w = ai_matr.d3;
+		result[3].x = ai_matr.a4; result[3].y = ai_matr.b4; result[3].z = ai_matr.c4; result[3].w = ai_matr.d4;
+
+		return result;
+	}
+
 	void AnimationKeyframes::UpdateBoneTransforms()
 	{
 		for (unsigned int i = 0; i < mModels.size(); ++i)
@@ -725,40 +742,37 @@ namespace vr
 				//ubo.boneTransforms[i] = glm::transpose(glm::make_mat4(&(boneTransforms[i].a1)));
 			}
 
-			// bones positions to render
-			mModels[i]->bonePos.clear();
-			mModels[i]->bonePos.resize(mModels[i]->mAnimation->mBoneCount); // mBoneCount is same as boneTransform.size()
+			// joints positions to render
+			mModels[i]->jointPositions.clear();
+			mModels[i]->jointPositions.resize(mModels[i]->mAnimation->mBoneCount); // mBoneCount is same as boneTransform.size()
 			for (unsigned int j = 0; j < boneTransforms.size(); ++j)
 			{
 				glm::mat4 t = glm::transpose(glm::make_mat4(&(boneTransforms[j].a1)));
 				glm::vec4 v = t * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-				mModels[i]->bonePos[j] = { v.x, v.y, v.z, 1 };
+				mModels[i]->jointPositions[j] = { v.x, v.y, v.z, 1 };
 			}
 
-			// line positions to render
+			// bone line positions to render
 			mModels[i]->linePos.clear();
 			mModels[i]->linePos.resize(mModels[i]->mAnimation->mBoneCount * 2); // mBoneCount is same as boneTransform.size()
 			std::vector<glm::vec4> BonePositionsMeshSpaceChild;
 			std::vector<glm::vec4> BonePositionsMeshSpaceParent;
-			unsigned int k;
 			for (unsigned int j = 1; j < mModels[i]->mAnimation->mBoneCount; ++j)
 			{
-				k = j * 2;
-				glm::mat4 childPos = glm::transpose(glm::make_mat4(&(mModels[i]->mAnimation->boneLines[j].childBone.a1)));
-				glm::mat4 parentPos = glm::transpose(glm::make_mat4(&(mModels[i]->mAnimation->boneLines[j].parentBone.a1)));
+				unsigned int k = j * 2;
+				glm::mat4 childPos = glm::transpose(glm::make_mat4(&(mModels[i]->mAnimation->boneEndpointPositions[j].childBone.a1)));
+				glm::mat4 parentPos = glm::transpose(glm::make_mat4(&(mModels[i]->mAnimation->boneEndpointPositions[j].parentBone.a1)));
+
+				//glm::mat4 childPos = aiMatrix4x4ToGlm(mModels[i]->mAnimation->boneEndpointPositions[j].childBone);
+				//glm::mat4 parentPos = aiMatrix4x4ToGlm(mModels[i]->mAnimation->boneEndpointPositions[j].parentBone);
 
 				BonePositionsMeshSpaceChild.push_back(childPos * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 				BonePositionsMeshSpaceParent.push_back(parentPos * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
 				mModels[i]->linePos[k] = { BonePositionsMeshSpaceChild[j - 1].x, BonePositionsMeshSpaceChild[j - 1].y, BonePositionsMeshSpaceChild[j - 1].z ,1 };
 				mModels[i]->linePos[k + 1] = { BonePositionsMeshSpaceParent[j - 1].x, BonePositionsMeshSpaceParent[j - 1].y, BonePositionsMeshSpaceParent[j - 1].z,1 };
-
-				/*mModels[i]->linePos[k] = { BonePositionsMeshSpaceChild[j - 1].x / 100.0f, BonePositionsMeshSpaceChild[j - 1].y / 100.0f, BonePositionsMeshSpaceChild[j - 1].z / 100.0f,1 };
-				mModels[i]->linePos[k + 1] = { BonePositionsMeshSpaceParent[j - 1].x / 100.0f, BonePositionsMeshSpaceParent[j - 1].y / 100.0f, BonePositionsMeshSpaceParent[j - 1].z / 100.0f,1 };*/
 			}
 		}
-
-		int a = 10;
 	}
 
 	void AnimationKeyframes::UpdateBoneModelMatrix(aiMatrix4x4 transform)

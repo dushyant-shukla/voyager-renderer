@@ -372,9 +372,6 @@ namespace vrassimp
 		double timeInTicks = seconds * mTicksPerSecond;
 		float animationTime = fmod(timeInTicks, (float)mScene->mAnimations[currentIndex]->mDuration);
 
-		tempCount.clear();
-		tempCount.resize(MAX_BONES);
-
 		aiMatrix4x4 identityMatrix = aiMatrix4x4();
 		ReadNodeHierarchy(animationTime, mScene->mRootNode, identityMatrix);
 
@@ -420,25 +417,7 @@ namespace vrassimp
 			unsigned int boneIndex = mBoneMapping[nodeName];
 			mBoneMatrices[boneIndex].finalBoneTransform = mGlobalInverseTransform * globalTransformation;
 			mBoneMatrices[boneIndex].finalWorldTransform = mGlobalInverseTransform * globalTransformation * mBoneMatrices[boneIndex].offset;
-			mBoneMatrices[boneIndex].index = boneIndex;
-
-			// TODO: Find a place to clear it as well
-			boneLines.push_back(BoneLine(mGlobalInverseTransform * parentTransform, mBoneMatrices[boneIndex].finalBoneTransform));
-
-			// may be this part is not needed
-			for (int i = 0; i < parentNode->mNumChildren; i++)
-			{
-				std::string nodeName(parentNode->mChildren[i]->mName.data);
-				if (mBoneMapping.find(nodeName) != mBoneMapping.end())
-				{
-					int boneIndex = mBoneMapping[nodeName];
-					tempCount[boneIndex].push_back(boneIndex);
-				}
-				else
-				{
-					tempCount[boneIndex].push_back(boneIndex);
-				}
-			}
+			boneEndpointPositions.push_back(BoneLine(mGlobalInverseTransform * parentTransform, mBoneMatrices[boneIndex].finalBoneTransform));
 		}
 
 		for (int i = 0; i < parentNode->mNumChildren; ++i)

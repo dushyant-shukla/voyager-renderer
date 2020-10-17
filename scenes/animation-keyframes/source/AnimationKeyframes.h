@@ -43,6 +43,7 @@ namespace vr
 		void LoadAssets();
 		void UpdateUniformBuffers(const unsigned int& imageIndex);
 		void UpdateModelInfo(vrassimp::Model* model);
+		glm::mat4 aiMatrix4x4ToGlm(aiMatrix4x4 ai_matr);
 		void UpdateBoneTransforms();
 		void UpdateBoneModelMatrix(aiMatrix4x4 transform);
 		void Deserialize(const std::string archetype);

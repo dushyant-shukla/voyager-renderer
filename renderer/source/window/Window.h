@@ -18,7 +18,7 @@ namespace vr
 		/*
 			TODO: Probably a good idea to deserialize these properties from a configuration file.
 		*/
-		WindowProperties(unsigned int w = 1280, unsigned int h = 720, std::string t = "Voyager Renderer");
+		WindowProperties(unsigned int w = 1280, unsigned int h = 720, std::string t = "Voyager Graphics Renderer");
 	};
 
 	class Window

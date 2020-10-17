@@ -59,5 +59,7 @@ namespace vr
 		InputManager* input;
 		glm::vec2 oldMousePosition = glm::vec2(0.0f);
 		glm::vec2 oldScrollOffset = glm::vec2(0.0f);
+
+		static inline bool UPDATE_CAMERA = true;
 	};
 }
