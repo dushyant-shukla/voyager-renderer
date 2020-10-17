@@ -7,6 +7,7 @@ layout (location = 0) in VS_OUT
     vec3 color;
     vec2 uv;
     vec3 normal;
+    int draw_bone;
 } fs_in;
 
 layout(set = 1, binding = 0) uniform sampler2D texture_sampler;
@@ -17,8 +18,16 @@ layout(location = 0) out vec4 frag_color;
 
 void main() 
 {
-    //frag_color = texture(texture_sampler, fs_in.uv);
-    frag_color = texture(texture_sampler, fs_in.uv);
-    //frag_color = vec4(fs_in.color, 1.0);
-    //if (frag_color.w < 0.6) { discard; }
+    if(fs_in.draw_bone == 0)
+    {
+        //frag_color = texture(texture_sampler, fs_in.uv);
+        frag_color = texture(texture_sampler, fs_in.uv);
+        //frag_color = vec4(fs_in.color, 1.0);
+        //if (frag_color.w < 0.6) { discard; }
+    }
+    else
+    {
+        frag_color = vec4(0.0, 0.0, 0.0, 1.0);
+    }
+
 }

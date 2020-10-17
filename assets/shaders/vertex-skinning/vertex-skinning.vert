@@ -27,38 +27,74 @@ layout (location = 0) out VS_OUT
     vec3 color;
     vec2 uv;
     vec3 normal;
+    int draw_bone;
 } vs_out;
 
 layout (push_constant) uniform PushModel
 {
     mat4 model;
+    mat4 model_temp;
     int enable_animation;
+    int bone_line;
 } push_model;
 
 void main() 
 {
-    if(push_model.enable_animation != 0)
+    if(push_model.bone_line == 0)
     {
-        mat4 bone_transform = ubo.bones[bone_ids[0]] * bone_weights[0];
-        bone_transform     += ubo.bones[bone_ids[1]] * bone_weights[1];
-        bone_transform     += ubo.bones[bone_ids[2]] * bone_weights[2];
-        bone_transform     += ubo.bones[bone_ids[3]] * bone_weights[3];
+        if(push_model.enable_animation != 0)
+        {
+            mat4 bone_transform = ubo.bones[bone_ids[0]] * bone_weights[0];
+            bone_transform     += ubo.bones[bone_ids[1]] * bone_weights[1];
+            bone_transform     += ubo.bones[bone_ids[2]] * bone_weights[2];
+            bone_transform     += ubo.bones[bone_ids[3]] * bone_weights[3];
 
-        gl_Position = ubo.projection 
-                      * ubo.view
-                      * push_model.model
-                      * bone_transform
-                      * vec4(position, 1.0);
+            gl_Position = ubo.projection 
+                          * ubo.view
+                          * push_model.model
+                          * bone_transform
+                          * vec4(position, 1.0);
+        }
+        else
+        {
+            gl_Position = ubo.projection 
+                          * ubo.view
+                          * push_model.model
+                          * vec4(position, 1.0);
+        }
+
+        vs_out.color = color;
+        vs_out.uv = uv;
+        vs_out.normal = normal;
+        vs_out.draw_bone = 0;
     }
     else
     {
-        gl_Position = ubo.projection 
-                      * ubo.view
-                      * push_model.model
-                      * vec4(position, 1.0);
+        vs_out.draw_bone = 1;
+        if(gl_VertexIndex == 0)
+		{
+			gl_Position = ubo.projection * ubo.view * push_model.model *  vec4(-1.0f,1.0f,0.0f, 1.0f);
+			
+		}
+		else if(gl_VertexIndex == 1)
+		{
+			gl_Position = ubo.projection * ubo.view * push_model.model *  vec4(1.0f,1.0f,0.0f, 1.0f);
+		}
+		else if(gl_VertexIndex == 2)
+		{
+			gl_Position = ubo.projection * ubo.view * push_model.model_temp *  vec4(1.0f,-1.0f,0.0f, 1.0f);
+		}
+		else if(gl_VertexIndex == 3)
+		{
+			gl_Position = ubo.projection * ubo.view * push_model.model_temp *  vec4(1.0f,-1.0f,0.0f, 1.0f);
+		}
+		else if(gl_VertexIndex == 4)
+		{
+			gl_Position = ubo.projection * ubo.view * push_model.model_temp *  vec4(-1.0f,-1.0f,0.0f, 1.0f);
+		}
+		else if(gl_VertexIndex == 5)
+		{
+			gl_Position = ubo.projection * ubo.view * push_model.model *  vec4(-1.0f,1.0f,0.0f, 1.0f);
+		}
     }
-
-    vs_out.color = color;
-    vs_out.uv = uv;
-    vs_out.normal = normal;
 }

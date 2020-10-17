@@ -42,7 +42,9 @@ namespace vr
 		void SetupTextureSampler();
 		void LoadAssets();
 		void UpdateUniformBuffers(const unsigned int& imageIndex);
+		void UpdateModelInfo(vrassimp::Model* model);
 		void UpdateBoneTransforms();
+		void UpdateBoneModelMatrix(aiMatrix4x4 transform);
 		void Deserialize(const std::string archetype);
 
 	private:
@@ -50,28 +52,41 @@ namespace vr
 		struct
 		{
 			/*
-				Uniform buffer data would be same for all geometries drawn in one frame
+				Uniform buffer data would be same for all geometries drawn in one frame.
+				Used by mesh pipeline.
 			*/
-			DescriptorPool uniformBufferPool;
-			DescriptorSetLayout uniformBufferLayout;
-			std::vector<VkDescriptorSet> uniformBufferSets;
+			DescriptorPool meshUboPool;
+			DescriptorSetLayout meshUboLayout;
+			std::vector<VkDescriptorSet> meshUboSets;
 
 			/*
 				Textures will change on per mesh basis.
 				A descriptor set will be owned by each mesh with common pool and layout.
+				Used by mesh pipeline.
 			*/
 			DescriptorPool texturePool;
 			DescriptorSetLayout textureLayout;
+
+			/*
+				Used by primitive (bones and joints) draw pipelines
+			*/
+			DescriptorPool primitiveUboPool;
+			DescriptorSetLayout primitiveUboLayout;
+			std::vector<VkDescriptorSet> primitiveUboSets;
 		} mDescriptors;
 
 		struct
 		{
-			Pipeline pipeline;
+			Pipeline mesh;
+			Pipeline bones; // lines
+			Pipeline joints; // points
 		} mPipelines;
 
 		struct
 		{
-			PipelineLayout pipelineLayout;
+			PipelineLayout mesh;
+			PipelineLayout joints;
+			PipelineLayout bones;
 		} mPipelineLayouts;
 
 		struct
@@ -90,10 +105,28 @@ namespace vr
 			alignas(16) glm::mat4 view;
 			alignas(16) glm::mat4 bones[MAX_BONES];
 			alignas(16) glm::vec3 viewPosition;
-		} ubo;
-		std::vector<VkBuffer> uboBuffers;// don't forget to destroy this
-		std::vector<VkDeviceMemory> uboBuffersMemory; // don't forget to free this
+		} meshUBO;
+		std::vector<VkBuffer> meshUboBuffers;// don't forget to destroy this
+		std::vector<VkDeviceMemory> meshUboMemory; // don't forget to free this
+
+		struct
+		{
+			alignas(16) glm::mat4 projection;
+			alignas(16) glm::mat4 view;
+		} primitiveUBO;
+		std::vector<VkBuffer> primitiveUboBuffers;// don't forget to destroy this
+		std::vector<VkDeviceMemory> primitiveUboMemory; // don't forget to free this
+
+		Buffer<glm::vec4> jointVertexBuffer;
+		Buffer<glm::vec4> boneVertexBuffer;
+
+		struct
+		{
+			glm::mat4 model;
+		} mPrimtiveModelData;
+
 		std::vector<aiMatrix4x4> boneTransforms;
+
 		float timer = 0;
 
 		/*
@@ -102,7 +135,9 @@ namespace vr
 		struct
 		{
 			glm::mat4 model;
+			glm::mat4 modelTemp;
 			int enableAnimation = 1;
+			int boneLine = 0;
 		} mPerModelData;
 
 		std::vector<vrassimp::Model*> mModels;
@@ -124,6 +159,7 @@ namespace vr
 			float speed = 0.75;
 			int id = 0;
 			std::string animations = "";
+			int boneLine = 0;
 		} animationSettings;
 
 		int mCurrentFrame = 0;

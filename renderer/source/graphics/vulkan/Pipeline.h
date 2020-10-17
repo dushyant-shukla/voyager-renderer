@@ -4,6 +4,7 @@
 #include "PipelineLayout.h"
 
 #include <vector>
+#include <string>
 
 namespace vr
 {

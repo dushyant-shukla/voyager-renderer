@@ -5,6 +5,8 @@
 
 namespace vr
 {
+	inline const std::string SHADER_BASE_PATH = "..\\..\\assets\\shaders\\";
+
 	class ShaderModule
 	{
 	public:

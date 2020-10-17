@@ -53,7 +53,7 @@ namespace vr
 
 		SetupPipeline();
 
-		RecordCommands(0);
+		//RecordCommands(0);
 
 		isReady = true;
 	}
@@ -99,6 +99,7 @@ namespace vr
 		vkAcquireNextImageKHR(mDevice->GetLogicalDevice().device, mSwapchain->GetVulkanSwapChain(), std::numeric_limits<uint64_t>::max(), mSyncPrimitives.GetImageAvailableSemaphore(mCurrentFrame), VK_NULL_HANDLE, &imageIndex);
 
 		//RecordCommands(imageIndex);
+		RecordCommands(0);
 		UpdateUniformBuffer(imageIndex);
 
 		// 2# submit command buffer to render

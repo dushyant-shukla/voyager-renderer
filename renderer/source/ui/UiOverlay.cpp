@@ -183,9 +183,9 @@ namespace vr
 				&buffers.vertex.mBuffer,
 				&buffers.vertex.mMemory);
 
-			buffers.vertex.SetupDescriptor();
+			//buffers.vertex.SetupDescriptor();
 			buffers.vertexCount = imDrawData->TotalVtxCount;
-			buffers.vertex.Unmap();
+			//buffers.vertex.Unmap();
 			buffers.vertex.Map();
 			updateCmdBuffers = true;
 		}
@@ -203,7 +203,7 @@ namespace vr
 				ALLOCATION_CALLBACK,
 				&buffers.index.mBuffer,
 				&buffers.index.mMemory);
-			buffers.index.SetupDescriptor();
+			//buffers.index.SetupDescriptor();
 			buffers.indexCount = imDrawData->TotalIdxCount;
 			buffers.index.Map();
 			updateCmdBuffers = true;

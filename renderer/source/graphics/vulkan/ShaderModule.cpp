@@ -6,7 +6,7 @@
 vr::ShaderModule::ShaderModule(std::string filename)
 	:mFilename(filename)
 {
-	std::vector<char> code = ResourceLoader::ReadFile(filename);
+	std::vector<char> code = ResourceLoader::ReadFile(SHADER_BASE_PATH + filename);
 
 	VkShaderModuleCreateInfo shaderModuleCreateInfo = {};
 	shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;

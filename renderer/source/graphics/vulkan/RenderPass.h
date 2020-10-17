@@ -15,7 +15,7 @@ namespace vr
 
 		const VkRenderPass& GetVulkanRenderPass();
 
-	private:
+	public:
 
 		VkSurfaceFormatKHR mSwapchainFormat;
 

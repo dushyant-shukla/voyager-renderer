@@ -20,7 +20,7 @@ namespace vrassimp
 
 	Mesh::Mesh() {}
 
-	Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture*> textures)
+	Mesh::Mesh(std::vector<MeshVertex> vertices, std::vector<unsigned int> indices, std::vector<Texture*> textures)
 		: vertices(vertices), indices(indices), textures(textures)
 	{
 	}
@@ -149,7 +149,9 @@ namespace vrassimp
 		mAnimation->mScene = Importer.GetOrphanedScene();
 		mAnimation->SetAnimation(0);
 		mAnimation->mGlobalInverseTransform = scene->mRootNode->mTransformation;
+		mAnimation->mGlobalInverseTransform.Inverse(); // animation runs without inverse as well
 
+		// extract information about animation tracks available in the file
 		for (size_t i = 0; i < scene->mNumAnimations; ++i)
 		{
 			double start = (i == 0 ? 0 : mAnimation->animationTimes[i - 1].end);
@@ -169,7 +171,7 @@ namespace vrassimp
 		/*
 			Process animation data for all meshes here
 		*/
-		mAnimation->mBones.resize(scene->mNumMeshes);
+		mAnimation->mBoneIdsAndWeights.resize(scene->mNumMeshes);
 		for (int meshIndex = 0; meshIndex < scene->mNumMeshes; ++meshIndex)
 		{
 			aiMesh* mesh = scene->mMeshes[meshIndex];
@@ -201,17 +203,17 @@ namespace vrassimp
 			/*
 				Add bone-id(s) and weight(s) for each mesh vertex.
 			*/
-			if (mAnimation && !mAnimation->mBones[meshIndex].empty())//isAnimationAvailable)
+			if (mAnimation && !mAnimation->mBoneIdsAndWeights[meshIndex].empty())//isAnimationAvailable)
 			{
 				for (unsigned int boneIndex = 0; boneIndex < MAX_BONES_PER_VERTX; ++boneIndex)
 				{
 					// TODO: for mesh 5 no. of vertices are zero // wolf\\scene.gltf
-					mesh->vertices[vertIndex].boneWeights[boneIndex] = mAnimation->mBones[meshIndex][vertIndex].weights[boneIndex];
+					mesh->vertices[vertIndex].boneWeights[boneIndex] = mAnimation->mBoneIdsAndWeights[meshIndex][vertIndex].weights[boneIndex];
 				}
 
 				for (unsigned int boneIndex = 0; boneIndex < MAX_BONES_PER_VERTX; ++boneIndex)
 				{
-					mesh->vertices[vertIndex].boneIds[boneIndex] = mAnimation->mBones[meshIndex][vertIndex].ids[boneIndex];
+					mesh->vertices[vertIndex].boneIds[boneIndex] = mAnimation->mBoneIdsAndWeights[meshIndex][vertIndex].ids[boneIndex];
 				}
 			}
 			else
@@ -329,7 +331,7 @@ namespace vrassimp
 
 	void Animation::ProcessMesh(int meshIndex, aiMesh* mesh, const aiScene* scene)
 	{
-		mBones[meshIndex].resize(mesh->mNumVertices);
+		mBoneIdsAndWeights[meshIndex].resize(mesh->mNumVertices);
 
 		// load bones
 		for (int i = 0; i < mesh->mNumBones; ++i)
@@ -353,18 +355,19 @@ namespace vrassimp
 			}
 
 			/*
-				Each bone influences certain number of vertices
+				Each bone influences certain number of vertices by a corresponding weight.
+				This is what is sent into shader along with bone transformations.
 			*/
 			for (int j = 0; j < mesh->mBones[i]->mNumWeights; ++j)
 			{
 				int vertexId = mesh->mBones[i]->mWeights[j].mVertexId;
 				float weight = mesh->mBones[i]->mWeights[j].mWeight;
-				mBones[meshIndex][vertexId].AddBoneData(boneIndex, weight);
+				mBoneIdsAndWeights[meshIndex][vertexId].AddBoneData(boneIndex, weight);
 			}
 		}
 	}
 
-	void Animation::BoneTransform(double seconds, std::vector<aiMatrix4x4>& transforms)
+	void Animation::Animate(double seconds, std::vector<aiMatrix4x4>& transforms, std::vector<aiMatrix4x4>& boneTransforms)
 	{
 		double timeInTicks = seconds * mTicksPerSecond;
 		float animationTime = fmod(timeInTicks, (float)mScene->mAnimations[currentIndex]->mDuration);
@@ -376,10 +379,12 @@ namespace vrassimp
 		ReadNodeHierarchy(animationTime, mScene->mRootNode, identityMatrix);
 
 		transforms.resize(mBoneCount);
+		boneTransforms.resize(mBoneCount);
 
 		for (int i = 0; i < mBoneCount; ++i)
 		{
 			transforms[i] = mBoneMatrices[i].finalWorldTransform;
+			boneTransforms[i] = mBoneMatrices[i].finalBoneTransform;
 		}
 
 		int a = 10;
@@ -399,6 +404,9 @@ namespace vrassimp
 
 		if (nodeAnimation)
 		{
+			/*
+				TODO: change this to use Quaternion class
+			*/
 			aiMatrix4x4 matScale = InterpolateScale(parentAnimationTime, nodeAnimation);
 			aiMatrix4x4 matRotation = InterpolateRotation(parentAnimationTime, nodeAnimation);
 			aiMatrix4x4 matTranslation = InterpolateTranslation(parentAnimationTime, nodeAnimation);
@@ -412,7 +420,12 @@ namespace vrassimp
 			unsigned int boneIndex = mBoneMapping[nodeName];
 			mBoneMatrices[boneIndex].finalBoneTransform = mGlobalInverseTransform * globalTransformation;
 			mBoneMatrices[boneIndex].finalWorldTransform = mGlobalInverseTransform * globalTransformation * mBoneMatrices[boneIndex].offset;
+			mBoneMatrices[boneIndex].index = boneIndex;
 
+			// TODO: Find a place to clear it as well
+			boneLines.push_back(BoneLine(mGlobalInverseTransform * parentTransform, mBoneMatrices[boneIndex].finalBoneTransform));
+
+			// may be this part is not needed
 			for (int i = 0; i < parentNode->mNumChildren; i++)
 			{
 				std::string nodeName(parentNode->mChildren[i]->mName.data);
