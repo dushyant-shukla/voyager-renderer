@@ -7,7 +7,6 @@ layout (location = 0) in VS_OUT
     vec3 color;
     vec2 uv;
     vec3 normal;
-    int draw_bone;
 } fs_in;
 
 layout(set = 1, binding = 0) uniform sampler2D diffuse_sampler;

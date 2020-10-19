@@ -2,6 +2,7 @@
 #include "input/InputManager.h"
 #include "window/Window.h"
 #include "logging/LoggingCore.h"
+#include "imgui.h"
 
 namespace vr
 {
@@ -76,6 +77,10 @@ namespace vr
 
 	void EditingModeCamera::Update(float frametime)
 	{
+		ImGuiIO& io = ImGui::GetIO();
+		if (io.WantCaptureMouse) return;
+		if (io.WantCaptureKeyboard) return;
+
 		// handle zoom // 1338
 		{
 			glm::vec2 offset = input->GetScrollOffset();

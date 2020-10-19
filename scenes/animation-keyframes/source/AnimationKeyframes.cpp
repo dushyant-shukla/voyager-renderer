@@ -564,16 +564,16 @@ namespace vr
 		//model->LoadFromFile("blade\\scene.gltf", &modelCreateInfo);
 		//model->LoadFromFile("wolf\\scene.gltf", &modelCreateInfo);
 		//model->LoadFromFile("alpha-wolf\\alpha-wolf.fbx", &modelCreateInfo);
-		//model->LoadFromFile("wolverine\\wolverine.fbx", &modelCreateInfo);
-		//model->LoadFromFile("wolverine\\scene.gltf", &modelCreateInfo);
+		//model->LoadFromFile("wolverine\\wolverine.fbx", "wolverine");
+		//model->LoadFromFile("wolverine\\scene.gltf", "wolverine");
 		//model->LoadFromFile("alpha-wolf\\scene.gltf", &modelCreateInfo);
 		//model->LoadFromFile("jumping.fbx", &modelCreateInfo);
 		//model->LoadFromFile("wolf-ii\\Wolf_dae.dae", &modelCreateInfo);
 		//model->LoadFromFile("iron-man-fortnite\\scene.gltf", &modelCreateInfo);
-		//model->LoadFromFile("nathan\\scene.gltf"); // works - loads correctly
-		//model->LoadFromFile("bengal-tiger\\tiger.fbx"); // works - loads correctly
+		//model->LoadFromFile("nathan\\scene.gltf", "nathan"); // works - loads correctly
+		//model->LoadFromFile("bengal-tiger\\tiger.fbx", "bengal tiger"); // works - loads correctly
 		//model->LoadFromFile("myth-creature\\myth-creature.fbx", &modelCreateInfo); // works - loads correctly
-		model->LoadFromFile("spiderman\\spiderman.fbx"); // works - loads correctly
+		model->LoadFromFile("spiderman\\spiderman.fbx", "spidey"); // works - loads correctly
 
 		// TODO: read archetype file here for Nathan which will hold the name for model file, and transformation information
 		// mimic the behavior for now
@@ -582,6 +582,9 @@ namespace vr
 		//model->mTransform.scale = glm::vec3(0.01f, 0.01f, 0.01f); // nathan
 		//model->mTransform.scale = glm::vec3(0.5f, 0.5f, 0.50f);   // tiger
 		model->mTransform.scale = glm::vec3(3.00f, 3.0f, 3.0f);   // spidey
+		//model->mTransform.scale = glm::vec3(20.00f, 20.0f, 20.0f);  // wolverine
+
+		mModels.push_back(model);
 
 		for (size_t i = 0; i < model->mAnimation->animationTimes.size(); ++i)
 		{
@@ -593,64 +596,67 @@ namespace vr
 			Setup meshes' vertex buffers, index buffers and textures
 		*/
 
-		for (size_t meshIndex = 0; meshIndex < model->meshes.size(); ++meshIndex)
+		for (auto& model : mModels)
 		{
-			vrassimp::Mesh* currentMesh = model->meshes[meshIndex];
-
-			currentMesh->buffers.vertex.Create(currentMesh->vertices, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-			currentMesh->buffers.index.Create(currentMesh->indices, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-
-			if (!currentMesh->textures.empty())
+			for (size_t meshIndex = 0; meshIndex < model->meshes.size(); ++meshIndex)
 			{
-				// allocate a descritor set to hold per mesh data (texture data for now...)
-				currentMesh->mDescriptorSets.Setup(mDescriptors.textureLayout.mLayout, mDescriptors.texturePool.mPool, 1);
-				std::vector<VkWriteDescriptorSet> descriptorWrites;
-				descriptorWrites.reserve(currentMesh->textures.size());
+				vrassimp::Mesh* currentMesh = model->meshes[meshIndex];
 
-				for (size_t textureIndex = 0; textureIndex < currentMesh->textures.size(); ++textureIndex)
+				currentMesh->buffers.vertex.Create(currentMesh->vertices, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+				currentMesh->buffers.index.Create(currentMesh->indices, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+
+				if (!currentMesh->textures.empty())
 				{
-					vrassimp::Texture* texture = model->meshes[meshIndex]->textures[textureIndex];
-					Texture* t = nullptr;
-					switch (texture->type)
-					{
-					case vrassimp::Texture::Type::DIFFUSE:
-						t = new Texture(0);
-						t->LoadFromFile(texture->path.c_str(), mSamplers.diffuse.GetVulkanSampler());
-						texture->texture = t;
-						break;
-					case vrassimp::Texture::Type::SPECULAR:
-						t = new Texture(1);
-						t->LoadFromFile(texture->path.c_str(), mSamplers.specular.GetVulkanSampler());
-						texture->texture = t;
-						break;
-					case vrassimp::Texture::Type::EMISSIVE:
-						t = new Texture(2);
-						t->LoadFromFile(texture->path.c_str(), mSamplers.emission.GetVulkanSampler());
-						texture->texture = t;
-						break;
-					default:
-						break;
-					}
+					// allocate a descritor set to hold per mesh data (texture data for now...)
+					currentMesh->mDescriptorSets.Setup(mDescriptors.textureLayout.mLayout, mDescriptors.texturePool.mPool, 1);
+					std::vector<VkWriteDescriptorSet> descriptorWrites;
+					descriptorWrites.reserve(currentMesh->textures.size());
 
-					if (t != nullptr)
+					for (size_t textureIndex = 0; textureIndex < currentMesh->textures.size(); ++textureIndex)
 					{
-						VkWriteDescriptorSet writeImageInfo = {};
-						writeImageInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-						writeImageInfo.dstSet = currentMesh->mDescriptorSets[0];
-						writeImageInfo.dstBinding = t->mBinding;
-						writeImageInfo.dstArrayElement = 0;
-						writeImageInfo.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-						writeImageInfo.descriptorCount = 1;
-						writeImageInfo.pImageInfo = &t->mImageInfo;
+						vrassimp::Texture* texture = model->meshes[meshIndex]->textures[textureIndex];
+						Texture* t = nullptr;
+						switch (texture->type)
+						{
+						case vrassimp::Texture::Type::DIFFUSE:
+							t = new Texture(0);
+							t->LoadFromFile(texture->path.c_str(), mSamplers.diffuse.GetVulkanSampler());
+							texture->texture = t;
+							break;
+						case vrassimp::Texture::Type::SPECULAR:
+							t = new Texture(1);
+							t->LoadFromFile(texture->path.c_str(), mSamplers.specular.GetVulkanSampler());
+							texture->texture = t;
+							break;
+						case vrassimp::Texture::Type::EMISSIVE:
+							t = new Texture(2);
+							t->LoadFromFile(texture->path.c_str(), mSamplers.emission.GetVulkanSampler());
+							texture->texture = t;
+							break;
+						default:
+							break;
+						}
 
-						descriptorWrites.push_back(writeImageInfo);
+						if (t != nullptr)
+						{
+							VkWriteDescriptorSet writeImageInfo = {};
+							writeImageInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+							writeImageInfo.dstSet = currentMesh->mDescriptorSets[0];
+							writeImageInfo.dstBinding = t->mBinding;
+							writeImageInfo.dstArrayElement = 0;
+							writeImageInfo.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+							writeImageInfo.descriptorCount = 1;
+							writeImageInfo.pImageInfo = &t->mImageInfo;
+
+							descriptorWrites.push_back(writeImageInfo);
+						}
 					}
+					vkUpdateDescriptorSets(LOGICAL_DEVICE, static_cast<unsigned int>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 				}
-				vkUpdateDescriptorSets(LOGICAL_DEVICE, static_cast<unsigned int>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 			}
 		}
 
-		mModels.push_back(model);
+		//mModels.push_back(model);
 	}
 
 	void AnimationKeyframes::UpdateUniformBuffers(const unsigned int& imageIndex)
@@ -676,11 +682,11 @@ namespace vr
 	void AnimationKeyframes::UpdateModelInfo(vrassimp::Model* model)
 	{
 		glm::mat4 modelMatrix(1.0f);
-		modelMatrix = glm::scale(modelMatrix, model->mTransform.scale);
-		modelMatrix = glm::rotate(modelMatrix, model->mTransform.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-		modelMatrix = glm::rotate(modelMatrix, model->mTransform.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-		modelMatrix = glm::rotate(modelMatrix, model->mTransform.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
 		modelMatrix = glm::translate(modelMatrix, model->mTransform.position);
+		modelMatrix = glm::rotate(modelMatrix, model->mTransform.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+		modelMatrix = glm::rotate(modelMatrix, model->mTransform.rotation.y, glm::vec3(0.0f, 0.0f, 1.0f));
+		modelMatrix = glm::rotate(modelMatrix, model->mTransform.rotation.z, glm::vec3(0.0f, 1.0f, 0.0f));
+		modelMatrix = glm::scale(modelMatrix, model->mTransform.scale);
 		mPerModelData.model = modelMatrix;
 	}
 
@@ -766,6 +772,54 @@ namespace vr
 		}
 		if (mPerModelData.enableAnimation && ImGui::Combo("track", &animationSettings.id, animationSettings.animations.c_str()))
 		{
+		}
+		if (ImGui::TreeNode("Models"))
+		{
+			for (auto& model : mModels)
+			{
+				if (ImGui::TreeNode(model->mScreenName.c_str()))
+				{
+					ImGui::PushItemWidth(80);
+					ImGui::DragFloat("##scale_x", &(model->mTransform.scale.x), 0.05f, -9999.0, 9999.0, "S:x = %.2f");
+					ImGui::PopItemWidth();
+					ImGui::SameLine();
+					ImGui::PushItemWidth(80);
+					ImGui::DragFloat("##scale_y", &(model->mTransform.scale.y), 0.05f, -9999.0, 9999.0, "S:y = %.2f");
+					ImGui::PopItemWidth();
+					ImGui::SameLine();
+					ImGui::PushItemWidth(80);
+					ImGui::DragFloat("##scale_z", &(model->mTransform.scale.z), 0.05f, -9999.0, 9999.0, "S:z = %.2f");
+					ImGui::PopItemWidth();
+
+					ImGui::PushItemWidth(80);
+					ImGui::DragFloat("##rotate_x", &(model->mTransform.rotation.x), 0.05f, -9999.0, 9999.0, "R:x = %.2f");
+					ImGui::PopItemWidth();
+					ImGui::SameLine();
+					ImGui::PushItemWidth(80);
+					ImGui::DragFloat("##rotate_y", &(model->mTransform.rotation.y), 0.05f, -9999.0, 9999.0, "R:y = %.2f");
+					ImGui::PopItemWidth();
+					ImGui::SameLine();
+					ImGui::PushItemWidth(80);
+					ImGui::DragFloat("##rotate_z", &(model->mTransform.rotation.z), 0.05f, -9999.0, 9999.0, "R:z = %.2f");
+					ImGui::PopItemWidth();
+
+					ImGui::PushItemWidth(80);
+					ImGui::DragFloat("##translate_x", &(model->mTransform.position.x), 0.05f, -9999.0, 9999.0, "T:x = %.2f");
+					ImGui::PopItemWidth();
+					ImGui::SameLine();
+					ImGui::PushItemWidth(80);
+					ImGui::DragFloat("##translate_y", &(model->mTransform.position.y), 0.05f, -9999.0, 9999.0, "T:y = %.2f");
+					ImGui::PopItemWidth();
+					ImGui::SameLine();
+					ImGui::PushItemWidth(80);
+					ImGui::DragFloat("##translate_z", &(model->mTransform.position.z), 0.05f, -9999.0, 9999.0, "T:z = %.2f");
+					ImGui::PopItemWidth();
+
+					ImGui::TreePop();
+				}
+			}
+
+			ImGui::TreePop();
 		}
 		ImGui::End();
 	}

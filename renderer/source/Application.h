@@ -89,7 +89,7 @@ namespace vr
 		// Stores the features available on the selected physical device
 		VkPhysicalDeviceFeatures deviceFeatures;
 
-		/** @brief Set of physical device features to be enabled for this example (must be set in the derived constructor) */
+		// Set of physical device features to be enabled for this example (must be set in the derived constructor)
 		VkPhysicalDeviceFeatures enabledFeatures{};
 
 		bool isReady = false;

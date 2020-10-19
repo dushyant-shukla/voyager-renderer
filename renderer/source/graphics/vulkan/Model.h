@@ -330,6 +330,8 @@ namespace vrassimp
 	{
 		~Model();
 
+		std::string mScreenName;
+
 		struct
 		{
 			glm::vec3 position;
@@ -361,7 +363,7 @@ namespace vrassimp
 		std::vector<glm::vec4> linePositions;
 		std::vector<glm::vec4> localLinePositions;
 
-		void LoadFromFile(std::string filename);
+		void LoadFromFile(std::string filename, std::string screename);
 		void QueryAnimationData(Assimp::Importer& Importer, const aiScene* scene);
 		void QueryMeshData(const unsigned int& meshIndex, const aiMesh* mesh, const aiScene* scene);
 		void QueryMeshMaterial(const unsigned int& meshIndex, const aiMesh* mesh, const aiScene* scene);

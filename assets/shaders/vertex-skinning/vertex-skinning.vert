@@ -27,7 +27,6 @@ layout (location = 0) out VS_OUT
     vec3 color;
     vec2 uv;
     vec3 normal;
-    int draw_bone;
 } vs_out;
 
 layout (push_constant) uniform PushModel
@@ -60,5 +59,4 @@ void main()
     vs_out.color = color;
     vs_out.uv = uv;
     vs_out.normal = normal;
-    vs_out.draw_bone = 0;
 }

@@ -92,7 +92,7 @@ namespace vrassimp
 		}
 	}
 
-	void Model::LoadFromFile(std::string filename)
+	void Model::LoadFromFile(std::string filename, std::string screename)
 	{
 		Assimp::Importer Importer;
 
@@ -112,6 +112,8 @@ namespace vrassimp
 		std::string fullpath(MODEL_PATH + filename);
 		const aiScene* scene = Importer.ReadFile(fullpath.c_str(), Model::DEFAUTL_FLAGS);
 		ASSERT_SUCCESS_AND_THROW(scene, "FAILED TO LOAD MODEL: " + fullpath);
+
+		mScreenName = screename;
 
 		if (scene)
 		{
@@ -139,7 +141,7 @@ namespace vrassimp
 		mAnimation->mScene = Importer.GetOrphanedScene();
 		mAnimation->SetAnimation(0);
 		mAnimation->mGlobalInverseTransform = scene->mRootNode->mTransformation;
-		//mAnimation->mGlobalInverseTransform.Inverse(); // animation runs without inverse as well
+		mAnimation->mGlobalInverseTransform.Inverse(); // animation runs without inverse as well
 
 		// extract information about animation tracks available in the file
 		for (size_t i = 0; i < scene->mNumAnimations; ++i)

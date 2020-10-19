@@ -60,12 +60,7 @@ namespace vr
 			mInputManager->LateUpdate(framerateController->GetFrameTime());
 			framerateController->FrameEnd();
 			UpdateUI(framerateController->GetFrameTime());
-			if (EditingModeCamera::UPDATE_CAMERA)
-			{
-				// TODO: this is a makeshift solution
-				// think of a better approach (layered architecture for processing input events could be a possibility)
-				eCamera.Update(framerateController->GetFrameTime());
-			}
+			eCamera.Update(framerateController->GetFrameTime());
 		}
 
 		Wait();
@@ -201,11 +196,6 @@ namespace vr
 		{
 			//buildCommandBuffers();
 			mUiOverlay.mUI.mUiState.updated = false;
-			EditingModeCamera::UPDATE_CAMERA = false;
-		}
-		else
-		{
-			EditingModeCamera::UPDATE_CAMERA = true;
 		}
 	}
 
