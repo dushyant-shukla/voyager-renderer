@@ -358,9 +358,10 @@ namespace vrassimp
 		// these things are actually drawn
 		std::vector<Mesh*> meshes;
 		std::vector<glm::vec4> jointPositions;
-		std::vector<glm::vec4> linePos;
+		std::vector<glm::vec4> linePositions;
+		std::vector<glm::vec4> localLinePositions;
 
-		void LoadFromFile(std::string filename, ModelCreateInfo* createInfo);
+		void LoadFromFile(std::string filename);
 		void QueryAnimationData(Assimp::Importer& Importer, const aiScene* scene);
 		void QueryMeshData(const unsigned int& meshIndex, const aiMesh* mesh, const aiScene* scene);
 		void QueryMeshMaterial(const unsigned int& meshIndex, const aiMesh* mesh, const aiScene* scene);

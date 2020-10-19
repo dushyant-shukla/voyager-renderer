@@ -92,7 +92,7 @@ namespace vrassimp
 		}
 	}
 
-	void Model::LoadFromFile(std::string filename, ModelCreateInfo* createInfo)
+	void Model::LoadFromFile(std::string filename)
 	{
 		Assimp::Importer Importer;
 
@@ -115,16 +115,6 @@ namespace vrassimp
 
 		if (scene)
 		{
-			glm::vec3 scale(1.0f);
-			glm::vec3 center(0.0f);
-			glm::vec2 uvScale(1.0f);
-			if (createInfo)
-			{
-				scale = createInfo->scale;
-				center = createInfo->center;
-				uvScale = createInfo->uvScale;
-			}
-
 			if (scene->HasAnimations())
 			{
 				QueryAnimationData(Importer, scene);
@@ -149,7 +139,7 @@ namespace vrassimp
 		mAnimation->mScene = Importer.GetOrphanedScene();
 		mAnimation->SetAnimation(0);
 		mAnimation->mGlobalInverseTransform = scene->mRootNode->mTransformation;
-		mAnimation->mGlobalInverseTransform.Inverse(); // animation runs without inverse as well
+		//mAnimation->mGlobalInverseTransform.Inverse(); // animation runs without inverse as well
 
 		// extract information about animation tracks available in the file
 		for (size_t i = 0; i < scene->mNumAnimations; ++i)
@@ -207,7 +197,6 @@ namespace vrassimp
 			{
 				for (unsigned int boneIndex = 0; boneIndex < MAX_BONES_PER_VERTX; ++boneIndex)
 				{
-					// TODO: for mesh 5 no. of vertices are zero // wolf\\scene.gltf
 					mesh->vertices[vertIndex].boneWeights[boneIndex] = mAnimation->mBoneIdsAndWeights[meshIndex][vertIndex].weights[boneIndex];
 				}
 
@@ -395,10 +384,6 @@ namespace vrassimp
 		aiMatrix4x4 nodeTransform(parentNode->mTransformation);
 
 		const aiNodeAnim* nodeAnimation = FindNodeAnim(animation, nodeName);
-
-		bool found = false;
-		int foundCount = -1;
-
 		if (nodeAnimation)
 		{
 			/*
@@ -415,8 +400,8 @@ namespace vrassimp
 		if (mBoneMapping.find(nodeName) != mBoneMapping.end())
 		{
 			unsigned int boneIndex = mBoneMapping[nodeName];
-			mBoneMatrices[boneIndex].finalBoneTransform = mGlobalInverseTransform * globalTransformation;
-			mBoneMatrices[boneIndex].finalWorldTransform = mGlobalInverseTransform * globalTransformation * mBoneMatrices[boneIndex].offset;
+			mBoneMatrices[boneIndex].finalBoneTransform = (mGlobalInverseTransform * globalTransformation);
+			mBoneMatrices[boneIndex].finalWorldTransform = (mGlobalInverseTransform * globalTransformation * mBoneMatrices[boneIndex].offset);
 			boneEndpointPositions.push_back(BoneLine(mGlobalInverseTransform * parentTransform, mBoneMatrices[boneIndex].finalBoneTransform));
 		}
 

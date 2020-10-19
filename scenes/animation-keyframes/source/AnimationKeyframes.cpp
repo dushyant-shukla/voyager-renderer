@@ -257,38 +257,21 @@ namespace vr
 		VkCommandBufferBeginInfo bufferBeginInfo = {};
 		bufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-		// not needed any more as we are using fences to synchronise
-		//bufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;	// buffer can be resubmitted when it has already been submitted and waiting for its execution
-
 		// Information about how to begin a render pass (only needed if we are doing a graphical application)
+		std::array<VkClearValue, 2> clearValues = {};
+		clearValues[0].color = { 1.0f, 1.0f, 1.0f, 1.0f };
+		clearValues[1].depthStencil.depth = 1.0f;
 		VkRenderPassBeginInfo renderpassBeginInfo = {};
 		renderpassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderpassBeginInfo.renderPass = mRenderpass.GetVulkanRenderPass();			// render pass to begin
 		renderpassBeginInfo.renderArea.offset = { 0, 0 };		// start point of render pass in pixels
 		renderpassBeginInfo.renderArea.extent = mSwapchain->mExtent;	// size of region to run render pass on (starting at offset)
-
-		std::array<VkClearValue, 2> clearValues = {};
-		//clearValues[0].color = { 0.6f, 0.65f, 0.4f, 1.0f };
-		clearValues[0].color = { 1.0f, 1.0f, 1.0f, 1.0f };
-		clearValues[1].depthStencil.depth = 1.0f;
-
 		renderpassBeginInfo.pClearValues = clearValues.data();			// list of clear values (TODO: depth attachment clear value)
 		renderpassBeginInfo.clearValueCount = static_cast<unsigned int> (clearValues.size());
-
 		renderpassBeginInfo.framebuffer = mFramebuffers[currentImage];
 
-		// 1# Starts recording commands to command buffer
-		// 2# Being render pass
-		// 3# Bind pipeline
-		// 4# draw
-		// 5# end render pass
-		// 6# end recording commands to command buffer
-
-		// start recording commands to command buffer
-		if (vkBeginCommandBuffer(mGraphicsCommandBuffers[currentImage], &bufferBeginInfo) != VK_SUCCESS)
-		{
-			throw std::runtime_error("Failed to start recording a command buffer!!");
-		}
+		// begin command buffer
+		CHECK_RESULT(vkBeginCommandBuffer(mGraphicsCommandBuffers[currentImage], &bufferBeginInfo), "FAILED TO START RECORDING A COMMAND BUFFER!");
 
 		// being render pass
 		vkCmdBeginRenderPass(mGraphicsCommandBuffers[currentImage], &renderpassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -296,13 +279,12 @@ namespace vr
 		for (size_t i = 0; i < mModels.size(); ++i)
 		{
 			vrassimp::Model* currentModel = mModels[i];
+			UpdateModelInfo(currentModel);
 
 			if (!animationSettings.boneLine)
 			{
 				// bind pipeline to be used in render pass
 				vkCmdBindPipeline(mGraphicsCommandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.mesh.GetVulkanPipeline());
-
-				UpdateModelInfo(currentModel);
 
 				// all meshes within a model will have the same model matrix
 				vkCmdPushConstants(mGraphicsCommandBuffers[currentImage],
@@ -384,49 +366,49 @@ namespace vr
 
 				// render bones
 				{
-					//vkCmdBindPipeline(mGraphicsCommandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.bones.GetVulkanPipeline());
+					vkCmdBindPipeline(mGraphicsCommandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.bones.GetVulkanPipeline());
 
-					//glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-					////model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f)); // nathan
-					////model = glm::scale(model, glm::vec3(0.50f, 0.50f, 0.50f)); // tiger
-					//model = glm::scale(model, glm::vec3(3.00f, 3.00f, 3.00f)); // spidey
-					//mPrimtiveModelData.model = model;
+					glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+					//model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f)); // nathan
+					//model = glm::scale(model, glm::vec3(0.50f, 0.50f, 0.50f)); // tiger
+					model = glm::scale(model, glm::vec3(3.00f, 3.00f, 3.00f)); // spidey
+					mPrimtiveModelData.model = model;
 
-					//// all meshes within a model will have the same model matrix
-					//vkCmdPushConstants(mGraphicsCommandBuffers[currentImage],
-					//	mPipelineLayouts.joints.GetVulkanPipelineLayout(),
-					//	VK_SHADER_STAGE_VERTEX_BIT, 0,
-					//	sizeof(mPrimtiveModelData), &mPrimtiveModelData);	// we can also pass an array of data
+					// all meshes within a model will have the same model matrix
+					vkCmdPushConstants(mGraphicsCommandBuffers[currentImage],
+						mPipelineLayouts.joints.GetVulkanPipelineLayout(),
+						VK_SHADER_STAGE_VERTEX_BIT, 0,
+						sizeof(mPrimtiveModelData), &mPrimtiveModelData);	// we can also pass an array of data
 
-					//std::vector<VkDescriptorSet> descriptorSets = { mDescriptors.primitiveUboSets[currentImage] };
+					std::vector<VkDescriptorSet> descriptorSets = { mDescriptors.primitiveUboSets[currentImage] };
 
-					//vkCmdBindDescriptorSets(mGraphicsCommandBuffers[currentImage],
-					//	VK_PIPELINE_BIND_POINT_GRAPHICS,
-					//	mPipelineLayouts.bones.GetVulkanPipelineLayout(),
-					//	0,
-					//	static_cast<unsigned int>(descriptorSets.size()),
-					//	descriptorSets.data(), 0, nullptr);
+					vkCmdBindDescriptorSets(mGraphicsCommandBuffers[currentImage],
+						VK_PIPELINE_BIND_POINT_GRAPHICS,
+						mPipelineLayouts.bones.GetVulkanPipelineLayout(),
+						0,
+						static_cast<unsigned int>(descriptorSets.size()),
+						descriptorSets.data(), 0, nullptr);
 
-					//boneVertexBuffer.Unmap();
-					//vkQueueWaitIdle(GRAPHICS_QUEUE);
-					//boneVertexBuffer.Destroy();
-					//MemoryUtility::CreateBuffer(sizeof(currentModel->linePos[0]) * currentModel->mAnimation->mBoneCount * 2,
-					//	VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-					//	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-					//	ALLOCATION_CALLBACK,
-					//	&boneVertexBuffer.mBuffer,
-					//	&boneVertexBuffer.mMemory);
+					boneVertexBuffer.Unmap();
+					vkQueueWaitIdle(GRAPHICS_QUEUE);
+					boneVertexBuffer.Destroy();
+					MemoryUtility::CreateBuffer(sizeof(currentModel->linePositions[0]) * currentModel->mAnimation->mBoneCount * 2,
+						VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+						ALLOCATION_CALLBACK,
+						&boneVertexBuffer.mBuffer,
+						&boneVertexBuffer.mMemory);
 
-					//boneVertexBuffer.Map();
-					//boneVertexBuffer.CopyData(&currentModel->linePos[0], sizeof(currentModel->linePos[0]) * currentModel->mAnimation->mBoneCount * 2);
+					boneVertexBuffer.Map();
+					boneVertexBuffer.CopyData(&currentModel->linePositions[0], sizeof(currentModel->linePositions[0]) * currentModel->mAnimation->mBoneCount * 2);
 
-					//VkBuffer vertexBuffers[] = { boneVertexBuffer.mBuffer };
-					//VkDeviceSize offsets[] = { 0 };
-					//vkCmdBindVertexBuffers(mGraphicsCommandBuffers[currentImage], 0, 1, vertexBuffers, offsets);
+					VkBuffer vertexBuffers[] = { boneVertexBuffer.mBuffer };
+					VkDeviceSize offsets[] = { 0 };
+					vkCmdBindVertexBuffers(mGraphicsCommandBuffers[currentImage], 0, 1, vertexBuffers, offsets);
 
-					//vkCmdDraw(mGraphicsCommandBuffers[currentImage], currentModel->mAnimation->mBoneCount * 2, 1, 0, 0);
+					vkCmdDraw(mGraphicsCommandBuffers[currentImage], currentModel->mAnimation->mBoneCount * 2, 1, 0, 0);
 
-					//boneVertexBuffer.Unmap();
+					boneVertexBuffer.Unmap();
 				}
 			}
 		}
@@ -578,8 +560,6 @@ namespace vr
 
 	void AnimationKeyframes::LoadAssets()
 	{
-		vrassimp::Model::ModelCreateInfo modelCreateInfo(1.0, 1.0f, 0.0f);
-
 		vrassimp::Model* model = new vrassimp::Model();
 		//model->LoadFromFile("blade\\scene.gltf", &modelCreateInfo);
 		//model->LoadFromFile("wolf\\scene.gltf", &modelCreateInfo);
@@ -590,10 +570,10 @@ namespace vr
 		//model->LoadFromFile("jumping.fbx", &modelCreateInfo);
 		//model->LoadFromFile("wolf-ii\\Wolf_dae.dae", &modelCreateInfo);
 		//model->LoadFromFile("iron-man-fortnite\\scene.gltf", &modelCreateInfo);
-		//model->LoadFromFile("nathan\\scene.gltf", &modelCreateInfo); // works - loads correctly
-		//model->LoadFromFile("bengal-tiger\\tiger.fbx", &modelCreateInfo); // works - loads correctly
+		//model->LoadFromFile("nathan\\scene.gltf"); // works - loads correctly
+		//model->LoadFromFile("bengal-tiger\\tiger.fbx"); // works - loads correctly
 		//model->LoadFromFile("myth-creature\\myth-creature.fbx", &modelCreateInfo); // works - loads correctly
-		model->LoadFromFile("spiderman\\spiderman.fbx", &modelCreateInfo); // works - loads correctly
+		model->LoadFromFile("spiderman\\spiderman.fbx"); // works - loads correctly
 
 		// TODO: read archetype file here for Nathan which will hold the name for model file, and transformation information
 		// mimic the behavior for now
@@ -602,8 +582,6 @@ namespace vr
 		//model->mTransform.scale = glm::vec3(0.01f, 0.01f, 0.01f); // nathan
 		//model->mTransform.scale = glm::vec3(0.5f, 0.5f, 0.50f);   // tiger
 		model->mTransform.scale = glm::vec3(3.00f, 3.0f, 3.0f);   // spidey
-
-		mModels.push_back(model);
 
 		for (size_t i = 0; i < model->mAnimation->animationTimes.size(); ++i)
 		{
@@ -614,65 +592,65 @@ namespace vr
 		/*
 			Setup meshes' vertex buffers, index buffers and textures
 		*/
-		for (size_t modelIndex = 0; modelIndex < mModels.size(); ++modelIndex)
+
+		for (size_t meshIndex = 0; meshIndex < model->meshes.size(); ++meshIndex)
 		{
-			for (size_t meshIndex = 0; meshIndex < mModels[modelIndex]->meshes.size(); ++meshIndex)
+			vrassimp::Mesh* currentMesh = model->meshes[meshIndex];
+
+			currentMesh->buffers.vertex.Create(currentMesh->vertices, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+			currentMesh->buffers.index.Create(currentMesh->indices, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+
+			if (!currentMesh->textures.empty())
 			{
-				vrassimp::Mesh* currentMesh = mModels[modelIndex]->meshes[meshIndex];
+				// allocate a descritor set to hold per mesh data (texture data for now...)
+				currentMesh->mDescriptorSets.Setup(mDescriptors.textureLayout.mLayout, mDescriptors.texturePool.mPool, 1);
+				std::vector<VkWriteDescriptorSet> descriptorWrites;
+				descriptorWrites.reserve(currentMesh->textures.size());
 
-				currentMesh->buffers.vertex.Create(currentMesh->vertices, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-				currentMesh->buffers.index.Create(currentMesh->indices, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-
-				if (!currentMesh->textures.empty())
+				for (size_t textureIndex = 0; textureIndex < currentMesh->textures.size(); ++textureIndex)
 				{
-					// allocate a descritor set to hold per mesh data (texture data for now...)
-					currentMesh->mDescriptorSets.Setup(mDescriptors.textureLayout.mLayout, mDescriptors.texturePool.mPool, 1);
-					std::vector<VkWriteDescriptorSet> descriptorWrites;
-					descriptorWrites.reserve(currentMesh->textures.size());
-
-					for (size_t textureIndex = 0; textureIndex < currentMesh->textures.size(); ++textureIndex)
+					vrassimp::Texture* texture = model->meshes[meshIndex]->textures[textureIndex];
+					Texture* t = nullptr;
+					switch (texture->type)
 					{
-						vrassimp::Texture* texture = mModels[modelIndex]->meshes[meshIndex]->textures[textureIndex];
-						Texture* t = nullptr;
-						switch (texture->type)
-						{
-						case vrassimp::Texture::Type::DIFFUSE:
-							t = new Texture(0);
-							t->LoadFromFile(texture->path.c_str(), mSamplers.diffuse.GetVulkanSampler());
-							texture->texture = t;
-							break;
-						case vrassimp::Texture::Type::SPECULAR:
-							t = new Texture(1);
-							t->LoadFromFile(texture->path.c_str(), mSamplers.specular.GetVulkanSampler());
-							texture->texture = t;
-							break;
-						case vrassimp::Texture::Type::EMISSIVE:
-							t = new Texture(2);
-							t->LoadFromFile(texture->path.c_str(), mSamplers.emission.GetVulkanSampler());
-							texture->texture = t;
-							break;
-						default:
-							break;
-						}
-
-						if (t != nullptr)
-						{
-							VkWriteDescriptorSet writeImageInfo = {};
-							writeImageInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-							writeImageInfo.dstSet = currentMesh->mDescriptorSets[0];
-							writeImageInfo.dstBinding = t->mBinding;
-							writeImageInfo.dstArrayElement = 0;
-							writeImageInfo.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-							writeImageInfo.descriptorCount = 1;
-							writeImageInfo.pImageInfo = &t->mImageInfo;
-
-							descriptorWrites.push_back(writeImageInfo);
-						}
+					case vrassimp::Texture::Type::DIFFUSE:
+						t = new Texture(0);
+						t->LoadFromFile(texture->path.c_str(), mSamplers.diffuse.GetVulkanSampler());
+						texture->texture = t;
+						break;
+					case vrassimp::Texture::Type::SPECULAR:
+						t = new Texture(1);
+						t->LoadFromFile(texture->path.c_str(), mSamplers.specular.GetVulkanSampler());
+						texture->texture = t;
+						break;
+					case vrassimp::Texture::Type::EMISSIVE:
+						t = new Texture(2);
+						t->LoadFromFile(texture->path.c_str(), mSamplers.emission.GetVulkanSampler());
+						texture->texture = t;
+						break;
+					default:
+						break;
 					}
-					vkUpdateDescriptorSets(LOGICAL_DEVICE, static_cast<unsigned int>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+
+					if (t != nullptr)
+					{
+						VkWriteDescriptorSet writeImageInfo = {};
+						writeImageInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+						writeImageInfo.dstSet = currentMesh->mDescriptorSets[0];
+						writeImageInfo.dstBinding = t->mBinding;
+						writeImageInfo.dstArrayElement = 0;
+						writeImageInfo.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+						writeImageInfo.descriptorCount = 1;
+						writeImageInfo.pImageInfo = &t->mImageInfo;
+
+						descriptorWrites.push_back(writeImageInfo);
+					}
 				}
+				vkUpdateDescriptorSets(LOGICAL_DEVICE, static_cast<unsigned int>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 			}
 		}
+
+		mModels.push_back(model);
 	}
 
 	void AnimationKeyframes::UpdateUniformBuffers(const unsigned int& imageIndex)
@@ -704,7 +682,6 @@ namespace vr
 		modelMatrix = glm::rotate(modelMatrix, model->mTransform.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
 		modelMatrix = glm::translate(modelMatrix, model->mTransform.position);
 		mPerModelData.model = modelMatrix;
-		mPerModelData.boneLine = 0;
 	}
 
 	glm::mat4 AnimationKeyframes::aiMatrix4x4ToGlm(aiMatrix4x4 ai_matr)
@@ -722,7 +699,9 @@ namespace vr
 	{
 		for (unsigned int i = 0; i < mModels.size(); ++i)
 		{
-			vrassimp::Animation* animation = mModels[i]->mAnimation;
+			vrassimp::Model* currentModel = mModels[i];
+
+			vrassimp::Animation* animation = currentModel->mAnimation;
 			animation->currentIndex = animationSettings.id;
 			if (timer > animation->animationTimes[animation->currentIndex].end)
 			{
@@ -733,57 +712,41 @@ namespace vr
 
 			std::vector<aiMatrix4x4> transforms;
 			std::vector<aiMatrix4x4> boneTransforms; // for drawing bones without mesh
-			mModels[i]->mAnimation->Animate(timer, transforms, boneTransforms);
+			currentModel->mAnimation->Animate(timer, transforms, boneTransforms);
 			for (unsigned int j = 0; j < transforms.size(); ++j)
 			{
 				meshUBO.bones[j] = glm::transpose(glm::make_mat4(&(transforms[j].a1)));
-
-				// update data for drawing bones
-				//ubo.boneTransforms[i] = glm::transpose(glm::make_mat4(&(boneTransforms[i].a1)));
 			}
 
 			// joints positions to render
-			mModels[i]->jointPositions.clear();
-			mModels[i]->jointPositions.resize(mModels[i]->mAnimation->mBoneCount); // mBoneCount is same as boneTransform.size()
+			currentModel->jointPositions.clear();
+			currentModel->jointPositions.resize(currentModel->mAnimation->mBoneCount); // mBoneCount is same as boneTransform.size()
 			for (unsigned int j = 0; j < boneTransforms.size(); ++j)
 			{
 				glm::mat4 t = glm::transpose(glm::make_mat4(&(boneTransforms[j].a1)));
 				glm::vec4 v = t * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-				mModels[i]->jointPositions[j] = { v.x, v.y, v.z, 1 };
+				currentModel->jointPositions[j] = { v.x, v.y, v.z, 1 };
 			}
 
 			// bone line positions to render
-			mModels[i]->linePos.clear();
-			mModels[i]->linePos.resize(mModels[i]->mAnimation->mBoneCount * 2); // mBoneCount is same as boneTransform.size()
+			currentModel->linePositions = {};
+			currentModel->linePositions.resize(currentModel->mAnimation->mBoneCount * 2); // mBoneCount is same as boneTransform.size()
 			std::vector<glm::vec4> BonePositionsMeshSpaceChild;
 			std::vector<glm::vec4> BonePositionsMeshSpaceParent;
-			for (unsigned int j = 1; j < mModels[i]->mAnimation->mBoneCount; ++j)
+
+			for (unsigned int j = 1; j < currentModel->mAnimation->mBoneCount; ++j)
 			{
 				unsigned int k = j * 2;
-				glm::mat4 childPos = glm::transpose(glm::make_mat4(&(mModels[i]->mAnimation->boneEndpointPositions[j].childBone.a1)));
-				glm::mat4 parentPos = glm::transpose(glm::make_mat4(&(mModels[i]->mAnimation->boneEndpointPositions[j].parentBone.a1)));
-
-				//glm::mat4 childPos = aiMatrix4x4ToGlm(mModels[i]->mAnimation->boneEndpointPositions[j].childBone);
-				//glm::mat4 parentPos = aiMatrix4x4ToGlm(mModels[i]->mAnimation->boneEndpointPositions[j].parentBone);
+				glm::mat4 childPos = glm::transpose(glm::make_mat4(&(currentModel->mAnimation->boneEndpointPositions[j].childBone.a1)));
+				glm::mat4 parentPos = glm::transpose(glm::make_mat4(&(currentModel->mAnimation->boneEndpointPositions[j].parentBone.a1)));
 
 				BonePositionsMeshSpaceChild.push_back(childPos * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 				BonePositionsMeshSpaceParent.push_back(parentPos * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
-				mModels[i]->linePos[k] = { BonePositionsMeshSpaceChild[j - 1].x, BonePositionsMeshSpaceChild[j - 1].y, BonePositionsMeshSpaceChild[j - 1].z ,1 };
-				mModels[i]->linePos[k + 1] = { BonePositionsMeshSpaceParent[j - 1].x, BonePositionsMeshSpaceParent[j - 1].y, BonePositionsMeshSpaceParent[j - 1].z,1 };
+				currentModel->linePositions[k] = { BonePositionsMeshSpaceChild[j - 1].x, BonePositionsMeshSpaceChild[j - 1].y, BonePositionsMeshSpaceChild[j - 1].z, 1 };
+				currentModel->linePositions[k + 1] = { BonePositionsMeshSpaceParent[j - 1].x, BonePositionsMeshSpaceParent[j - 1].y, BonePositionsMeshSpaceParent[j - 1].z, 1 };
 			}
 		}
-	}
-
-	void AnimationKeyframes::UpdateBoneModelMatrix(aiMatrix4x4 transform)
-	{
-		glm::mat4 model(1.0f);
-		model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
-		model[3].x = transform.a4 / 100.0f;
-		model[3].y = transform.b4 / 100.0f;
-		model[3].z = transform.c4 / 100.0f;
-		mPerModelData.model = model;
-		mPerModelData.boneLine = 0;
 	}
 
 	void AnimationKeyframes::OnUpdateUIOverlay(UiOverlay* overlay)
@@ -793,8 +756,9 @@ namespace vr
 		ImGui::Text("Settings:");
 		if (overlay->CheckBox("Enable animation", &mPerModelData.enableAnimation))
 		{
+			int a = 10;
 		}
-		if (mPerModelData.enableAnimation && overlay->CheckBox("Enable bones", &animationSettings.boneLine))
+		if (overlay->CheckBox("Enable bones", &animationSettings.boneLine))
 		{
 		}
 		if (mPerModelData.enableAnimation && overlay->InputFloat("speed", &animationSettings.speed, 0.5, 3))

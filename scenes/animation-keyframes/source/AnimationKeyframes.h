@@ -45,7 +45,6 @@ namespace vr
 		void UpdateModelInfo(vrassimp::Model* model);
 		glm::mat4 aiMatrix4x4ToGlm(aiMatrix4x4 ai_matr);
 		void UpdateBoneTransforms();
-		void UpdateBoneModelMatrix(aiMatrix4x4 transform);
 		void Deserialize(const std::string archetype);
 
 	private:
@@ -136,9 +135,7 @@ namespace vr
 		struct
 		{
 			glm::mat4 model;
-			glm::mat4 modelTemp;
 			int enableAnimation = 1;
-			int boneLine = 0;
 		} mPerModelData;
 
 		std::vector<vrassimp::Model*> mModels;
