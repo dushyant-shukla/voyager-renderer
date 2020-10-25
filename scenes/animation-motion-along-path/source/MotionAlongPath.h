@@ -3,9 +3,10 @@
 #include "main.h"
 #include "Application.h"
 #include "Splines.h"
-#include "camera/EditingModeCamera.h"
+#include "graphics/vulkan/Model.h"
 
-#define MAX_BONES 100
+//#define MAX_BONES 100
+#define MAX_MESH_COUNT 100
 
 namespace vr
 {
@@ -25,12 +26,17 @@ namespace vr
 	private:
 
 		// setup methods
-		void SetupDescriptorSetForCurve();
-		void SetupPipelineForCurve();
-		void SetupUboForCurve();
+		void SetupDescriptorSet();
+		void SetupPipeline();
+		void SetupUbo();
+		void SetupTextureSamplers();
+
+		// loading assets
+		void LoadAssets();
 
 		// update methods
-		void UpdateUniformBufferForCurve(unsigned int imageIndex);
+		void UpdateUniformBuffer(unsigned int imageIndex);
+		void UpdateModelData(vrassimp::Model* model);
 
 		// draw commands
 		void RecordCommands(unsigned int imageIndex);
@@ -39,29 +45,34 @@ namespace vr
 
 		struct
 		{
-			PipelineLayout model;
+			PipelineLayout mesh;
 			PipelineLayout curve;
 		} mPipelineLayouts;
 
 		struct
 		{
-			Pipeline model;
+			Pipeline mesh;
 			Pipeline curve;
 		} mPipelines;
 
 		struct
 		{
+			DescriptorSets mesh;
 			DescriptorSets curve;
 		} mDescriptorSets;
 
 		struct
 		{
-			DescriptorSetLayout viewUBO;
+			DescriptorSetLayout mesh;
+			DescriptorSetLayout curve;
+			DescriptorSetLayout texture;
 		} mDescriptorSetLayouts;
 
 		struct
 		{
-			DescriptorPool viewUBO;
+			DescriptorPool mesh;
+			DescriptorPool curve;
+			DescriptorPool texture;
 		} mDescriptorPools;
 
 		struct
@@ -81,8 +92,28 @@ namespace vr
 
 		struct
 		{
-			glm::mat4 model;
-		} curvePushConstant;
+			alignas(16) glm::mat4 model;
+			alignas(16) int enableAnimation;
+		} modelData;
+
+		struct
+		{
+			int isControlPoints;
+		} primitiveModelData;
+
+		struct
+		{
+			TextureSampler diffuse;
+			TextureSampler specular;
+			TextureSampler emission;
+		} mSamplers;
+
+		struct
+		{
+			int enableAnimation = 1;
+		} animationSettings;
+
+		std::vector<vrassimp::Model*> mModels;
 
 		Splines* curve;
 

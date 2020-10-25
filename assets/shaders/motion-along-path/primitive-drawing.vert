@@ -8,16 +8,29 @@ layout(set = 0, binding = 0) uniform UBO
     mat4 view;
 } ubo;
 
-layout (push_constant) uniform PushModel
+layout (push_constant) uniform ModelData
 {
-    mat4 model;
-} push_model;
+    int is_control_points;
+} model_data;
+
+layout (location = 0) out VS_OUT
+{
+    vec3 color;
+} vs_out;
 
 void main()
 {
-   gl_PointSize = 5.0;
+   if(model_data.is_control_points == 1)
+   {
+        gl_PointSize = 20.0;
+        vs_out.color = vec3(1.0, 1.0, 0.0);
+   }
+   else
+   {
+        gl_PointSize = 15.0;
+        vs_out.color = vec3(1.0, 1.0, 1.0);
+   }
    gl_Position = ubo.projection 
                     * ubo.view
-                    * push_model.model
                     * position;
 } 

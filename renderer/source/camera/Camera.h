@@ -18,7 +18,6 @@ namespace vr
 
 		Camera();
 		~Camera();
-		void UpdateViewMatrix();
 		void Update(float deltaTime);
 
 		// Use to adjust mouse rotation speed
@@ -45,10 +44,6 @@ namespace vr
 		static inline const float PITCH_MIN = -89.0;
 		static inline const float FIELD_OF_VIEW_MIN = 1.0f;
 		static inline const float FIELD_OF_VIEW_MAX = 45.0f;
-
-		void SetRotation(glm::vec3 rotation);
-		void SetPosition(glm::vec3 position);
-		void SetPerspective(float radians, float aspect, float near, float far);
 
 	private:
 

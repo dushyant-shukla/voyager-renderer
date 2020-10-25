@@ -11,25 +11,46 @@ namespace vr
 {
 	Splines::Splines()
 	{
+		mControlPoints.push_back(P0);
 		mControlPoints.push_back(P1);
 		mControlPoints.push_back(P2);
 		mControlPoints.push_back(P3);
 		mControlPoints.push_back(P4);
 		mControlPoints.push_back(P5);
+		mControlPoints.push_back(P6);
+		mControlPoints.push_back(P7);
+		mControlPoints.push_back(P8);
+		mControlPoints.push_back(P9);
+		mControlPoints.push_back(P10);
+		mControlPoints.push_back(P11);
+		mControlPoints.push_back(P12);
+		mControlPoints.push_back(P13);
+		mControlPoints.push_back(P14);
+		mControlPoints.push_back(P15);
+		mControlPoints.push_back(P16);
+
+		mControlPoints.push_back(P17);
+		mControlPoints.push_back(P18);
+		mControlPoints.push_back(P19);
+		mControlPoints.push_back(P20);
+		mControlPoints.push_back(P21);
+		mControlPoints.push_back(P22);
+		mControlPoints.push_back(P23);
+		mControlPoints.push_back(P24);
+		mControlPoints.push_back(P25);
+		mControlPoints.push_back(P26);
+		mControlPoints.push_back(P27);
+		mControlPoints.push_back(P28);
+		mControlPoints.push_back(P29);
+		mControlPoints.push_back(P30);
+		mControlPoints.push_back(P31);
+		mControlPoints.push_back(P32);
+		mControlPoints.push_back(P33);
 
 		CalculateCurve();
 
 		// create buffers
 		mBuffers.controPoints.Create(mControlPoints, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-
-		CurveVertex p1(-0.5f, 0.5f, 0.0f);
-		CurveVertex p2(0.25f, 0.5f, 0.0f);
-		CurveVertex p3(0.5f, 0.5f, 0.0f);
-		points.push_back(p1);
-		points.push_back(p2);
-		points.push_back(p3);
-
-		//mBuffers.interpolatedPoints.Create(points, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 		mBuffers.interpolatedPoints.Create(mInterpolatedPoints, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 	}
 
@@ -64,16 +85,14 @@ namespace vr
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 		vkCmdDraw(commandBuffer, mInterpolatedPoints.size(), 1, 0, 0);
+	}
 
-		//VkBuffer vertexBuffers[] = { mBuffers.interpolatedPoints.mBuffer };
-		//VkDeviceSize offsets[] = { 0 };
-		//vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-		//vkCmdDraw(commandBuffer, points.size(), 1, 0, 0);
-
-		//VkBuffer vertexBuffers[] = { mBuffers.controPoints.mBuffer };
-		//VkDeviceSize offsets[] = { 0 };
-		//vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-		//vkCmdDraw(commandBuffer, mControlPoints.size(), 1, 0, 0);
+	void Splines::DrawControlPoints(VkCommandBuffer commandBuffer)
+	{
+		VkBuffer controlPointsBuffers[] = { mBuffers.controPoints.mBuffer };
+		VkDeviceSize controlPointsOffsets[] = { 0 };
+		vkCmdBindVertexBuffers(commandBuffer, 0, 1, controlPointsBuffers, controlPointsOffsets);
+		vkCmdDraw(commandBuffer, mControlPoints.size(), 1, 0, 0);
 	}
 
 	CurveVertex Splines::CalculateBSpline(glm::mat4 matrix, float t)
