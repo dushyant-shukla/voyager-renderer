@@ -35,8 +35,9 @@ namespace vr
 		void LoadAssets();
 
 		// update methods
-		void UpdateUniformBuffer(unsigned int imageIndex);
+		void UpdateViewBuffer(unsigned int imageIndex);
 		void UpdateModelData(vrassimp::Model* model);
+		void UpdateBoneTransforms(vrassimp::Model* model, unsigned int imageIndex);
 
 		// draw commands
 		void RecordCommands(unsigned int imageIndex);
@@ -111,9 +112,12 @@ namespace vr
 		struct
 		{
 			int enableAnimation = 1;
+			float speed = 1.5f;
 		} animationSettings;
 
 		std::vector<vrassimp::Model*> mModels;
+
+		float timer = 0;
 
 		Splines* curve;
 

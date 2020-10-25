@@ -2,6 +2,8 @@
 #include "input/InputManager.h"
 #include "window/Window.h"
 
+#include <imgui.h>
+
 namespace vr
 {
 	Camera::Camera()
@@ -34,6 +36,10 @@ namespace vr
 
 	void Camera::Update(float deltaTime)
 	{
+		ImGuiIO& io = ImGui::GetIO();
+		if (io.WantCaptureMouse) return;
+		if (io.WantCaptureKeyboard) return;
+
 		float adjustedSpeed = speed * deltaTime;
 
 		if (mInput->IsKeyPressed(KEY_W))
