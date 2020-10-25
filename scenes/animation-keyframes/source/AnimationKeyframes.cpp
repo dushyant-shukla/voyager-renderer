@@ -322,8 +322,8 @@ namespace vr
 
 					glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 					//model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f)); // nathan
-					//model = glm::scale(model, glm::vec3(0.50f, 0.50f, 0.50f)); // tiger
-					model = glm::scale(model, glm::vec3(3.00f, 3.00f, 3.00f)); // spidey
+					model = glm::scale(model, glm::vec3(0.50f, 0.50f, 0.50f)); // tiger
+					//model = glm::scale(model, glm::vec3(3.00f, 3.00f, 3.00f)); // spidey
 					mPrimtiveModelData.model = model;
 
 					// all meshes within a model will have the same model matrix
@@ -370,8 +370,8 @@ namespace vr
 
 					glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 					//model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f)); // nathan
-					//model = glm::scale(model, glm::vec3(0.50f, 0.50f, 0.50f)); // tiger
-					model = glm::scale(model, glm::vec3(3.00f, 3.00f, 3.00f)); // spidey
+					model = glm::scale(model, glm::vec3(0.50f, 0.50f, 0.50f)); // tiger
+					//model = glm::scale(model, glm::vec3(3.00f, 3.00f, 3.00f)); // spidey
 					mPrimtiveModelData.model = model;
 
 					// all meshes within a model will have the same model matrix
@@ -486,7 +486,7 @@ namespace vr
 		*/
 		mDescriptors.primitiveUboPool
 			.AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
-			.Create(0, static_cast<unsigned> (mSwapchain->GetSwapchainImages().size()), nullptr);
+			.Create(0, static_cast<unsigned int> (mSwapchain->GetSwapchainImages().size()), nullptr);
 
 		mDescriptors.primitiveUboLayout
 			.AddLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr)
@@ -571,17 +571,17 @@ namespace vr
 		//model->LoadFromFile("wolf-ii\\Wolf_dae.dae", &modelCreateInfo);
 		//model->LoadFromFile("iron-man-fortnite\\scene.gltf", &modelCreateInfo);
 		//model->LoadFromFile("nathan\\scene.gltf", "nathan"); // works - loads correctly
-		//model->LoadFromFile("bengal-tiger\\tiger.fbx", "bengal tiger"); // works - loads correctly
+		model->LoadFromFile("bengal-tiger\\tiger.fbx", "bengal tiger"); // works - loads correctly
 		//model->LoadFromFile("myth-creature\\myth-creature.fbx", &modelCreateInfo); // works - loads correctly
-		model->LoadFromFile("spiderman\\spiderman.fbx", "spidey"); // works - loads correctly
+		//model->LoadFromFile("spiderman\\spiderman.fbx", "spidey"); // works - loads correctly
 
 		// TODO: read archetype file here for Nathan which will hold the name for model file, and transformation information
 		// mimic the behavior for now
 		model->mTransform.position = glm::vec3(0.0f, 0.0f, 0.0f);
 		model->mTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
 		//model->mTransform.scale = glm::vec3(0.01f, 0.01f, 0.01f); // nathan
-		//model->mTransform.scale = glm::vec3(0.5f, 0.5f, 0.50f);   // tiger
-		model->mTransform.scale = glm::vec3(3.00f, 3.0f, 3.0f);   // spidey
+		model->mTransform.scale = glm::vec3(0.5f, 0.5f, 0.50f);   // tiger
+		//model->mTransform.scale = glm::vec3(3.00f, 3.0f, 3.0f);   // spidey
 		//model->mTransform.scale = glm::vec3(20.00f, 20.0f, 20.0f);  // wolverine
 
 		mModels.push_back(model);

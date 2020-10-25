@@ -140,13 +140,6 @@ namespace vr
 
 		std::vector<vrassimp::Model*> mModels;
 
-		struct ImageInfo
-		{
-			int binding;
-			VkDescriptorImageInfo info;
-		};
-		std::vector<ImageInfo> imageInfos;
-
 		struct
 		{
 			std::string name;
