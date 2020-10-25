@@ -8,10 +8,15 @@ namespace vr
 {
 	MotionAlongPath::MotionAlongPath(std::string name) : Application(name)
 	{
+		activeCamera = CameraType::FIRST_PERSON;
+		cameraTypeIndex = static_cast<int>(activeCamera);
+
+		mCamera.position = glm::vec3(0.0f, 5.00f, 15.0f);
+		mCamera.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+
 		eCamera.type = EditingModeCamera::Type::look_at;
 		eCamera.matrices.flipY = true;
-		eCamera.SetPosition(glm::vec3(0.0f, 0.75f, -2.0f));
-		//eCamera.SetPosition(glm::vec3(-40.0f, 9.0f, 18.0f));
+		eCamera.SetPosition(glm::vec3(0.0f, 5.00f, -10.0f));
 		eCamera.SetRotation(glm::vec3(0.0f, 0.0f, 0.0f));
 		eCamera.SetPerspective(glm::radians(60.0f), (float)Window::WIDTH / Window::HEIGHT, 0.1f, 1024.0f);
 	}
@@ -64,7 +69,7 @@ namespace vr
 		unsigned int imageIndex;
 		vkAcquireNextImageKHR(LOGICAL_DEVICE, mSwapchain->mSwapchain, std::numeric_limits<uint64_t>::max(), mSyncPrimitives.mImageAvailable[mCurrentFrame], VK_NULL_HANDLE, &imageIndex);
 
-		RecordCommands(imageIndex);
+		RecordCommands(imageIndex, frametime);
 
 		VkSubmitInfo submitInfo = {};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -104,8 +109,6 @@ namespace vr
 		//vkQueueWaitIdle(mDevice->GetLogicalDevice().presentationQueue);
 		// Get next frame (% keeps value below MAX_FRAME_DRAWS)
 		mCurrentFrame = (mCurrentFrame + 1) % SynchronizationPrimitives::MAX_FRAME_DRAWS;
-
-		timer += frametime * animationSettings.speed;
 	}
 
 	VkPhysicalDeviceFeatures MotionAlongPath::CheckRequiredFeatures()
@@ -347,9 +350,12 @@ namespace vr
 		vrassimp::Model* nathan = new vrassimp::Model();
 		nathan->LoadFromFile("nathan\\scene.gltf", "nathan");
 		nathan->mTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
-		nathan->mTransform.rotation = glm::vec3(90.0f, 0.0f, 0.0f);
+		nathan->mTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
 		nathan->mTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
-		//nathan->isAnimationAvailable = false;
+		nathan->mAnimationTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
+		nathan->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 0.0f);
+		nathan->mAnimationTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
+		nathan->mAnimation->settings.speed = 8.0f;
 		mModels.push_back(nathan);
 
 		for (auto& model : mModels)
@@ -411,23 +417,45 @@ namespace vr
 
 	void MotionAlongPath::UpdateViewBuffer(unsigned int imageIndex)
 	{
-		// view ubo
-		//viewUBO.projection = eCamera.matrices.projection;
-		//viewUBO.view = eCamera.matrices.view;
-
-		viewUBO.projection = mCamera.project;
-		viewUBO.view = mCamera.view;
+		if (activeCamera == CameraType::LOOK_AT)
+		{
+			viewUBO.projection = eCamera.matrices.projection;
+			viewUBO.view = eCamera.matrices.view;
+		}
+		else
+		{
+			viewUBO.projection = mCamera.project;
+			viewUBO.view = mCamera.view;
+		}
 
 		void* data;
 		vkMapMemory(LOGICAL_DEVICE, viewUboMemory[imageIndex], 0, sizeof(viewUBO), 0, &data);
 		memcpy(data, &viewUBO, sizeof(viewUBO));
 		vkUnmapMemory(LOGICAL_DEVICE, viewUboMemory[imageIndex]);
-
-		// skinning ubo
 	}
 
 	void MotionAlongPath::UpdateModelData(vrassimp::Model* model)
 	{
+		if (model->isAnimationAvailable)
+		{
+			// if model has animation, take current state from UI's animation setting
+			modelData.enableAnimation = model->mAnimation->settings.enableAnimation;
+			if (modelData.enableAnimation)
+			{
+				glm::mat4  modelMatrix(1.0);
+				modelMatrix = glm::translate(modelMatrix, model->mAnimationTransform.position);
+				modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mAnimationTransform.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+				modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mAnimationTransform.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f)); // y is rotated around z-axis
+				modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mAnimationTransform.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+				modelMatrix = glm::scale(modelMatrix, model->mAnimationTransform.scale);
+				modelData.model = modelMatrix;
+				return;
+			}
+		}
+		else
+		{
+			modelData.enableAnimation = 0;
+		}
 		glm::mat4  modelMatrix(1.0);
 		modelMatrix = glm::translate(modelMatrix, model->mTransform.position);
 		modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mTransform.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -435,30 +463,20 @@ namespace vr
 		modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mTransform.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 		modelMatrix = glm::scale(modelMatrix, model->mTransform.scale);
 		modelData.model = modelMatrix;
-
-		if (model->isAnimationAvailable)
-		{
-			// if model has animation, take current state from UI's animation setting
-			modelData.enableAnimation = animationSettings.enableAnimation;
-		}
-		else
-		{
-			modelData.enableAnimation = 0;
-		}
 	}
 
-	void MotionAlongPath::UpdateBoneTransforms(vrassimp::Model* model, unsigned int imageIndex)
+	void MotionAlongPath::UpdateBoneTransforms(vrassimp::Model* model, unsigned int imageIndex, const double& frametime)
 	{
 		vrassimp::Animation* animation = model->mAnimation;
-		animation->currentIndex = 0;
-		if (timer > animation->animationTimes[animation->currentIndex].end)
+		animation->currentIndex = animation->settings.currentTrackIndex;
+		if (animation->timer > animation->animationTracks[animation->currentIndex].end)
 		{
-			timer = animation->animationTimes[animation->currentIndex].start;
+			animation->timer = animation->animationTracks[animation->currentIndex].start;
 		}
 
 		std::vector<aiMatrix4x4> transforms;
 		std::vector<aiMatrix4x4> boneTransforms;
-		model->mAnimation->Animate(timer, transforms, boneTransforms);
+		model->mAnimation->Animate(animation->timer, transforms, boneTransforms);
 		for (unsigned int i = 0; i < transforms.size(); ++i)
 		{
 			skinningUBO.bones[i] = glm::transpose(glm::make_mat4(&(transforms[i].a1)));
@@ -468,9 +486,11 @@ namespace vr
 		vkMapMemory(LOGICAL_DEVICE, skinningUboMemory[imageIndex], 0, sizeof(skinningUBO), 0, &data);
 		memcpy(data, &skinningUBO, sizeof(skinningUBO));
 		vkUnmapMemory(LOGICAL_DEVICE, skinningUboMemory[imageIndex]);
+
+		animation->timer += frametime * animation->settings.speed;
 	}
 
-	void MotionAlongPath::RecordCommands(unsigned int imageIndex)
+	void MotionAlongPath::RecordCommands(unsigned int imageIndex, const double& frametime)
 	{
 		// Information about how to begin each command buffer
 		VkCommandBufferBeginInfo bufferBeginInfo = {};
@@ -530,7 +550,7 @@ namespace vr
 				UpdateModelData(model);
 				if (model->isAnimationAvailable)
 				{
-					UpdateBoneTransforms(model, imageIndex);
+					UpdateBoneTransforms(model, imageIndex, frametime);
 				}
 
 				vkCmdBindPipeline(mGraphicsCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.mesh.GetVulkanPipeline());
@@ -573,56 +593,116 @@ namespace vr
 
 	void MotionAlongPath::OnUpdateUIOverlay(UiOverlay* overlay)
 	{
-		ImGui::SetNextWindowPos(ImVec2(10, 200));
+		ImGui::SetNextWindowPos(ImVec2(10, 210));
 		ImGui::Begin("Animation (Motion along a path)");
 		ImGui::Text("Settings:");
-		if (overlay->CheckBox("Enable animation", &animationSettings.enableAnimation))
-		{
-		}
-		if (animationSettings.enableAnimation && overlay->InputFloat("speed", &animationSettings.speed, 0.5, 3))
-		{
-		}
+		//if (overlay->CheckBox("Enable animation", &animationSettings.enableAnimation))
+		//{
+		//}
+		//if (animationSettings.enableAnimation && overlay->InputFloat("speed", &animationSettings.speed, 0.5, 3))
+		//{
+		//}
 		if (ImGui::TreeNode("Models"))
 		{
 			for (auto& model : mModels)
 			{
+				bool showStaticTransforms = true;
 				if (ImGui::TreeNode(model->mScreenName.c_str()))
 				{
-					ImGui::PushItemWidth(80);
-					ImGui::DragFloat("##scale_x", &(model->mTransform.scale.x), 0.05f, -9999.0, 9999.0, "S:x = %.2f");
-					ImGui::PopItemWidth();
-					ImGui::SameLine();
-					ImGui::PushItemWidth(80);
-					ImGui::DragFloat("##scale_y", &(model->mTransform.scale.y), 0.05f, -9999.0, 9999.0, "S:y = %.2f");
-					ImGui::PopItemWidth();
-					ImGui::SameLine();
-					ImGui::PushItemWidth(80);
-					ImGui::DragFloat("##scale_z", &(model->mTransform.scale.z), 0.05f, -9999.0, 9999.0, "S:z = %.2f");
-					ImGui::PopItemWidth();
+					if (model->isAnimationAvailable)
+					{
+						if (overlay->CheckBox("Enable animation", &(model->mAnimation->settings.enableAnimation)))
+						{
+						}
+						if (model->mAnimation->settings.enableAnimation &&
+							overlay->InputFloat("speed", &(model->mAnimation->settings.speed), 0.5, 3))
+						{
+						}
+						if (model->mAnimation->settings.enableAnimation &&
+							ImGui::Combo("track", &(model->mAnimation->settings.currentTrackIndex), model->mAnimation->settings.tracks.c_str()))
+						{
+						}
+						if (model->mAnimation->settings.enableAnimation)
+						{
+							showStaticTransforms = false;
 
-					ImGui::PushItemWidth(80);
-					ImGui::DragFloat("##rotate_x", &(model->mTransform.rotation.x), 0.05f, -9999.0, 9999.0, "R:x = %.2f");
-					ImGui::PopItemWidth();
-					ImGui::SameLine();
-					ImGui::PushItemWidth(80);
-					ImGui::DragFloat("##rotate_y", &(model->mTransform.rotation.y), 0.05f, -9999.0, 9999.0, "R:y = %.2f");
-					ImGui::PopItemWidth();
-					ImGui::SameLine();
-					ImGui::PushItemWidth(80);
-					ImGui::DragFloat("##rotate_z", &(model->mTransform.rotation.z), 0.05f, -9999.0, 9999.0, "R:z = %.2f");
-					ImGui::PopItemWidth();
+							ImGui::PushItemWidth(80);
+							ImGui::DragFloat("##scale_x", &(model->mAnimationTransform.scale.x), 0.05f, -9999.0, 9999.0, "S:x = %.2f");
+							ImGui::PopItemWidth();
+							ImGui::SameLine();
+							ImGui::PushItemWidth(80);
+							ImGui::DragFloat("##scale_y", &(model->mAnimationTransform.scale.y), 0.05f, -9999.0, 9999.0, "S:y = %.2f");
+							ImGui::PopItemWidth();
+							ImGui::SameLine();
+							ImGui::PushItemWidth(80);
+							ImGui::DragFloat("##scale_z", &(model->mAnimationTransform.scale.z), 0.05f, -9999.0, 9999.0, "S:z = %.2f");
+							ImGui::PopItemWidth();
 
-					ImGui::PushItemWidth(80);
-					ImGui::DragFloat("##translate_x", &(model->mTransform.position.x), 0.05f, -9999.0, 9999.0, "T:x = %.2f");
-					ImGui::PopItemWidth();
-					ImGui::SameLine();
-					ImGui::PushItemWidth(80);
-					ImGui::DragFloat("##translate_y", &(model->mTransform.position.y), 0.05f, -9999.0, 9999.0, "T:y = %.2f");
-					ImGui::PopItemWidth();
-					ImGui::SameLine();
-					ImGui::PushItemWidth(80);
-					ImGui::DragFloat("##translate_z", &(model->mTransform.position.z), 0.05f, -9999.0, 9999.0, "T:z = %.2f");
-					ImGui::PopItemWidth();
+							ImGui::PushItemWidth(80);
+							ImGui::DragFloat("##rotate_x", &(model->mAnimationTransform.rotation.x), 0.05f, -9999.0, 9999.0, "R:x = %.2f");
+							ImGui::PopItemWidth();
+							ImGui::SameLine();
+							ImGui::PushItemWidth(80);
+							ImGui::DragFloat("##rotate_y", &(model->mAnimationTransform.rotation.y), 0.05f, -9999.0, 9999.0, "R:y = %.2f");
+							ImGui::PopItemWidth();
+							ImGui::SameLine();
+							ImGui::PushItemWidth(80);
+							ImGui::DragFloat("##rotate_z", &(model->mAnimationTransform.rotation.z), 0.05f, -9999.0, 9999.0, "R:z = %.2f");
+							ImGui::PopItemWidth();
+
+							ImGui::PushItemWidth(80);
+							ImGui::DragFloat("##translate_x", &(model->mAnimationTransform.position.x), 0.05f, -9999.0, 9999.0, "T:x = %.2f");
+							ImGui::PopItemWidth();
+							ImGui::SameLine();
+							ImGui::PushItemWidth(80);
+							ImGui::DragFloat("##translate_y", &(model->mAnimationTransform.position.y), 0.05f, -9999.0, 9999.0, "T:y = %.2f");
+							ImGui::PopItemWidth();
+							ImGui::SameLine();
+							ImGui::PushItemWidth(80);
+							ImGui::DragFloat("##translate_z", &(model->mAnimationTransform.position.z), 0.05f, -9999.0, 9999.0, "T:z = %.2f");
+							ImGui::PopItemWidth();
+						}
+					}
+
+					// static transforms
+					if (showStaticTransforms)
+					{
+						ImGui::PushItemWidth(80);
+						ImGui::DragFloat("##scale_x", &(model->mTransform.scale.x), 0.05f, -9999.0, 9999.0, "S:x = %.2f");
+						ImGui::PopItemWidth();
+						ImGui::SameLine();
+						ImGui::PushItemWidth(80);
+						ImGui::DragFloat("##scale_y", &(model->mTransform.scale.y), 0.05f, -9999.0, 9999.0, "S:y = %.2f");
+						ImGui::PopItemWidth();
+						ImGui::SameLine();
+						ImGui::PushItemWidth(80);
+						ImGui::DragFloat("##scale_z", &(model->mTransform.scale.z), 0.05f, -9999.0, 9999.0, "S:z = %.2f");
+						ImGui::PopItemWidth();
+
+						ImGui::PushItemWidth(80);
+						ImGui::DragFloat("##rotate_x", &(model->mTransform.rotation.x), 0.05f, -9999.0, 9999.0, "R:x = %.2f");
+						ImGui::PopItemWidth();
+						ImGui::SameLine();
+						ImGui::PushItemWidth(80);
+						ImGui::DragFloat("##rotate_y", &(model->mTransform.rotation.y), 0.05f, -9999.0, 9999.0, "R:y = %.2f");
+						ImGui::PopItemWidth();
+						ImGui::SameLine();
+						ImGui::PushItemWidth(80);
+						ImGui::DragFloat("##rotate_z", &(model->mTransform.rotation.z), 0.05f, -9999.0, 9999.0, "R:z = %.2f");
+						ImGui::PopItemWidth();
+
+						ImGui::PushItemWidth(80);
+						ImGui::DragFloat("##translate_x", &(model->mTransform.position.x), 0.05f, -9999.0, 9999.0, "T:x = %.2f");
+						ImGui::PopItemWidth();
+						ImGui::SameLine();
+						ImGui::PushItemWidth(80);
+						ImGui::DragFloat("##translate_y", &(model->mTransform.position.y), 0.05f, -9999.0, 9999.0, "T:y = %.2f");
+						ImGui::PopItemWidth();
+						ImGui::SameLine();
+						ImGui::PushItemWidth(80);
+						ImGui::DragFloat("##translate_z", &(model->mTransform.position.z), 0.05f, -9999.0, 9999.0, "T:z = %.2f");
+						ImGui::PopItemWidth();
+					}
 
 					ImGui::TreePop();
 				}

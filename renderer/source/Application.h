@@ -14,6 +14,7 @@
 #include "input/InputManager.h"
 #include "camera/EditingModeCamera.h"
 #include "ui/UiOverlay.h"
+#include "camera/CameraType.h"
 
 namespace vr
 {
@@ -96,6 +97,10 @@ namespace vr
 
 		Camera mCamera;
 		EditingModeCamera eCamera;
+		CameraType activeCamera;
+		int cameraTypeIndex;
+		std::string cameraTypes = "";
+
 		InputManager* mInputManager;
 
 		struct

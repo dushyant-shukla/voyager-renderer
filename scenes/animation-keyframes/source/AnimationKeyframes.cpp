@@ -321,8 +321,8 @@ namespace vr
 					vkCmdBindPipeline(mGraphicsCommandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.joints.GetVulkanPipeline());
 
 					glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-					//model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f)); // nathan
-					model = glm::scale(model, glm::vec3(0.50f, 0.50f, 0.50f)); // tiger
+					model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f)); // nathan
+					//model = glm::scale(model, glm::vec3(0.50f, 0.50f, 0.50f)); // tiger
 					//model = glm::scale(model, glm::vec3(3.00f, 3.00f, 3.00f)); // spidey
 					mPrimtiveModelData.model = model;
 
@@ -570,8 +570,8 @@ namespace vr
 		//model->LoadFromFile("jumping.fbx", &modelCreateInfo);
 		//model->LoadFromFile("wolf-ii\\Wolf_dae.dae", &modelCreateInfo);
 		//model->LoadFromFile("iron-man-fortnite\\scene.gltf", &modelCreateInfo);
-		//model->LoadFromFile("nathan\\scene.gltf", "nathan"); // works - loads correctly
-		model->LoadFromFile("bengal-tiger\\tiger.fbx", "bengal tiger"); // works - loads correctly
+		model->LoadFromFile("nathan\\scene.gltf", "nathan"); // works - loads correctly
+		//model->LoadFromFile("bengal-tiger\\tiger.fbx", "bengal tiger"); // works - loads correctly
 		//model->LoadFromFile("myth-creature\\myth-creature.fbx", &modelCreateInfo); // works - loads correctly
 		//model->LoadFromFile("spiderman\\spiderman.fbx", "spidey"); // works - loads correctly
 
@@ -579,16 +579,16 @@ namespace vr
 		// mimic the behavior for now
 		model->mTransform.position = glm::vec3(0.0f, 0.0f, 0.0f);
 		model->mTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-		//model->mTransform.scale = glm::vec3(0.01f, 0.01f, 0.01f); // nathan
-		model->mTransform.scale = glm::vec3(0.5f, 0.5f, 0.50f);   // tiger
+		model->mTransform.scale = glm::vec3(0.01f, 0.01f, 0.01f); // nathan
+		//model->mTransform.scale = glm::vec3(0.5f, 0.5f, 0.50f);   // tiger
 		//model->mTransform.scale = glm::vec3(3.00f, 3.0f, 3.0f);   // spidey
 		//model->mTransform.scale = glm::vec3(20.00f, 20.0f, 20.0f);  // wolverine
 
 		mModels.push_back(model);
 
-		for (size_t i = 0; i < model->mAnimation->animationTimes.size(); ++i)
+		for (size_t i = 0; i < model->mAnimation->animationTracks.size(); ++i)
 		{
-			animationSettings.animations += (model->mAnimation->animationTimes[i].name + '\0');
+			animationSettings.animations += (model->mAnimation->animationTracks[i].name + '\0');
 		}
 		animationSettings.animations += '\0';
 
@@ -709,11 +709,11 @@ namespace vr
 
 			vrassimp::Animation* animation = currentModel->mAnimation;
 			animation->currentIndex = animationSettings.id;
-			if (timer > animation->animationTimes[animation->currentIndex].end)
+			if (timer > animation->animationTracks[animation->currentIndex].end)
 			{
 				//animation->currentIndex = (animation->currentIndex + 1) % animation->animationTimes.size();
 				RENDERER_INFO("CURRENT ANIMATION: {0}", animation->currentIndex);
-				timer = animation->animationTimes[animation->currentIndex].start;
+				timer = animation->animationTracks[animation->currentIndex].start;
 			}
 
 			std::vector<aiMatrix4x4> transforms;

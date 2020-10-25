@@ -265,7 +265,7 @@ namespace vrassimp
 		const aiScene* mScene;
 		aiAnimation* mActiveAnimation;
 
-		struct AnimationTimer
+		struct AnimationTrack
 		{
 			double duration;
 			std::string name;
@@ -273,11 +273,20 @@ namespace vrassimp
 			double start;
 			double end;
 
-			AnimationTimer(double d, std::string n, double t, double s, double e) : duration(d), name(n), ticksPerSecond(t), start(s), end(e)
+			AnimationTrack(double d, std::string n, double t, double s, double e) : duration(d), name(n), ticksPerSecond(t), start(s), end(e)
 			{}
 		};
-		std::vector<AnimationTimer> animationTimes;
+		std::vector<AnimationTrack> animationTracks;
 		unsigned int currentIndex = 0;
+		float timer = 0.0f;
+
+		struct AnimationSettings
+		{
+			float speed = 0.75f;
+			int enableAnimation = 1;
+			std::string tracks = "";
+			int currentTrackIndex = 0;
+		} settings;
 
 		void SetAnimation(unsigned int animationIndex);
 		//void ProcessNode(aiNode* node, const aiScene* scene);
@@ -338,6 +347,13 @@ namespace vrassimp
 			glm::vec3 scale;
 			glm::vec3 rotation;
 		} mTransform;
+
+		struct
+		{
+			glm::vec3 position;
+			glm::vec3 scale;
+			glm::vec3 rotation;
+		} mAnimationTransform;
 
 		/*
 			Used for parameterizing model loading

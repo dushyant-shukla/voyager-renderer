@@ -18,6 +18,12 @@ namespace vr
 		mDepthBuffer()
 	{
 		mInputManager = InputManager::GetInstance();
+
+		cameraTypes += "LOOK AT";
+		cameraTypes += '\0';
+		cameraTypes += "FIRST PERSON";
+		cameraTypes += '\0';
+		cameraTypes += '\0';
 	}
 
 	Application::~Application()
@@ -178,6 +184,13 @@ namespace vr
 			ImGui::PlotLines("frame rate", &mUiOverlay.frameTimes[0], 50, 0, "", mUiOverlay.frameTimeMin, mUiOverlay.frameTimeMax, ImVec2(0, 80), 4);
 		}
 		// frame rate plotting ends
+
+		ImGui::PushItemWidth(150.0f * mUiOverlay.mUI.mUiState.scale);
+		if (ImGui::Combo("Camera Type", &cameraTypeIndex, cameraTypes.c_str()))
+		{
+			activeCamera = static_cast<CameraType>(cameraTypeIndex);
+		}
+		ImGui::PopItemWidth();
 
 		ImGui::PushItemWidth(110.0f * mUiOverlay.mUI.mUiState.scale);
 

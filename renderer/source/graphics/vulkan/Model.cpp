@@ -146,10 +146,13 @@ namespace vrassimp
 		// extract information about animation tracks available in the file
 		for (size_t i = 0; i < scene->mNumAnimations; ++i)
 		{
-			double start = (i == 0 ? 0 : mAnimation->animationTimes[i - 1].end);
-			double end = (start + scene->mAnimations[i]->mDuration / scene->mAnimations[i]->mTicksPerSecond) - 0.1f;
-			mAnimation->animationTimes.emplace_back(scene->mAnimations[i]->mDuration, std::string(scene->mAnimations[i]->mName.data), scene->mAnimations[i]->mTicksPerSecond, start, end);
+			double start = (i == 0 ? 0 : mAnimation->animationTracks[i - 1].end);
+			double end = (start + scene->mAnimations[i]->mDuration / scene->mAnimations[i]->mTicksPerSecond);
+			mAnimation->animationTracks.emplace_back(scene->mAnimations[i]->mDuration, std::string(scene->mAnimations[i]->mName.data), scene->mAnimations[i]->mTicksPerSecond, start, end);
+
+			mAnimation->settings.tracks += mAnimation->animationTracks[i].name + '\0';
 		}
+		mAnimation->settings.tracks += '\0';
 
 		if (scene->mAnimations[0]->mTicksPerSecond != 0.0)
 		{

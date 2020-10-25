@@ -37,10 +37,10 @@ namespace vr
 		// update methods
 		void UpdateViewBuffer(unsigned int imageIndex);
 		void UpdateModelData(vrassimp::Model* model);
-		void UpdateBoneTransforms(vrassimp::Model* model, unsigned int imageIndex);
+		void UpdateBoneTransforms(vrassimp::Model* model, unsigned int imageIndex, const double& frametime);
 
 		// draw commands
-		void RecordCommands(unsigned int imageIndex);
+		void RecordCommands(unsigned int imageIndex, const double& frametime);
 
 	private:
 
@@ -108,12 +108,6 @@ namespace vr
 			TextureSampler specular;
 			TextureSampler emission;
 		} mSamplers;
-
-		struct
-		{
-			int enableAnimation = 1;
-			float speed = 1.5f;
-		} animationSettings;
 
 		std::vector<vrassimp::Model*> mModels;
 
