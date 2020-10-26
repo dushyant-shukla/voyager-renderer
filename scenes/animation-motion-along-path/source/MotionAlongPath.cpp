@@ -365,8 +365,23 @@ namespace vr
 			nathan->mAnimationTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
 			nathan->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 180.0f);
 			nathan->mAnimationTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
-			nathan->mAnimation->settings.speed = 37.0f;
+			nathan->mAnimation->settings.speed = 25.0f;
 			mModels.push_back(nathan);
+		}
+
+		// bengal-tiger
+		{
+			//vrassimp::Model* tiger = new vrassimp::Model();
+			//tiger->LoadFromFile("bengal-tiger\\tiger.fbx", "bengal tiger");
+			//tiger->mTransform.position = glm::vec3(0.0f, 2.10f, 0.0f);
+			//tiger->mTransform.rotation = glm::vec3(-94.70f, 222.60f, 347.35f);
+			//tiger->mTransform.scale = glm::vec3(2.5f, 2.5f, 2.5f);
+			//tiger->mAnimationTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
+			//tiger->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 180.0f);
+			//tiger->mAnimationTransform.scale = glm::vec3(2.5f, 2.5f, 2.5f);
+			//tiger->mAnimation->settings.speed = 0.75f;
+			//tiger->mAnimation->settings.currentTrackIndex = 6;
+			//mModels.push_back(tiger);
 		}
 
 		// spidey
