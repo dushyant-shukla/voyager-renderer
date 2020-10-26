@@ -29,14 +29,15 @@ namespace vr
 		void DrawSpline(VkCommandBuffer commandBuffer);
 		void DrawControlPoints(VkCommandBuffer commandBuffer);
 		CurveVertex CalculateBSpline(glm::mat4 matrix, float t);
-		TableValue FindInTable(float distance, float& timer);
+		CurveVertex CalculateBSplineDerivative(glm::mat4 matrix, float t);
+		TableValue FindInTable(float distance);
 		void CalculateAdaptiveTable(float& t1, float& t2, float& t3);
 
 	private:
 
 		void CalculateCurve();
 
-	private:
+	public:
 
 		//static inline CurveVertex P1 = CurveVertex(-45.0f, 10.0f, 20.0f);
 		//static inline CurveVertex P2 = CurveVertex(-30.0f, 10.0f, -20.0f);
@@ -119,5 +120,7 @@ namespace vr
 		} mBuffers;
 
 		std::vector<TableValue> mArcTable;
+
+		float someFactor = 6.0f;
 	};
 }

@@ -94,6 +94,7 @@ namespace vr
 		struct
 		{
 			alignas(16) glm::mat4 model;
+			alignas(16) glm::mat4 path;
 			alignas(16) int enableAnimation;
 		} modelData;
 
@@ -111,9 +112,11 @@ namespace vr
 
 		std::vector<vrassimp::Model*> mModels;
 
-		float timer = 0;
-
 		Splines* curve;
+		float t1, t2, t3, pathTime;
+		float velocity = 6.0f;
+		bool renderCurve = true;
+		bool renderControlPoints = true;
 
 		int mCurrentFrame = 0;
 	};

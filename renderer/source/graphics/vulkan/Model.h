@@ -283,6 +283,7 @@ namespace vrassimp
 		struct AnimationSettings
 		{
 			float speed = 0.75f;
+			float currentSpeed = 0.75f;
 			int enableAnimation = 1;
 			std::string tracks = "";
 			int currentTrackIndex = 0;

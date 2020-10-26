@@ -46,8 +46,11 @@ namespace vr
 
 	void MotionAlongPath::InitializeScene()
 	{
+		t1 = t2 = t3 = pathTime = 0.0f;
 		// curve
 		curve = new Splines();
+		curve->CalculateAdaptiveTable(t1, t2, t3);
+
 		SetupTextureSamplers();
 		SetupDescriptorSet();
 		SetupPipeline();
@@ -109,6 +112,8 @@ namespace vr
 		//vkQueueWaitIdle(mDevice->GetLogicalDevice().presentationQueue);
 		// Get next frame (% keeps value below MAX_FRAME_DRAWS)
 		mCurrentFrame = (mCurrentFrame + 1) % SynchronizationPrimitives::MAX_FRAME_DRAWS;
+
+		pathTime += frametime;
 	}
 
 	VkPhysicalDeviceFeatures MotionAlongPath::CheckRequiredFeatures()
@@ -340,23 +345,43 @@ namespace vr
 
 	void MotionAlongPath::LoadAssets()
 	{
-		vrassimp::Model* floor = new vrassimp::Model();
-		floor->LoadFromFile("floor\\scene.gltf", "floor");
-		floor->mTransform.position = glm::vec3(20.0f, 0.0f, 0.0f);
-		floor->mTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-		floor->mTransform.scale = glm::vec3(30.0f, 1.0f, 30.0f);
-		mModels.push_back(floor);
+		// floor
+		{
+			vrassimp::Model* floor = new vrassimp::Model();
+			floor->LoadFromFile("floor\\scene.gltf", "floor");
+			floor->mTransform.position = glm::vec3(20.0f, 0.0f, 0.0f);
+			floor->mTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+			floor->mTransform.scale = glm::vec3(30.0f, 1.0f, 30.0f);
+			mModels.push_back(floor);
+		}
 
-		vrassimp::Model* nathan = new vrassimp::Model();
-		nathan->LoadFromFile("nathan\\scene.gltf", "nathan");
-		nathan->mTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
-		nathan->mTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-		nathan->mTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
-		nathan->mAnimationTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
-		nathan->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 0.0f);
-		nathan->mAnimationTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
-		nathan->mAnimation->settings.speed = 8.0f;
-		mModels.push_back(nathan);
+		// nathan
+		{
+			vrassimp::Model* nathan = new vrassimp::Model();
+			nathan->LoadFromFile("nathan\\scene.gltf", "nathan");
+			nathan->mTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
+			nathan->mTransform.rotation = glm::vec3(0.0f, 180.0f, 0.0f);
+			nathan->mTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
+			nathan->mAnimationTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
+			nathan->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 180.0f);
+			nathan->mAnimationTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
+			nathan->mAnimation->settings.speed = 24.0f;
+			mModels.push_back(nathan);
+		}
+
+		// spidey
+		{
+			/*vrassimp::Model* spidey = new vrassimp::Model();
+			spidey->LoadFromFile("spiderman\\spiderman.fbx", "spidey");
+			spidey->mTransform.position = glm::vec3(10.0f, 0.2f, 0.0f);
+			spidey->mTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+			spidey->mTransform.scale = glm::vec3(10.00f, 10.0f, 10.0f);
+			spidey->mAnimationTransform.position = glm::vec3(10.0f, 0.2f, 0.0f);
+			spidey->mAnimationTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+			spidey->mAnimationTransform.scale = glm::vec3(3.00f, 3.0f, 3.0f);
+			spidey->mAnimation->settings.speed = 0.75f;
+			mModels.push_back(spidey);*/
+		}
 
 		for (auto& model : mModels)
 		{
@@ -442,6 +467,67 @@ namespace vr
 			modelData.enableAnimation = model->mAnimation->settings.enableAnimation;
 			if (modelData.enableAnimation)
 			{
+				float animationSpeed;
+				float distance;
+
+				if (pathTime <= t1)
+				{
+					animationSpeed = pathTime * (velocity / t1);
+					distance = (pathTime * pathTime * 0.5f) * (velocity / t1);
+				}
+				else if (pathTime > t1 && pathTime <= t2)
+				{
+					animationSpeed = velocity;
+					distance = (velocity * t1 * 0.5f) + velocity * (pathTime - t1);
+				}
+				else if (pathTime > t2 && pathTime <= t3)
+				{
+					animationSpeed = (t3 - pathTime) * (velocity / (t3 - t2));
+					distance = (((velocity * t1) / 2.0f) + velocity * (t2 - t1)) +
+						(velocity - (velocity * (pathTime - t2) / (t3 - t2)) * 0.5f) * (pathTime - t2);
+				}
+				else
+				{
+					distance = 0.0f;
+					pathTime = 0.0f;
+					animationSpeed = 0.0f;
+				}
+
+				TableValue tableValue = curve->FindInTable(distance);
+				CurveVertex curveVertex = curve->CalculateBSpline(curve->mControlPointsMatrices[tableValue.curveIndex], tableValue.pointOnCurve);
+				glm::vec3 position = curveVertex.position;
+				modelData.path = glm::translate(glm::mat4(1.0f), position);
+
+				// orientation
+				{
+					CurveVertex curveVertex1 = curve->CalculateBSplineDerivative(curve->mControlPointsMatrices[tableValue.curveIndex], tableValue.pointOnCurve);
+					glm::vec3 V = curveVertex1.position;
+					V = glm::normalize(V);
+
+					glm::vec3 up;
+					if (activeCamera == CameraType::LOOK_AT)
+					{
+						up = glm::vec3(0.0f, 1.0f, 0.0f);
+					}
+					else
+					{
+						up = mCamera.up;
+					}
+					glm::vec3 W = glm::normalize(glm::cross(up, V));
+					glm::vec3 U = glm::normalize(glm::cross(V, W));
+
+					glm::mat4 rotation;
+					rotation[0] = glm::vec4(W, 0.0f);
+					rotation[1] = glm::vec4(U, 0.0f);
+					rotation[2] = glm::vec4(V, 0.0f);
+					rotation[3] = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+					modelData.path *= rotation;
+				}
+
+				model->mAnimation->settings.currentSpeed = model->mAnimation->settings.speed *
+					(animationSpeed / velocity);
+
 				glm::mat4  modelMatrix(1.0);
 				modelMatrix = glm::translate(modelMatrix, model->mAnimationTransform.position);
 				modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mAnimationTransform.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -487,7 +573,7 @@ namespace vr
 		memcpy(data, &skinningUBO, sizeof(skinningUBO));
 		vkUnmapMemory(LOGICAL_DEVICE, skinningUboMemory[imageIndex]);
 
-		animation->timer += frametime * animation->settings.speed;
+		animation->timer += frametime * animation->settings.currentSpeed;
 	}
 
 	void MotionAlongPath::RecordCommands(unsigned int imageIndex, const double& frametime)
@@ -519,28 +605,37 @@ namespace vr
 
 		// draw curve
 		{
-			vkCmdBindPipeline(mGraphicsCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.curve.GetVulkanPipeline());
-			std::vector<VkDescriptorSet> descriptorSets = { mDescriptorSets.curve.mSets[imageIndex] };
-			vkCmdBindDescriptorSets(mGraphicsCommandBuffers[imageIndex],
-				VK_PIPELINE_BIND_POINT_GRAPHICS,
-				mPipelineLayouts.curve.mLayout,
-				0,
-				static_cast<unsigned int>(descriptorSets.size()),
-				descriptorSets.data(), 0, nullptr);
+			if (renderCurve || renderControlPoints)
+			{
+				vkCmdBindPipeline(mGraphicsCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.curve.GetVulkanPipeline());
+				std::vector<VkDescriptorSet> descriptorSets = { mDescriptorSets.curve.mSets[imageIndex] };
+				vkCmdBindDescriptorSets(mGraphicsCommandBuffers[imageIndex],
+					VK_PIPELINE_BIND_POINT_GRAPHICS,
+					mPipelineLayouts.curve.mLayout,
+					0,
+					static_cast<unsigned int>(descriptorSets.size()),
+					descriptorSets.data(), 0, nullptr);
 
-			primitiveModelData.isControlPoints = false;
-			vkCmdPushConstants(mGraphicsCommandBuffers[imageIndex],
-				mPipelineLayouts.curve.mLayout,
-				VK_SHADER_STAGE_VERTEX_BIT, 0,
-				sizeof(primitiveModelData), &primitiveModelData);
-			curve->DrawSpline(mGraphicsCommandBuffers[imageIndex]);
+				if (renderCurve)
+				{
+					primitiveModelData.isControlPoints = false;
+					vkCmdPushConstants(mGraphicsCommandBuffers[imageIndex],
+						mPipelineLayouts.curve.mLayout,
+						VK_SHADER_STAGE_VERTEX_BIT, 0,
+						sizeof(primitiveModelData), &primitiveModelData);
+					curve->DrawSpline(mGraphicsCommandBuffers[imageIndex]);
+				}
 
-			primitiveModelData.isControlPoints = true;
-			vkCmdPushConstants(mGraphicsCommandBuffers[imageIndex],
-				mPipelineLayouts.curve.mLayout,
-				VK_SHADER_STAGE_VERTEX_BIT, 0,
-				sizeof(primitiveModelData), &primitiveModelData);
-			curve->DrawControlPoints(mGraphicsCommandBuffers[imageIndex]);
+				if (renderControlPoints)
+				{
+					primitiveModelData.isControlPoints = true;
+					vkCmdPushConstants(mGraphicsCommandBuffers[imageIndex],
+						mPipelineLayouts.curve.mLayout,
+						VK_SHADER_STAGE_VERTEX_BIT, 0,
+						sizeof(primitiveModelData), &primitiveModelData);
+					curve->DrawControlPoints(mGraphicsCommandBuffers[imageIndex]);
+				}
+			}
 		}
 
 		// draw models
@@ -596,12 +691,12 @@ namespace vr
 		ImGui::SetNextWindowPos(ImVec2(10, 210));
 		ImGui::Begin("Animation (Motion along a path)");
 		ImGui::Text("Settings:");
-		//if (overlay->CheckBox("Enable animation", &animationSettings.enableAnimation))
-		//{
-		//}
-		//if (animationSettings.enableAnimation && overlay->InputFloat("speed", &animationSettings.speed, 0.5, 3))
-		//{
-		//}
+		if (overlay->CheckBox("Curve", &renderCurve))
+		{
+		}
+		if (overlay->CheckBox("Control Points", &renderControlPoints))
+		{
+		}
 		if (ImGui::TreeNode("Models"))
 		{
 			for (auto& model : mModels)
@@ -619,6 +714,14 @@ namespace vr
 						{
 						}
 						if (model->mAnimation->settings.enableAnimation &&
+							overlay->InputFloat("current speed", &(model->mAnimation->settings.currentSpeed), 0.5, 3))
+						{
+						}
+						if (model->mAnimation->settings.enableAnimation &&
+							overlay->InputFloat("curve velocity", &velocity, 0.01, 3))
+						{
+						}
+						if (model->mAnimation->settings.enableAnimation &&
 							ImGui::Combo("track", &(model->mAnimation->settings.currentTrackIndex), model->mAnimation->settings.tracks.c_str()))
 						{
 						}
@@ -627,15 +730,15 @@ namespace vr
 							showStaticTransforms = false;
 
 							ImGui::PushItemWidth(80);
-							ImGui::DragFloat("##scale_x", &(model->mAnimationTransform.scale.x), 0.05f, -9999.0, 9999.0, "S:x = %.2f");
+							ImGui::DragFloat("##scale_x", &(model->mAnimationTransform.scale.x), 0.01f, -9999.0, 9999.0, "S:x = %.2f");
 							ImGui::PopItemWidth();
 							ImGui::SameLine();
 							ImGui::PushItemWidth(80);
-							ImGui::DragFloat("##scale_y", &(model->mAnimationTransform.scale.y), 0.05f, -9999.0, 9999.0, "S:y = %.2f");
+							ImGui::DragFloat("##scale_y", &(model->mAnimationTransform.scale.y), 0.01f, -9999.0, 9999.0, "S:y = %.2f");
 							ImGui::PopItemWidth();
 							ImGui::SameLine();
 							ImGui::PushItemWidth(80);
-							ImGui::DragFloat("##scale_z", &(model->mAnimationTransform.scale.z), 0.05f, -9999.0, 9999.0, "S:z = %.2f");
+							ImGui::DragFloat("##scale_z", &(model->mAnimationTransform.scale.z), 0.01f, -9999.0, 9999.0, "S:z = %.2f");
 							ImGui::PopItemWidth();
 
 							ImGui::PushItemWidth(80);
@@ -668,15 +771,15 @@ namespace vr
 					if (showStaticTransforms)
 					{
 						ImGui::PushItemWidth(80);
-						ImGui::DragFloat("##scale_x", &(model->mTransform.scale.x), 0.05f, -9999.0, 9999.0, "S:x = %.2f");
+						ImGui::DragFloat("##scale_x", &(model->mTransform.scale.x), 0.01f, -9999.0, 9999.0, "S:x = %.2f");
 						ImGui::PopItemWidth();
 						ImGui::SameLine();
 						ImGui::PushItemWidth(80);
-						ImGui::DragFloat("##scale_y", &(model->mTransform.scale.y), 0.05f, -9999.0, 9999.0, "S:y = %.2f");
+						ImGui::DragFloat("##scale_y", &(model->mTransform.scale.y), 0.01f, -9999.0, 9999.0, "S:y = %.2f");
 						ImGui::PopItemWidth();
 						ImGui::SameLine();
 						ImGui::PushItemWidth(80);
-						ImGui::DragFloat("##scale_z", &(model->mTransform.scale.z), 0.05f, -9999.0, 9999.0, "S:z = %.2f");
+						ImGui::DragFloat("##scale_z", &(model->mTransform.scale.z), 0.01f, -9999.0, 9999.0, "S:z = %.2f");
 						ImGui::PopItemWidth();
 
 						ImGui::PushItemWidth(80);

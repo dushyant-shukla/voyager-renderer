@@ -28,6 +28,7 @@ layout(set = 0, binding = 1) uniform BoneUBO
 layout (push_constant) uniform PushModel
 {
     mat4 model;
+    mat4 path_matrix;
     int enable_animation;
 } push_model;
 
@@ -48,6 +49,7 @@ void main()
         bone_transform     += bone_ubo.bones[bone_ids[3]] * bone_weights[3];
         gl_Position = view_ubo.projection 
                       * view_ubo.view
+                      * push_model.path_matrix
                       * push_model.model
                       * bone_transform
                       * vec4(position, 1.0);

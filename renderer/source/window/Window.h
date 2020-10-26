@@ -18,7 +18,7 @@ namespace vr
 		/*
 			TODO: Probably a good idea to deserialize these properties from a configuration file.
 		*/
-		WindowProperties(unsigned int w = 1280, unsigned int h = 720, std::string t = "Voyager Graphics Renderer");
+		WindowProperties(unsigned int w = 1920, unsigned int h = 1080, std::string t = "Voyager Graphics Renderer");
 	};
 
 	class Window
@@ -35,8 +35,8 @@ namespace vr
 
 		GLFWwindow* GetNativeWindow();
 
-		static inline const int WIDTH = 1280;
-		static inline const int HEIGHT = 720;
+		static inline const int WIDTH = 1920;
+		static inline const int HEIGHT = 1080;
 
 	private:
 

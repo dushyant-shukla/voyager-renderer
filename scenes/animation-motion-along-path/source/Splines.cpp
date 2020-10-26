@@ -97,21 +97,37 @@ namespace vr
 
 	CurveVertex Splines::CalculateBSpline(glm::mat4 matrix, float t)
 	{
-		glm::mat4 catmul;
-		catmul[0] = glm::vec4(-1.0f, 3.0f, -3.0f, 1.0f);
-		catmul[1] = glm::vec4(3.0f, -6.0f, 3.0f, 0.0f);
-		catmul[2] = glm::vec4(-3.0f, 0.0f, 3.0f, 0.0f);
-		catmul[3] = glm::vec4(1.0f, 4.0f, 1.0f, 0.0f);
+		glm::mat4 bsplineMatrix;
+		bsplineMatrix[0] = glm::vec4(-1.0f, 3.0f, -3.0f, 1.0f);
+		bsplineMatrix[1] = glm::vec4(3.0f, -6.0f, 3.0f, 0.0f);
+		bsplineMatrix[2] = glm::vec4(-3.0f, 0.0f, 3.0f, 0.0f);
+		bsplineMatrix[3] = glm::vec4(1.0f, 4.0f, 1.0f, 0.0f);
 
-		catmul /= 6.0f;
+		bsplineMatrix /= someFactor;
 
-		catmul = glm::transpose(catmul);
+		bsplineMatrix = glm::transpose(bsplineMatrix);
 
-		glm::vec4 position = glm::vec4(t * t * t, t * t, t, 1.0f) * catmul * matrix;
+		glm::vec4 position = glm::vec4(t * t * t, t * t, t, 1.0f) * bsplineMatrix * matrix;
 		return CurveVertex(position);
 	}
 
-	TableValue Splines::FindInTable(float distance, float& timer)
+	CurveVertex Splines::CalculateBSplineDerivative(glm::mat4 matrix, float t)
+	{
+		glm::mat4 bsplineMatrix;
+		bsplineMatrix[0] = glm::vec4(-1.0f, 3.0f, -3.0f, 1.0f);
+		bsplineMatrix[1] = glm::vec4(3.0f, -6.0f, 3.0f, 0.0f);
+		bsplineMatrix[2] = glm::vec4(-3.0f, 0.0f, 3.0f, 0.0f);
+		bsplineMatrix[3] = glm::vec4(1.0f, 4.0f, 1.0f, 0.0f);
+
+		bsplineMatrix /= someFactor;
+
+		bsplineMatrix = glm::transpose(bsplineMatrix);
+
+		glm::vec4 position = glm::vec4(3 * t * t, 2 * t, 1.0, 0.0f) * bsplineMatrix * matrix;
+		return CurveVertex(position);
+	}
+
+	TableValue Splines::FindInTable(float distance)
 	{
 		for (unsigned int i = 0; i < mArcTable.size() - 1; ++i)
 		{
@@ -197,7 +213,7 @@ namespace vr
 				"curveIndex: " << mArcTable[i].curveIndex << std::endl;
 		}
 
-		t3 = mArcTable[mArcTable.size() - 1].distance / 6.0f;
+		t3 = mArcTable[mArcTable.size() - 1].distance / someFactor;
 		t1 = 0.3f * t3;
 		t2 = 0.9f * t3;
 		t3 += (t1 + (t3 - t2));
