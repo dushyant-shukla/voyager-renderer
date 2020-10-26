@@ -365,7 +365,7 @@ namespace vr
 			nathan->mAnimationTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
 			nathan->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 180.0f);
 			nathan->mAnimationTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
-			nathan->mAnimation->settings.speed = 24.0f;
+			nathan->mAnimation->settings.speed = 37.0f;
 			mModels.push_back(nathan);
 		}
 

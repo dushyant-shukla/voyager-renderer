@@ -284,7 +284,7 @@ namespace vrassimp
 		{
 			float speed = 0.75f;
 			float currentSpeed = 0.75f;
-			int enableAnimation = 1;
+			int enableAnimation = 0;
 			std::string tracks = "";
 			int currentTrackIndex = 0;
 		} settings;
