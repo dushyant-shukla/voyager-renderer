@@ -586,9 +586,9 @@ namespace vr
 
 		mModels.push_back(model);
 
-		for (size_t i = 0; i < model->mAnimation->animationTracks.size(); ++i)
+		for (size_t i = 0; i < model->mAnimation->availableTracks.size(); ++i)
 		{
-			animationSettings.animations += (model->mAnimation->animationTracks[i].name + '\0');
+			animationSettings.animations += (model->mAnimation->availableTracks[i].name + '\0');
 		}
 		animationSettings.animations += '\0';
 
@@ -708,12 +708,12 @@ namespace vr
 			vrassimp::Model* currentModel = mModels[i];
 
 			vrassimp::Animation* animation = currentModel->mAnimation;
-			animation->currentIndex = animationSettings.id;
-			if (timer > animation->animationTracks[animation->currentIndex].end)
+			animation->activeTrackIndex = animationSettings.id;
+			if (timer > animation->availableTracks[animation->activeTrackIndex].end)
 			{
 				//animation->currentIndex = (animation->currentIndex + 1) % animation->animationTimes.size();
-				RENDERER_INFO("CURRENT ANIMATION: {0}", animation->currentIndex);
-				timer = animation->animationTracks[animation->currentIndex].start;
+				RENDERER_INFO("CURRENT ANIMATION: {0}", animation->activeTrackIndex);
+				timer = animation->availableTracks[animation->activeTrackIndex].start;
 			}
 
 			std::vector<aiMatrix4x4> transforms;

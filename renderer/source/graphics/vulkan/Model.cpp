@@ -95,38 +95,31 @@ namespace vrassimp
 	void Model::LoadFromFile(std::string filename, std::string screename)
 	{
 		Assimp::Importer Importer;
-
-		// Load file
-		//char buffer[MAX_PATH];
-		//GetModuleFileName(NULL, buffer, MAX_PATH);
-		//std::string::size_type pos = std::string(buffer).find_last_of("\\/");
-
-		//std::string fileName = std::string(buffer).substr(0, pos);
-		//std::size_t found = fileName.find("PC Visual Studio");
-		//if (found != std::string::npos)
-		//{
-		//	fileName.erase(fileName.begin() + found, fileName.end());
-		//}
-
-		//fileName = fileName + "Resources\\Models\\" + filename;
 		std::string fullpath(MODEL_PATH + filename);
-		const aiScene* scene = Importer.ReadFile(fullpath.c_str(), Model::DEFAUTL_FLAGS);
-		ASSERT_SUCCESS_AND_THROW(scene, "FAILED TO LOAD MODEL: " + fullpath);
+		Importer.ReadFile(fullpath.c_str(), Model::DEFAUTL_FLAGS);
+
+		/*
+			Importer above will go out of scope when LoadFromFile() ends.
+			To take control of the scene we call GetOrphanedScene()
+		*/
+		mScene = Importer.GetOrphanedScene();
+
+		ASSERT_SUCCESS_AND_THROW(mScene, "FAILED TO LOAD MODEL: " + fullpath);
 
 		mScreenName = screename;
 
-		if (scene)
+		if (mScene)
 		{
-			if (scene->HasAnimations())
+			if (mScene->HasAnimations())
 			{
-				QueryAnimationData(Importer, scene);
+				QueryAnimationData();
 			}
 
-			this->meshes.resize(scene->mNumMeshes);
-			for (int meshIndex = 0; meshIndex < scene->mNumMeshes; ++meshIndex)
+			this->meshes.resize(mScene->mNumMeshes);
+			for (int meshIndex = 0; meshIndex < mScene->mNumMeshes; ++meshIndex)
 			{
-				QueryMeshData(meshIndex, scene->mMeshes[meshIndex], scene);
-				QueryMeshMaterial(meshIndex, scene->mMeshes[meshIndex], scene);
+				QueryMeshData(meshIndex, mScene->mMeshes[meshIndex]);
+				QueryMeshMaterial(meshIndex, mScene->mMeshes[meshIndex]);
 			}
 		}
 	}
@@ -134,29 +127,30 @@ namespace vrassimp
 	/*
 		TODO: may be the scene is not needed as the second para here
 	*/
-	void Model::QueryAnimationData(Assimp::Importer& Importer, const aiScene* scene)
+	void Model::QueryAnimationData()
 	{
 		isAnimationAvailable = true;
 		mAnimation = new Animation();
-		mAnimation->mScene = Importer.GetOrphanedScene();
+		//mAnimation->mScene = Importer.GetOrphanedScene();
+		mAnimation->mScene = mScene;
 		mAnimation->SetAnimation(0);
-		mAnimation->mGlobalInverseTransform = scene->mRootNode->mTransformation;
+		mAnimation->mGlobalInverseTransform = mScene->mRootNode->mTransformation;
 		mAnimation->mGlobalInverseTransform.Inverse(); // animation runs without inverse as well
 
 		// extract information about animation tracks available in the file
-		for (size_t i = 0; i < scene->mNumAnimations; ++i)
+		for (size_t i = 0; i < mScene->mNumAnimations; ++i)
 		{
-			double start = (i == 0 ? 0 : mAnimation->animationTracks[i - 1].end);
-			double end = (start + scene->mAnimations[i]->mDuration / scene->mAnimations[i]->mTicksPerSecond);
-			mAnimation->animationTracks.emplace_back(scene->mAnimations[i]->mDuration, std::string(scene->mAnimations[i]->mName.data), scene->mAnimations[i]->mTicksPerSecond, start, end);
+			double start = (i == 0 ? 0 : mAnimation->availableTracks[i - 1].end);
+			double end = (start + mScene->mAnimations[i]->mDuration / mScene->mAnimations[i]->mTicksPerSecond);
+			mAnimation->availableTracks.emplace_back(mScene->mAnimations[i]->mDuration, std::string(mScene->mAnimations[i]->mName.data), mScene->mAnimations[i]->mTicksPerSecond, start, end);
 
-			mAnimation->settings.tracks += mAnimation->animationTracks[i].name + '\0';
+			mAnimation->settings.tracks += mAnimation->availableTracks[i].name + '\0';
 		}
 		mAnimation->settings.tracks += '\0';
 
-		if (scene->mAnimations[0]->mTicksPerSecond != 0.0)
+		if (mScene->mAnimations[0]->mTicksPerSecond != 0.0)
 		{
-			mAnimation->mTicksPerSecond = scene->mAnimations[0]->mTicksPerSecond;
+			mAnimation->mTicksPerSecond = mScene->mAnimations[0]->mTicksPerSecond;
 		}
 		else
 		{
@@ -166,18 +160,18 @@ namespace vrassimp
 		/*
 			Process animation data for all meshes here
 		*/
-		mAnimation->mBoneIdsAndWeights.resize(scene->mNumMeshes);
-		for (int meshIndex = 0; meshIndex < scene->mNumMeshes; ++meshIndex)
+		mAnimation->mBoneIdsAndWeights.resize(mScene->mNumMeshes);
+		for (int meshIndex = 0; meshIndex < mScene->mNumMeshes; ++meshIndex)
 		{
-			aiMesh* mesh = scene->mMeshes[meshIndex];
+			aiMesh* mesh = mScene->mMeshes[meshIndex];
 			if (mesh->mNumBones > 0)
 			{
-				mAnimation->ProcessMesh(meshIndex, mesh, scene);
+				mAnimation->ProcessMesh(meshIndex, mesh);
 			}
 		}
 	}
 
-	void Model::QueryMeshData(const unsigned int& meshIndex, const aiMesh* aiMesh, const aiScene* scene)
+	void Model::QueryMeshData(const unsigned int& meshIndex, const aiMesh* aiMesh)
 	{
 		Mesh* mesh = new Mesh();
 		mesh->vertices.resize(aiMesh->mNumVertices);
@@ -224,7 +218,7 @@ namespace vrassimp
 			}
 
 			aiColor3D pColor(0.f, 0.f, 0.f);
-			scene->mMaterials[aiMesh->mMaterialIndex]->Get(AI_MATKEY_COLOR_DIFFUSE, pColor);
+			mScene->mMaterials[aiMesh->mMaterialIndex]->Get(AI_MATKEY_COLOR_DIFFUSE, pColor);
 			mesh->vertices[vertIndex].color = { pColor.r, pColor.g, pColor.b };
 		}
 
@@ -241,11 +235,11 @@ namespace vrassimp
 		this->meshes[meshIndex] = mesh;
 	}
 
-	void Model::QueryMeshMaterial(const unsigned int& meshIndex, const aiMesh* mesh, const aiScene* scene)
+	void Model::QueryMeshMaterial(const unsigned int& meshIndex, const aiMesh* mesh)
 	{
 		if (mesh->mMaterialIndex >= 0)
 		{
-			aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+			aiMaterial* material = mScene->mMaterials[mesh->mMaterialIndex];
 
 			aiString path;
 			if (material->GetTextureCount(aiTextureType_DIFFUSE))
@@ -323,7 +317,7 @@ namespace vrassimp
 		THROW("ANIMATION FAILURE: INVALID INDEX PASSED");
 	}
 
-	void Animation::ProcessMesh(int meshIndex, aiMesh* mesh, const aiScene* scene)
+	void Animation::ProcessMesh(int meshIndex, aiMesh* mesh)
 	{
 		mBoneIdsAndWeights[meshIndex].resize(mesh->mNumVertices);
 
@@ -364,7 +358,7 @@ namespace vrassimp
 	void Animation::Animate(double seconds, std::vector<aiMatrix4x4>& transforms, std::vector<aiMatrix4x4>& boneTransforms)
 	{
 		double timeInTicks = seconds * mTicksPerSecond;
-		float animationTime = fmod(timeInTicks, (float)mScene->mAnimations[currentIndex]->mDuration);
+		float animationTime = fmod(timeInTicks, (float)mScene->mAnimations[settings.currentTrackIndex]->mDuration);
 
 		aiMatrix4x4 identityMatrix = aiMatrix4x4();
 		ReadNodeHierarchy(animationTime, mScene->mRootNode, identityMatrix);
@@ -377,23 +371,18 @@ namespace vrassimp
 			transforms[i] = mBoneMatrices[i].finalWorldTransform;
 			boneTransforms[i] = mBoneMatrices[i].finalBoneTransform;
 		}
-
-		int a = 10;
 	}
 
 	void Animation::ReadNodeHierarchy(float parentAnimationTime, const aiNode* parentNode, const aiMatrix4x4 parentTransform)
 	{
 		std::string nodeName(parentNode->mName.data);
 
-		const aiAnimation* animation = mScene->mAnimations[currentIndex];
+		const aiAnimation* animation = mScene->mAnimations[settings.currentTrackIndex];
 		aiMatrix4x4 nodeTransform(parentNode->mTransformation);
 
 		const aiNodeAnim* nodeAnimation = FindNodeAnim(animation, nodeName);
 		if (nodeAnimation)
 		{
-			/*
-				TODO: change this to use Quaternion class
-			*/
 			aiMatrix4x4 matScale = InterpolateScale(parentAnimationTime, nodeAnimation);
 			aiMatrix4x4 matRotation = InterpolateRotation(parentAnimationTime, nodeAnimation);
 			aiMatrix4x4 matTranslation = InterpolateTranslation(parentAnimationTime, nodeAnimation);

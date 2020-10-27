@@ -36,7 +36,7 @@ namespace vr
 
 		// update methods
 		void UpdateViewBuffer(unsigned int imageIndex);
-		void UpdateModelData(vrassimp::Model* model);
+		void UpdateModelData(vrassimp::Model* model, const double& frametime);
 		void UpdateBoneTransforms(vrassimp::Model* model, unsigned int imageIndex, const double& frametime);
 
 		// draw commands

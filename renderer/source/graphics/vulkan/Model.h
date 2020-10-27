@@ -276,22 +276,23 @@ namespace vrassimp
 			AnimationTrack(double d, std::string n, double t, double s, double e) : duration(d), name(n), ticksPerSecond(t), start(s), end(e)
 			{}
 		};
-		std::vector<AnimationTrack> animationTracks;
-		unsigned int currentIndex = 0;
+		std::vector<AnimationTrack> availableTracks;
+		unsigned int activeTrackIndex = 0;
 		float timer = 0.0f;
 
 		struct AnimationSettings
 		{
 			float speed = 0.75f;
 			float currentSpeed = 0.75f;
-			int enableAnimation = 0;
+			int enableAnimation = 0; // load model in bind pose
 			std::string tracks = "";
-			int currentTrackIndex = 0;
+			int currentTrackIndex = 0; // first track
+			float pathTime = 0.0; // for implementing a walk-cycle along a curve
 		} settings;
 
 		void SetAnimation(unsigned int animationIndex);
 		//void ProcessNode(aiNode* node, const aiScene* scene);
-		void ProcessMesh(int meshIndex, aiMesh* mesh, const aiScene* scene);
+		void ProcessMesh(int meshIndex, aiMesh* mesh);
 		void Animate(double seconds, std::vector<aiMatrix4x4>& transforms, std::vector<aiMatrix4x4>& boneTransforms);
 		void ReadNodeHierarchy(float parentAnimationTime, const aiNode* parentNode, const aiMatrix4x4 parentTransform);
 		const aiNodeAnim* FindNodeAnim(const aiAnimation* parentAnimation, const std::string parentNodeName);
@@ -371,6 +372,7 @@ namespace vrassimp
 			ModelCreateInfo(float _center, float _scale, float _uvScale);
 		};
 
+		const aiScene* mScene = nullptr;
 		Animation* mAnimation = nullptr;
 		bool isAnimationAvailable = false;
 
@@ -381,9 +383,9 @@ namespace vrassimp
 		std::vector<glm::vec4> localLinePositions;
 
 		void LoadFromFile(std::string filename, std::string screename);
-		void QueryAnimationData(Assimp::Importer& Importer, const aiScene* scene);
-		void QueryMeshData(const unsigned int& meshIndex, const aiMesh* mesh, const aiScene* scene);
-		void QueryMeshMaterial(const unsigned int& meshIndex, const aiMesh* mesh, const aiScene* scene);
+		void QueryAnimationData();
+		void QueryMeshData(const unsigned int& meshIndex, const aiMesh* mesh);
+		void QueryMeshMaterial(const unsigned int& meshIndex, const aiMesh* mesh);
 
 		void Draw();
 

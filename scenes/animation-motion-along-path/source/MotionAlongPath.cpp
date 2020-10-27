@@ -113,7 +113,7 @@ namespace vr
 		// Get next frame (% keeps value below MAX_FRAME_DRAWS)
 		mCurrentFrame = (mCurrentFrame + 1) % SynchronizationPrimitives::MAX_FRAME_DRAWS;
 
-		pathTime += frametime;
+		//pathTime += frametime;
 	}
 
 	VkPhysicalDeviceFeatures MotionAlongPath::CheckRequiredFeatures()
@@ -349,24 +349,10 @@ namespace vr
 		{
 			vrassimp::Model* floor = new vrassimp::Model();
 			floor->LoadFromFile("floor\\scene.gltf", "floor");
-			floor->mTransform.position = glm::vec3(20.0f, 0.0f, 0.0f);
+			floor->mTransform.position = glm::vec3(30.0f, 0.0f, 0.0f);
 			floor->mTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-			floor->mTransform.scale = glm::vec3(30.0f, 1.0f, 30.0f);
+			floor->mTransform.scale = glm::vec3(50.0f, 1.0f, 30.0f);
 			mModels.push_back(floor);
-		}
-
-		// nathan
-		{
-			vrassimp::Model* nathan = new vrassimp::Model();
-			nathan->LoadFromFile("nathan\\scene.gltf", "nathan");
-			nathan->mTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
-			nathan->mTransform.rotation = glm::vec3(0.0f, 180.0f, 0.0f);
-			nathan->mTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
-			nathan->mAnimationTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
-			nathan->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 180.0f);
-			nathan->mAnimationTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
-			nathan->mAnimation->settings.speed = 25.0f;
-			mModels.push_back(nathan);
 		}
 
 		// bengal-tiger
@@ -382,6 +368,20 @@ namespace vr
 			//tiger->mAnimation->settings.speed = 0.75f;
 			//tiger->mAnimation->settings.currentTrackIndex = 6;
 			//mModels.push_back(tiger);
+		}
+
+		// nathan
+		{
+			vrassimp::Model* nathan = new vrassimp::Model();
+			nathan->LoadFromFile("nathan\\scene.gltf", "nathan");
+			nathan->mTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
+			nathan->mTransform.rotation = glm::vec3(0.0f, 180.0f, 0.0f);
+			nathan->mTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
+			nathan->mAnimationTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
+			nathan->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 180.0f);
+			nathan->mAnimationTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
+			nathan->mAnimation->settings.speed = 25.0f;
+			mModels.push_back(nathan);
 		}
 
 		// spidey
@@ -474,7 +474,7 @@ namespace vr
 		vkUnmapMemory(LOGICAL_DEVICE, viewUboMemory[imageIndex]);
 	}
 
-	void MotionAlongPath::UpdateModelData(vrassimp::Model* model)
+	void MotionAlongPath::UpdateModelData(vrassimp::Model* model, const double& frametime)
 	{
 		if (model->isAnimationAvailable)
 		{
@@ -484,6 +484,8 @@ namespace vr
 			{
 				float animationSpeed;
 				float distance;
+
+				float pathTime = model->mAnimation->settings.pathTime;
 
 				if (pathTime <= t1)
 				{
@@ -507,6 +509,7 @@ namespace vr
 					pathTime = 0.0f;
 					animationSpeed = 0.0f;
 				}
+				model->mAnimation->settings.pathTime = pathTime;
 
 				TableValue tableValue = curve->FindInTable(distance);
 				CurveVertex curveVertex = curve->CalculateBSpline(curve->mControlPointsMatrices[tableValue.curveIndex], tableValue.pointOnCurve);
@@ -550,6 +553,10 @@ namespace vr
 				modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mAnimationTransform.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 				modelMatrix = glm::scale(modelMatrix, model->mAnimationTransform.scale);
 				modelData.model = modelMatrix;
+
+				model->mAnimation->settings.pathTime += frametime;
+				RENDERER_TRACE("path time: {0}", model->mAnimation->settings.pathTime);
+
 				return;
 			}
 		}
@@ -569,10 +576,10 @@ namespace vr
 	void MotionAlongPath::UpdateBoneTransforms(vrassimp::Model* model, unsigned int imageIndex, const double& frametime)
 	{
 		vrassimp::Animation* animation = model->mAnimation;
-		animation->currentIndex = animation->settings.currentTrackIndex;
-		if (animation->timer > animation->animationTracks[animation->currentIndex].end)
+		//animation->activeTrackIndex = animation->settings.currentTrackIndex;
+		if (animation->timer > animation->availableTracks[animation->settings.currentTrackIndex].end)
 		{
-			animation->timer = animation->animationTracks[animation->currentIndex].start;
+			animation->timer = animation->availableTracks[animation->settings.currentTrackIndex].start;
 		}
 
 		std::vector<aiMatrix4x4> transforms;
@@ -657,7 +664,7 @@ namespace vr
 		{
 			for (auto& model : mModels)
 			{
-				UpdateModelData(model);
+				UpdateModelData(model, frametime);
 				if (model->isAnimationAvailable)
 				{
 					UpdateBoneTransforms(model, imageIndex, frametime);
@@ -728,14 +735,16 @@ namespace vr
 							overlay->InputFloat("speed", &(model->mAnimation->settings.speed), 0.5, 3))
 						{
 						}
-						if (model->mAnimation->settings.enableAnimation &&
-							overlay->InputFloat("current speed", &(model->mAnimation->settings.currentSpeed), 0.5, 3))
+						if (model->mAnimation->settings.enableAnimation)
 						{
+							ImGui::Separator();
+							ImGui::Text("current speed: %.3f", model->mAnimation->settings.currentSpeed);
+							ImGui::Separator();
 						}
-						if (model->mAnimation->settings.enableAnimation &&
+						/*if (model->mAnimation->settings.enableAnimation &&
 							overlay->InputFloat("curve velocity", &velocity, 0.01, 3))
 						{
-						}
+						}*/
 						if (model->mAnimation->settings.enableAnimation &&
 							ImGui::Combo("track", &(model->mAnimation->settings.currentTrackIndex), model->mAnimation->settings.tracks.c_str()))
 						{
