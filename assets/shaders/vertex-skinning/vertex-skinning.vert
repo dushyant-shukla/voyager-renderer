@@ -14,20 +14,16 @@ layout(location = 6) in vec4 bone_weights;
 
 #define MAX_BONES 100
 
-layout(set = 0, binding = 0) uniform UBO
+layout(set = 0, binding = 0) uniform ViewUBO
 {
     mat4 projection;
     mat4 view;
-    mat4 bones[MAX_BONES];
-    vec3 view_position;
-} ubo;
+} view_ubo;
 
-layout (location = 0) out VS_OUT
+layout(set = 0, binding = 1) uniform BoneUBO
 {
-    vec3 color;
-    vec2 uv;
-    vec3 normal;
-} vs_out;
+    mat4 bones[MAX_BONES];
+} bone_ubo;
 
 layout (push_constant) uniform PushModel
 {
@@ -35,28 +31,41 @@ layout (push_constant) uniform PushModel
     int enable_animation;
 } push_model;
 
+layout (location = 0) out VS_OUT
+{
+    vec3 color;
+    vec2 uv;
+    vec3 normal;
+    vec3 frag_position;
+} vs_out;
+
 void main() 
 {
     if(push_model.enable_animation != 0)
     {
-        mat4 bone_transform = ubo.bones[bone_ids[0]] * bone_weights[0];
-        bone_transform     += ubo.bones[bone_ids[1]] * bone_weights[1];
-        bone_transform     += ubo.bones[bone_ids[2]] * bone_weights[2];
-        bone_transform     += ubo.bones[bone_ids[3]] * bone_weights[3];
-        gl_Position = ubo.projection 
-                      * ubo.view
+        mat4 bone_transform = bone_ubo.bones[bone_ids[0]] * bone_weights[0];
+        bone_transform     += bone_ubo.bones[bone_ids[1]] * bone_weights[1];
+        bone_transform     += bone_ubo.bones[bone_ids[2]] * bone_weights[2];
+        bone_transform     += bone_ubo.bones[bone_ids[3]] * bone_weights[3];
+        gl_Position = view_ubo.projection 
+                      * view_ubo.view
                       * push_model.model
                       * bone_transform
                       * vec4(position, 1.0);
     }
     else
     {
-        gl_Position = ubo.projection 
-                      * ubo.view
+        gl_Position = view_ubo.projection 
+                      * view_ubo.view
                       * push_model.model
                       * vec4(position, 1.0);
     }
+
+    mat3 normal_matrix = mat3(transpose(inverse(push_model.model)));
+
     vs_out.color = color;
     vs_out.uv = uv;
-    vs_out.normal = normal;
+    vs_out.normal = normal_matrix * normal;
+    //vs_out.normal = vec3(push_model.model * vec4(normal, 1.0));
+    vs_out.frag_position = vec3(push_model.model * vec4(position, 1.0));
 }

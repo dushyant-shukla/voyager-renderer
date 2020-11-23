@@ -20,6 +20,7 @@
 #include "maths/Quaternions.h"
 #include "Buffer.h"
 #include "DescriptorSets.h"
+#include "CCDSolver.h"
 
 const unsigned int MAX_BONES = 100;
 const unsigned int MAX_BONES_PER_VERTX = 4;
@@ -260,6 +261,9 @@ namespace vrassimp
 		std::vector<glm::vec3> mBonePosition;
 		std::vector<BoneLine> boneEndpointPositions;
 
+		std::vector<std::string> mIKBoneNames;
+		vr::CCDSolver mCCDSolver;
+
 		bool mEnableSlerp;
 
 		const aiScene* mScene;
@@ -288,6 +292,7 @@ namespace vrassimp
 			std::string tracks = "";
 			int currentTrackIndex = 0; // first track
 			float pathTime = 0.0; // for implementing a walk-cycle along a curve
+			int enableIk = 0;
 		} settings;
 
 		void SetAnimation(unsigned int animationIndex);
@@ -308,6 +313,9 @@ namespace vrassimp
 
 		Quaternions nlerp(Quaternions a, Quaternions b, float blend);
 		glm::mat4 aiToGlm(aiMatrix4x4 ai_matr);
+
+		void InitializeIKData();
+		void Animation::ReadIKBoneHierarchy(float animationTime, const aiNode* parentNode, const aiMatrix4x4 parentTransform);
 	};
 
 	struct Mesh
@@ -357,6 +365,12 @@ namespace vrassimp
 			glm::vec3 rotation;
 		} mAnimationTransform;
 
+		struct
+		{
+			bool texturesAvailable = 1;
+			glm::vec3 color = glm::vec3(1.0f, 0.0f, 0.0f);
+		} modelSettings;
+
 		/*
 			Used for parameterizing model loading
 		*/
@@ -392,7 +406,7 @@ namespace vrassimp
 	private:
 
 		// utility constant
-		static inline const int DEFAUTL_FLAGS = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_ConvertToLeftHanded | aiProcess_GlobalScale;
+		static inline const int DEFAUTL_FLAGS = aiProcess_Triangulate | /*aiProcess_GenNormals | aiProcess_GenSmoothNormals | */aiProcess_CalcTangentSpace | aiProcess_ConvertToLeftHanded | aiProcess_GlobalScale;
 		static inline const aiVector3D Zero3D = aiVector3D(0.0f, 0.0f, 0.0f);
 	};
 }

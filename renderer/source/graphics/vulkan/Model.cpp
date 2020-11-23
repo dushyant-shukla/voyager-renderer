@@ -124,14 +124,10 @@ namespace vrassimp
 		}
 	}
 
-	/*
-		TODO: may be the scene is not needed as the second para here
-	*/
 	void Model::QueryAnimationData()
 	{
 		isAnimationAvailable = true;
 		mAnimation = new Animation();
-		//mAnimation->mScene = Importer.GetOrphanedScene();
 		mAnimation->mScene = mScene;
 		mAnimation->SetAnimation(0);
 		mAnimation->mGlobalInverseTransform = mScene->mRootNode->mTransformation;
@@ -143,7 +139,6 @@ namespace vrassimp
 			double start = (i == 0 ? 0 : mAnimation->availableTracks[i - 1].end);
 			double end = (start + mScene->mAnimations[i]->mDuration / mScene->mAnimations[i]->mTicksPerSecond);
 			mAnimation->availableTracks.emplace_back(mScene->mAnimations[i]->mDuration, std::string(mScene->mAnimations[i]->mName.data), mScene->mAnimations[i]->mTicksPerSecond, start, end);
-
 			mAnimation->settings.tracks += mAnimation->availableTracks[i].name + '\0';
 		}
 		mAnimation->settings.tracks += '\0';
@@ -386,8 +381,7 @@ namespace vrassimp
 			aiMatrix4x4 matScale = InterpolateScale(parentAnimationTime, nodeAnimation);
 			aiMatrix4x4 matRotation = InterpolateRotation(parentAnimationTime, nodeAnimation);
 			aiMatrix4x4 matTranslation = InterpolateTranslation(parentAnimationTime, nodeAnimation);
-
-			nodeTransform = matTranslation * matRotation * matScale;
+			nodeTransform = matTranslation * matRotation * matScale; // works without scale as well
 		}
 
 		aiMatrix4x4 globalTransformation = parentTransform * nodeTransform;
@@ -397,6 +391,7 @@ namespace vrassimp
 			mBoneMatrices[boneIndex].finalBoneTransform = (mGlobalInverseTransform * globalTransformation);
 			mBoneMatrices[boneIndex].finalWorldTransform = (mGlobalInverseTransform * globalTransformation * mBoneMatrices[boneIndex].offset);
 			boneEndpointPositions.push_back(BoneLine(mGlobalInverseTransform * parentTransform, mBoneMatrices[boneIndex].finalBoneTransform));
+			//boneEndpointPositions.push_back(BoneLine(parentTransform, globalTransformation)); // works like this as well
 		}
 
 		for (int i = 0; i < parentNode->mNumChildren; ++i)
@@ -581,6 +576,44 @@ namespace vrassimp
 		result[3].x = ai_matr.a4; result[3].y = ai_matr.b4; result[3].z = ai_matr.c4; result[3].w = ai_matr.d4;
 
 		return result;
+	}
+
+	void Animation::InitializeIKData()
+	{
+		aiMatrix4x4 identityMatrix = aiMatrix4x4();
+		ReadIKBoneHierarchy(0.0f, mScene->mRootNode, identityMatrix);
+	}
+
+	void Animation::ReadIKBoneHierarchy(float animationTime, const aiNode* parentNode, const aiMatrix4x4 parentTransform)
+	{
+		std::string boneName(parentNode->mName.data);
+
+		const aiAnimation* animation = mScene->mAnimations[settings.currentTrackIndex];
+		aiMatrix4x4 nodeTransform(parentNode->mTransformation);
+
+		const aiNodeAnim* nodeAnimation = FindNodeAnim(animation, boneName);
+		if (nodeAnimation)
+		{
+			aiMatrix4x4 matScale = InterpolateScale(animationTime, nodeAnimation);
+			aiMatrix4x4 matRotation = InterpolateRotation(animationTime, nodeAnimation);
+			aiMatrix4x4 matTranslation = InterpolateTranslation(animationTime, nodeAnimation);
+			nodeTransform = matTranslation * matRotation * matScale; // works without scale as well
+		}
+
+		aiMatrix4x4 globalTransformation = parentTransform * nodeTransform;
+		if (mBoneMapping.find(boneName) != mBoneMapping.end())
+		{
+			unsigned int boneIndex = mBoneMapping[boneName];
+			glm::mat4 localTransform = aiToGlm(nodeTransform);
+			glm::mat4 globalTransform = aiToGlm(globalTransformation);
+			glm::mat4 worldTransform = aiToGlm(mGlobalInverseTransform * globalTransformation * mBoneMatrices[boneIndex].offset);
+			mCCDSolver.UpdateIkMatrices(boneName, boneIndex, localTransform, globalTransform, worldTransform);
+		}
+
+		for (int i = 0; i < parentNode->mNumChildren; ++i)
+		{
+			ReadIKBoneHierarchy(animationTime, parentNode->mChildren[i], globalTransformation);
+		}
 	}
 
 	Quaternions Animation::nlerp(Quaternions a, Quaternions b, float blend)

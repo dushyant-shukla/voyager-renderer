@@ -357,31 +357,31 @@ namespace vr
 
 		// bengal-tiger
 		{
-			//vrassimp::Model* tiger = new vrassimp::Model();
-			//tiger->LoadFromFile("bengal-tiger\\tiger.fbx", "bengal tiger");
-			//tiger->mTransform.position = glm::vec3(0.0f, 2.10f, 0.0f);
-			//tiger->mTransform.rotation = glm::vec3(-94.70f, 222.60f, 347.35f);
-			//tiger->mTransform.scale = glm::vec3(2.5f, 2.5f, 2.5f);
-			//tiger->mAnimationTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
-			//tiger->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 180.0f);
-			//tiger->mAnimationTransform.scale = glm::vec3(2.5f, 2.5f, 2.5f);
-			//tiger->mAnimation->settings.speed = 0.75f;
-			//tiger->mAnimation->settings.currentTrackIndex = 6;
-			//mModels.push_back(tiger);
+			vrassimp::Model* tiger = new vrassimp::Model();
+			tiger->LoadFromFile("bengal-tiger\\tiger.fbx", "bengal tiger");
+			tiger->mTransform.position = glm::vec3(0.0f, 2.10f, 0.0f);
+			tiger->mTransform.rotation = glm::vec3(-94.70f, 222.60f, 347.35f);
+			tiger->mTransform.scale = glm::vec3(2.5f, 2.5f, 2.5f);
+			tiger->mAnimationTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
+			tiger->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 180.0f);
+			tiger->mAnimationTransform.scale = glm::vec3(2.5f, 2.5f, 2.5f);
+			tiger->mAnimation->settings.speed = 0.75f;
+			tiger->mAnimation->settings.currentTrackIndex = 6;
+			mModels.push_back(tiger);
 		}
 
 		// nathan
 		{
-			vrassimp::Model* nathan = new vrassimp::Model();
-			nathan->LoadFromFile("nathan\\scene.gltf", "nathan");
-			nathan->mTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
-			nathan->mTransform.rotation = glm::vec3(0.0f, 180.0f, 0.0f);
-			nathan->mTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
-			nathan->mAnimationTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
-			nathan->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 180.0f);
-			nathan->mAnimationTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
-			nathan->mAnimation->settings.speed = 25.0f;
-			mModels.push_back(nathan);
+			//vrassimp::Model* nathan = new vrassimp::Model();
+			//nathan->LoadFromFile("nathan\\scene.gltf", "nathan");
+			//nathan->mTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
+			//nathan->mTransform.rotation = glm::vec3(0.0f, 180.0f, 0.0f);
+			//nathan->mTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
+			//nathan->mAnimationTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
+			//nathan->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 180.0f);
+			//nathan->mAnimationTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
+			//nathan->mAnimation->settings.speed = 25.0f;
+			//mModels.push_back(nathan);
 		}
 
 		// spidey
@@ -555,7 +555,7 @@ namespace vr
 				modelData.model = modelMatrix;
 
 				model->mAnimation->settings.pathTime += frametime;
-				RENDERER_TRACE("path time: {0}", model->mAnimation->settings.pathTime);
+				//RENDERER_TRACE("path time: {0}", model->mAnimation->settings.pathTime);
 
 				return;
 			}
@@ -582,7 +582,7 @@ namespace vr
 			animation->timer = animation->availableTracks[animation->settings.currentTrackIndex].start;
 		}
 
-		std::vector<aiMatrix4x4> transforms;
+		std::vector<aiMatrix4x4> transforms; // joint transforms in model-space
 		std::vector<aiMatrix4x4> boneTransforms;
 		model->mAnimation->Animate(animation->timer, transforms, boneTransforms);
 		for (unsigned int i = 0; i < transforms.size(); ++i)
