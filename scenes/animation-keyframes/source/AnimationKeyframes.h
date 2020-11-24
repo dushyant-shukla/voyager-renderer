@@ -100,6 +100,8 @@ namespace vr
 		{
 			alignas(16) glm::vec3 position;
 			alignas(16) glm::vec3 color;
+			//alignas(16) glm::vec3 direction;
+			//alignas(4) float cutoff;
 			alignas(4) float constant;
 			alignas(4) float linear;
 			alignas(4) float quadratic;
@@ -110,7 +112,9 @@ namespace vr
 		struct
 		{
 			alignas(16) glm::mat4 model;
+			alignas(8) glm::vec2 uvOffset = glm::vec2(0.0f);
 			alignas(4) int enableAnimation;
+			alignas(4) int type;
 		} modelData;
 
 		struct
@@ -120,6 +124,7 @@ namespace vr
 			TextureSampler emission;
 		} mSamplers;
 
+		vrassimp::Model* animatedModel;
 		std::vector<vrassimp::Model*> mModels;
 
 		int mCurrentFrame = 0;

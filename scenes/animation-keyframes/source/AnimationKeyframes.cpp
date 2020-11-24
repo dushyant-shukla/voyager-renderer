@@ -20,7 +20,9 @@ vr::AnimationKeyframes::AnimationKeyframes(std::string name) : Application(name)
 	eCamera.SetPerspective(glm::radians(60.0f), (float)Window::WIDTH / Window::HEIGHT, 0.1f, 1024.0f);
 
 	lightUBO.color = glm::vec3(1.0f, 1.0f, 1.0f);
-	lightUBO.position = glm::vec3(0.0f, 15.0f, 0.0f);
+	lightUBO.position = glm::vec3(0.0f, 10.0f, 5.0f);
+	//lightUBO.direction = glm::vec3(0.0f, 1.0f, 0.0f);
+	//lightUBO.cutoff = glm::cos(glm::radians(12.5f));
 	lightUBO.constant = 1.0f;
 	lightUBO.linear = 0.22f;
 	lightUBO.quadratic = 0.20f;
@@ -251,7 +253,7 @@ void vr::AnimationKeyframes::SetupPipeline()
 			.ConfigureRasterizer(VK_FALSE, VK_FALSE, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f, 0, nullptr)
 			.ConfigureMultiSampling(VK_SAMPLE_COUNT_1_BIT, VK_FALSE, 1.0f, nullptr, 0, VK_FALSE, VK_FALSE, nullptr)
 			.ConfigureDefaultDepthTesting()
-			.AddColorBlendAttachmentState(VK_TRUE,
+			.AddColorBlendAttachmentState(VK_FALSE, // disabled as clear color and object color were getting blended together
 				VK_BLEND_FACTOR_SRC_ALPHA,
 				VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
 				VK_BLEND_OP_ADD,
@@ -310,24 +312,28 @@ void vr::AnimationKeyframes::LoadAssets()
 	{
 		vrassimp::Model* floor = new vrassimp::Model();
 		floor->LoadFromFile("floor\\scene.gltf", "floor");
+		//floor->LoadFromFile("wooden-platform-i\\scene.gltf", "floor");
+		//floor->LoadFromFile("wooden-platform-ii\\scene.gltf", "floor");
 		floor->mTransform.position = glm::vec3(0.0f, -0.15f, 0.0f);
 		floor->mTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
 		floor->mTransform.scale = glm::vec3(6.0f, 3.0f, 6.0f);
+		floor->mAnimation = new vrassimp::Animation();
+		floor->mAnimation->settings.uvOffsetScale = 0.003;
 		mModels.push_back(floor);
 	}
 
 	// nathan
 	{
-		vrassimp::Model* nathan = new vrassimp::Model();
-		nathan->LoadFromFile("nathan\\scene.gltf", "nathan");
-		nathan->mTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
-		nathan->mTransform.rotation = glm::vec3(0.0f, 180.0f, 0.0f);
-		nathan->mTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
-		nathan->mAnimationTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
-		nathan->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 180.0f);
-		nathan->mAnimationTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
-		nathan->mAnimation->settings.speed = 25.0f;
-		mModels.push_back(nathan);
+		animatedModel = new vrassimp::Model();
+		animatedModel->LoadFromFile("nathan\\scene.gltf", "nathan");
+		animatedModel->mTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
+		animatedModel->mTransform.rotation = glm::vec3(0.0f, 180.0f, 0.0f);
+		animatedModel->mTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
+		animatedModel->mAnimationTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
+		animatedModel->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 180.0f);
+		animatedModel->mAnimationTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
+		animatedModel->mAnimation->settings.speed = 25.0f;
+		mModels.push_back(animatedModel);
 	}
 
 	{
@@ -434,6 +440,7 @@ void vr::AnimationKeyframes::UpdateModelData(vrassimp::Model* model, const doubl
 			modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mAnimationTransform.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 			modelMatrix = glm::scale(modelMatrix, model->mAnimationTransform.scale);
 			modelData.model = modelMatrix;
+			modelData.type = 0; // for animated model
 			return;
 		}
 	}
@@ -448,6 +455,16 @@ void vr::AnimationKeyframes::UpdateModelData(vrassimp::Model* model, const doubl
 	modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mTransform.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 	modelMatrix = glm::scale(modelMatrix, model->mTransform.scale);
 	modelData.model = modelMatrix;
+	if (model->mScreenName._Equal("floor") && animatedModel->mAnimation->settings.enableAnimation)
+	{
+		modelData.uvOffset.t += model->mAnimation->settings.uvOffsetScale * animatedModel->mAnimation->settings.speed * frametime;
+		modelData.uvOffset.s = 0.0;
+		modelData.type = 1; // for static model
+	}
+	else
+	{
+		modelData.type = 0;
+	}
 }
 
 void vr::AnimationKeyframes::UpdateBoneTransforms(vrassimp::Model* model, unsigned int imageIndex, const double& frametime)
@@ -492,7 +509,8 @@ void vr::AnimationKeyframes::RecordCommands(unsigned int imageIndex, const doubl
 
 	// Information about how to begin a render pass (only needed if we are doing a graphical application)
 	std::array<VkClearValue, 2> clearValues = {};
-	clearValues[0].color = { 1.0f, 1.0f, 1.0f, 1.0f };
+	//clearValues[0].color = { 1.0f, 1.0f, 1.0f, 1.0f };
+	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
 	clearValues[1].depthStencil.depth = 1.0f;
 	VkRenderPassBeginInfo renderpassBeginInfo = {};
 	renderpassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -570,15 +588,15 @@ void vr::AnimationKeyframes::OnUpdateUIOverlay(UiOverlay* overlay)
 		ImGui::Text("Position: ");
 		//ImGui::SameLine();
 		ImGui::PushItemWidth(100);
-		ImGui::InputFloat("x", &(lightUBO.position.x), 0.01f, 1.0f, "%.2f");
+		ImGui::InputFloat("x", &(lightUBO.position.x), 0.05f, 1.0f, "%.2f");
 		ImGui::PopItemWidth();
 		ImGui::SameLine();
 		ImGui::PushItemWidth(100);
-		ImGui::InputFloat("y", &(lightUBO.position.y), 0.01f, 1.0f, "%.2f");
+		ImGui::InputFloat("y", &(lightUBO.position.y), 0.05f, 1.0f, "%.2f");
 		ImGui::PopItemWidth();
 		ImGui::SameLine();
 		ImGui::PushItemWidth(100);
-		ImGui::InputFloat("z", &(lightUBO.position.z), 0.01f, 1.0f, "%.2f");
+		ImGui::InputFloat("z", &(lightUBO.position.z), 0.05f, 1.0f, "%.2f");
 		ImGui::PopItemWidth();
 
 		ImGui::Text("Color: ");
@@ -725,6 +743,11 @@ void vr::AnimationKeyframes::OnUpdateUIOverlay(UiOverlay* overlay)
 				}
 
 				ImGui::TreePop();
+
+				if (model->mScreenName._Equal("floor"))
+				{
+					ImGui::SliderFloat("uv offset", &(model->mAnimation->settings.uvOffsetScale), 0.000f, 1.0, "%.3f");
+				}
 			}
 		}
 

@@ -28,7 +28,9 @@ layout(set = 0, binding = 1) uniform BoneUBO
 layout (push_constant) uniform PushModel
 {
     mat4 model;
+    vec2 uvOffset;
     int enable_animation;
+    int type;
 } push_model;
 
 layout (location = 0) out VS_OUT
@@ -64,7 +66,14 @@ void main()
     mat3 normal_matrix = mat3(transpose(inverse(push_model.model)));
 
     vs_out.color = color;
-    vs_out.uv = uv;
+    if(push_model.type == 1)
+    {
+      vs_out.uv = uv + push_model.uvOffset;
+    }
+    else
+    {
+      vs_out.uv = uv;
+    }
     vs_out.normal = normal_matrix * normal;
     //vs_out.normal = vec3(push_model.model * vec4(normal, 1.0));
     vs_out.frag_position = vec3(push_model.model * vec4(position, 1.0));
