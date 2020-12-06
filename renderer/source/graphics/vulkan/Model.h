@@ -293,6 +293,7 @@ namespace vrassimp
 			int currentTrackIndex = 0; // first track
 			float pathTime = 0.0; // for implementing a walk-cycle along a curve
 			int enableIk = 0;
+			int showJoints = 0;
 			float uvOffsetScale = 0.0;
 		} settings;
 

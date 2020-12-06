@@ -57,28 +57,33 @@ namespace vr
 		struct
 		{
 			PipelineLayout mesh;
+			PipelineLayout joints;
 		} mPipelineLayouts;
 
 		struct
 		{
 			Pipeline mesh;
+			Pipeline joints;
 		} mPipelines;
 
 		struct
 		{
 			DescriptorSets mesh;
+			DescriptorSets joints;
 		} mDescriptorSets;
 
 		struct
 		{
 			DescriptorSetLayout mesh;
 			DescriptorSetLayout texture;
+			DescriptorSetLayout joints;
 		} mDescriptorSetLayouts;
 
 		struct
 		{
 			DescriptorPool mesh;
 			DescriptorPool texture;
+			DescriptorPool joints;
 		} mDescriptorPools;
 
 		struct
@@ -95,6 +100,8 @@ namespace vr
 		} skinningUBO;
 		std::vector<VkBuffer> skinningUboBuffers;
 		std::vector<VkDeviceMemory> skinningUboMemory;
+
+		Buffer<glm::vec4> jointVertexBuffer;
 
 		struct
 		{
@@ -119,12 +126,18 @@ namespace vr
 
 		struct
 		{
+			alignas(16) glm::mat4 model;
+		} jointModelData;
+
+		struct
+		{
 			TextureSampler diffuse;
 			TextureSampler specular;
 			TextureSampler emission;
 		} mSamplers;
 
 		vrassimp::Model* animatedModel;
+		vrassimp::Model* floor;
 		std::vector<vrassimp::Model*> mModels;
 
 		int mCurrentFrame = 0;

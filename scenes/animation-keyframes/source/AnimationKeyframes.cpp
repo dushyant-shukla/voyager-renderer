@@ -117,7 +117,7 @@ VkPhysicalDeviceFeatures vr::AnimationKeyframes::CheckRequiredFeatures()
 {
 	bool requiredFeaturesAvailable = true;
 	VkPhysicalDeviceFeatures requiredDeviceFeatures = {};
-	if (!(mDevice->GetPhysicalDevice().features.samplerAnisotropy))
+	if (!(mDevice->GetPhysicalDevice().features.samplerAnisotropy && mDevice->GetPhysicalDevice().features.largePoints && mDevice->GetPhysicalDevice().features.wideLines))
 	{
 		requiredFeaturesAvailable = false;
 	}
@@ -125,6 +125,8 @@ VkPhysicalDeviceFeatures vr::AnimationKeyframes::CheckRequiredFeatures()
 	if (requiredFeaturesAvailable)
 	{
 		requiredDeviceFeatures.samplerAnisotropy = VK_TRUE;
+		requiredDeviceFeatures.largePoints = VK_TRUE;
+		requiredDeviceFeatures.wideLines = VK_TRUE;
 		return requiredDeviceFeatures;
 	}
 
@@ -231,6 +233,42 @@ void vr::AnimationKeyframes::SetupDescriptorSet()
 			.AddLayoutBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr)	// sampler emission
 			.Create(0, nullptr);
 	}
+
+	// joints
+	{
+		mDescriptorPools.joints
+			.AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
+			.Create(0, static_cast<unsigned int>(mSwapchain->mImages.size()), nullptr);
+
+		mDescriptorSetLayouts.joints
+			.AddLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr)
+			.Create(0, nullptr);
+
+		mDescriptorSets.joints.Setup(mDescriptorSetLayouts.joints.mLayout,
+			mDescriptorPools.joints.mPool,
+			static_cast<unsigned int>(mSwapchain->mImages.size()));
+
+		std::vector<VkWriteDescriptorSet> descriptorWrites = {};
+		for (size_t i = 0; i < mDescriptorSets.joints.mSets.size(); ++i)
+		{
+			VkDescriptorBufferInfo bufferInfo = {};
+			bufferInfo.buffer = viewUboBuffers[i];
+			bufferInfo.offset = 0;
+			bufferInfo.range = sizeof(viewUBO);
+
+			VkWriteDescriptorSet writeBufferInfo = {};
+			writeBufferInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeBufferInfo.dstSet = mDescriptorSets.joints.mSets[i];
+			writeBufferInfo.dstBinding = 0;
+			writeBufferInfo.dstArrayElement = 0;
+			writeBufferInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			writeBufferInfo.descriptorCount = 1;
+			writeBufferInfo.pBufferInfo = &bufferInfo;
+
+			descriptorWrites.push_back(writeBufferInfo);
+		}
+		vkUpdateDescriptorSets(LOGICAL_DEVICE, static_cast<unsigned int>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+	}
 }
 
 void vr::AnimationKeyframes::SetupPipeline()
@@ -263,6 +301,35 @@ void vr::AnimationKeyframes::SetupPipeline()
 				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT)
 			.ConfigureColorBlendState(nullptr, 0, VK_FALSE, VK_LOGIC_OP_COPY, 0.0f, 0.0f, 0.0f, 0.0f)
 			.Configure(mPipelineLayouts.mesh.GetVulkanPipelineLayout(), mRenderpass.mRenderPass, 0, 0);
+	}
+
+	// pipeline for joints
+	{
+		mPipelineLayouts.joints
+			.AddDescriptorSetLayout(mDescriptorSetLayouts.joints.mLayout)
+			.AddPushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(jointModelData))
+			.Configure();
+
+		mPipelines.joints
+			.AddShaderStage(VK_SHADER_STAGE_VERTEX_BIT, "vertex-skinning/primitive-drawing.vert.spv")
+			.AddShaderStage(VK_SHADER_STAGE_FRAGMENT_BIT, "vertex-skinning/primitive-drawing.frag.spv")
+			.ConfigureInputAssembly(VK_PRIMITIVE_TOPOLOGY_POINT_LIST, VK_FALSE, 0, nullptr)
+			.AddVertexInputBindingDescription(vrassimp::JointVertex::GetVertexInputBindingDescription())
+			.AddVertexInputAttributeDescription(vrassimp::JointVertex::GetVertexInputAttributeDescriptions())
+			.ConfigureViewport(mSwapchain->GetSwapchainExtent())
+			.ConfigureRasterizer(VK_FALSE, VK_FALSE, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, VK_FALSE, 0.0f, 0.0f, 0.0f, 5.0f, 0, nullptr)
+			.ConfigureMultiSampling(VK_SAMPLE_COUNT_1_BIT, VK_FALSE, 1.0f, nullptr, 0, VK_FALSE, VK_FALSE, nullptr)
+			.ConfigureDefaultDepthTesting()
+			.AddColorBlendAttachmentState(VK_FALSE,
+				VK_BLEND_FACTOR_SRC_ALPHA,
+				VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+				VK_BLEND_OP_ADD,
+				VK_BLEND_FACTOR_SRC_ALPHA,
+				VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+				VK_BLEND_OP_SUBTRACT,
+				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT)
+			.ConfigureColorBlendState(nullptr, 0, VK_FALSE, VK_LOGIC_OP_COPY, 0.0f, 0.0f, 0.0f, 0.0f)
+			.Configure(mPipelineLayouts.joints.mLayout, mRenderpass.mRenderPass, 0, 0);
 	}
 }
 
@@ -309,44 +376,70 @@ void vr::AnimationKeyframes::SetupTextureSamplers()
 void vr::AnimationKeyframes::LoadAssets()
 {
 	// floor
+	floor = new vrassimp::Model();
 	{
-		vrassimp::Model* floor = new vrassimp::Model();
-		floor->LoadFromFile("floor\\scene.gltf", "floor");
-		//floor->LoadFromFile("wooden-platform-i\\scene.gltf", "floor");
-		//floor->LoadFromFile("wooden-platform-ii\\scene.gltf", "floor");
-		floor->mTransform.position = glm::vec3(0.0f, -0.15f, 0.0f);
-		floor->mTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-		floor->mTransform.scale = glm::vec3(6.0f, 3.0f, 6.0f);
+		//floor->LoadFromFile("floor\\scene.gltf", "floor");
+		//floor->mTransform.position = glm::vec3(0.0f, -0.15f, 0.0f);
+		//floor->mTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+		//floor->mTransform.scale = glm::vec3(30.0f, 3.0f, 30.0f);
+		//floor->mAnimation = new vrassimp::Animation();
+		//floor->mAnimation->settings.uvOffsetScale = 0.003;
+
+		floor->LoadFromFile("dungeon_ground\\scene.gltf", "floor");
+		floor->mTransform.position = glm::vec3(5.0f, -0.15f, -20.0f);
+		floor->mTransform.rotation = glm::vec3(90.0f, 0.0f, 0.0f);
+		floor->mTransform.scale = glm::vec3(5.0f, 3.0f, 1.0f);
 		floor->mAnimation = new vrassimp::Animation();
-		floor->mAnimation->settings.uvOffsetScale = 0.003;
+		//floor->mAnimation->settings.uvOffsetScale = 0.058;
+
 		mModels.push_back(floor);
 	}
 
 	// nathan
 	{
-		animatedModel = new vrassimp::Model();
-		animatedModel->LoadFromFile("nathan\\scene.gltf", "nathan");
-		animatedModel->mTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
-		animatedModel->mTransform.rotation = glm::vec3(0.0f, 180.0f, 0.0f);
-		animatedModel->mTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
-		animatedModel->mAnimationTransform.position = glm::vec3(0.0f, 0.2f, 0.0f);
-		animatedModel->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 180.0f);
-		animatedModel->mAnimationTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
-		animatedModel->mAnimation->settings.speed = 25.0f;
-		mModels.push_back(animatedModel);
+		vrassimp::Model* nathan = new vrassimp::Model();
+		nathan->LoadFromFile("nathan\\scene.gltf", "nathan");
+		nathan->mTransform.position = glm::vec3(0.0f, 0.2f, -10.0f);
+		nathan->mTransform.rotation = glm::vec3(0.0f, 180.0f, 0.0f);
+		nathan->mTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
+		nathan->mAnimationTransform.position = glm::vec3(0.0f, 0.2f, -10.0f);
+		nathan->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 180.0f);
+		nathan->mAnimationTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
+		nathan->mAnimation->settings.speed = 25.0f;
+		mModels.push_back(nathan);
+		animatedModel = nathan;
+		floor->mAnimation->settings.uvOffsetScale = 0.058;
 	}
 
 	{
 		//vrassimp::Model* spidey = new vrassimp::Model();
 		//spidey->LoadFromFile("spiderman\\spiderman.fbx", "spidey");
-		//spidey->mTransform.position = glm::vec3(0.0f, 0.1f, 0.0f);
+		//spidey->mTransform.position = glm::vec3(0.0f, 0.1f, -7.0f);
 		//spidey->mTransform.rotation = glm::vec3(-90.0f, 180.0f, 0.0f);
-		//spidey->mTransform.scale = glm::vec3(350.0, 350.0f, 350.0f);
-		//spidey->mAnimationTransform.position = glm::vec3(0.0f, 0.1f, 3.0f);
+		//spidey->mTransform.scale = glm::vec3(450.0, 450.0f, 450.0f);
+		//spidey->mAnimationTransform.position = glm::vec3(0.0f, 0.1f, -3.0f);
 		//spidey->mAnimationTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-		//spidey->mAnimationTransform.scale = glm::vec3(3.0, 3.0f, 3.0f);
+		//spidey->mAnimationTransform.scale = glm::vec3(4.0, 4.0f, 4.0f);
 		//spidey->mAnimation->settings.speed = 0.75f;
 		//mModels.push_back(spidey);
+		//animatedModel = spidey;
+		//floor->mAnimation->settings.uvOffsetScale = 0.0f;
+	}
+
+	{
+		//vrassimp::Model* bengalTiger = new vrassimp::Model();
+		//bengalTiger->LoadFromFile("bengal-tiger\\tiger.fbx", "bengal tiger");
+		//bengalTiger->mTransform.position = glm::vec3(0.0f, 2.50f, -13.0f);
+		//bengalTiger->mTransform.rotation = glm::vec3(-94.70f, 222.60f, 347.35f);
+		//bengalTiger->mTransform.scale = glm::vec3(3.5f, 3.5f, 3.5f);
+		//bengalTiger->mAnimationTransform.position = glm::vec3(0.0f, 0.10f, -13.0f);
+		//bengalTiger->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 180.0f);
+		//bengalTiger->mAnimationTransform.scale = glm::vec3(3.5f, 3.5f, 3.5f);
+		//bengalTiger->mAnimation->settings.speed = 0.75f;
+		//bengalTiger->mAnimation->settings.currentTrackIndex = 4;
+		//mModels.push_back(bengalTiger);
+		//animatedModel = bengalTiger;
+		//floor->mAnimation->settings.uvOffsetScale = 0.0f;
 	}
 
 	for (auto& model : mModels)
@@ -431,30 +524,45 @@ void vr::AnimationKeyframes::UpdateModelData(vrassimp::Model* model, const doubl
 	{
 		// if model has animation, take current state from UI's animation setting
 		modelData.enableAnimation = model->mAnimation->settings.enableAnimation;
+		glm::mat4  animatedModelMatrix(1.0);
+		animatedModelMatrix = glm::translate(animatedModelMatrix, model->mAnimationTransform.position);
+		animatedModelMatrix = glm::rotate(animatedModelMatrix, glm::radians(model->mAnimationTransform.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+		animatedModelMatrix = glm::rotate(animatedModelMatrix, glm::radians(model->mAnimationTransform.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f)); // y is rotated around z-axis
+		animatedModelMatrix = glm::rotate(animatedModelMatrix, glm::radians(model->mAnimationTransform.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+		animatedModelMatrix = glm::scale(animatedModelMatrix, model->mAnimationTransform.scale);
 		if (modelData.enableAnimation)
 		{
-			glm::mat4  modelMatrix(1.0);
-			modelMatrix = glm::translate(modelMatrix, model->mAnimationTransform.position);
-			modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mAnimationTransform.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-			modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mAnimationTransform.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f)); // y is rotated around z-axis
-			modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mAnimationTransform.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-			modelMatrix = glm::scale(modelMatrix, model->mAnimationTransform.scale);
-			modelData.model = modelMatrix;
+			modelData.model = animatedModelMatrix;
 			modelData.type = 0; // for animated model
+			jointModelData.model = animatedModelMatrix;
+			return;
+		}
+		else
+		{
+			modelData.enableAnimation = 0;
+			glm::mat4  modelMatrix(1.0);
+			modelMatrix = glm::translate(modelMatrix, model->mTransform.position);
+			modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mTransform.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+			modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mTransform.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f)); // y is rotated around z-axis
+			modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mTransform.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+			modelMatrix = glm::scale(modelMatrix, model->mTransform.scale);
+			modelData.model = modelMatrix;
+			jointModelData.model = animatedModelMatrix;
 			return;
 		}
 	}
 	else
 	{
 		modelData.enableAnimation = 0;
+		glm::mat4  modelMatrix(1.0);
+		modelMatrix = glm::translate(modelMatrix, model->mTransform.position);
+		modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mTransform.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+		modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mTransform.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f)); // y is rotated around z-axis
+		modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mTransform.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+		modelMatrix = glm::scale(modelMatrix, model->mTransform.scale);
+		modelData.model = modelMatrix;
 	}
-	glm::mat4  modelMatrix(1.0);
-	modelMatrix = glm::translate(modelMatrix, model->mTransform.position);
-	modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mTransform.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-	modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mTransform.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f)); // y is rotated around z-axis
-	modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mTransform.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-	modelMatrix = glm::scale(modelMatrix, model->mTransform.scale);
-	modelData.model = modelMatrix;
+
 	if (model->mScreenName._Equal("floor") && animatedModel->mAnimation->settings.enableAnimation)
 	{
 		modelData.uvOffset.t += model->mAnimation->settings.uvOffsetScale * animatedModel->mAnimation->settings.speed * frametime;
@@ -489,6 +597,27 @@ void vr::AnimationKeyframes::UpdateBoneTransforms(vrassimp::Model* model, unsign
 	vkMapMemory(LOGICAL_DEVICE, skinningUboMemory[imageIndex], 0, sizeof(skinningUBO), 0, &data);
 	memcpy(data, &skinningUBO, sizeof(skinningUBO));
 	vkUnmapMemory(LOGICAL_DEVICE, skinningUboMemory[imageIndex]);
+
+	model->jointPositions.clear();
+	model->jointPositions.resize(model->mAnimation->mBoneCount);
+	for (unsigned int i = 0; i < boneTransforms.size(); ++i)
+	{
+		glm::mat4 t = glm::transpose(glm::make_mat4(&(boneTransforms[i].a1)));
+		glm::vec4 v = t * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		model->jointPositions[i] = { v.x, v.y, v.z, 1 };
+	}
+
+	jointVertexBuffer.Unmap();
+	vkQueueWaitIdle(GRAPHICS_QUEUE);
+	jointVertexBuffer.Destroy();
+	MemoryUtility::CreateBuffer(sizeof(model->jointPositions[0]) * model->mAnimation->mBoneCount,
+		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+		ALLOCATION_CALLBACK,
+		&jointVertexBuffer.mBuffer,
+		&jointVertexBuffer.mMemory);
+	jointVertexBuffer.Map();
+	jointVertexBuffer.CopyData(&model->jointPositions[0], sizeof(model->jointPositions[0]) * model->mAnimation->mBoneCount);
 
 	animation->timer += frametime * model->mAnimation->settings.speed;
 }
@@ -535,9 +664,13 @@ void vr::AnimationKeyframes::RecordCommands(unsigned int imageIndex, const doubl
 		for (auto& model : mModels)
 		{
 			UpdateModelData(model, frametime);
-			if (model->isAnimationAvailable /*&& model->mAnimation->settings.enableAnimation == 1*/)
+			if (model->isAnimationAvailable && model->mAnimation->settings.enableAnimation == 1)
 			{
 				UpdateBoneTransforms(model, imageIndex, frametime);
+			}
+			else if (model->isAnimationAvailable)
+			{
+				UpdateBoneTransforms(model, imageIndex, 0.0f);
 			}
 
 			vkCmdBindPipeline(mGraphicsCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.mesh.GetVulkanPipeline());
@@ -549,20 +682,60 @@ void vr::AnimationKeyframes::RecordCommands(unsigned int imageIndex, const doubl
 
 			for (auto& mesh : model->meshes)
 			{
-				std::vector<VkDescriptorSet> descriptorSets = { mDescriptorSets.mesh.mSets[imageIndex] };
-				if (!mesh->textures.empty())
+				if (!(model->mAnimation->settings.showJoints))
 				{
-					descriptorSets.push_back(mesh->mDescriptorSets.mSets[0]);
+					std::vector<VkDescriptorSet> descriptorSets = { mDescriptorSets.mesh.mSets[imageIndex] };
+					if (!mesh->textures.empty())
+					{
+						descriptorSets.push_back(mesh->mDescriptorSets.mSets[0]);
+					}
+
+					vkCmdBindDescriptorSets(mGraphicsCommandBuffers[imageIndex],
+						VK_PIPELINE_BIND_POINT_GRAPHICS,
+						mPipelineLayouts.mesh.GetVulkanPipelineLayout(),
+						0,
+						static_cast<unsigned int>(descriptorSets.size()),
+						descriptorSets.data(), 0, nullptr);
+
+					mesh->Draw(mGraphicsCommandBuffers[imageIndex]);
 				}
+				else
+				{
+					vkCmdBindPipeline(mGraphicsCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.joints.GetVulkanPipeline());
+					vkCmdPushConstants(mGraphicsCommandBuffers[imageIndex],
+						mPipelineLayouts.joints.GetVulkanPipelineLayout(),
+						VK_SHADER_STAGE_VERTEX_BIT, 0,
+						sizeof(jointModelData), &jointModelData);
 
-				vkCmdBindDescriptorSets(mGraphicsCommandBuffers[imageIndex],
-					VK_PIPELINE_BIND_POINT_GRAPHICS,
-					mPipelineLayouts.mesh.GetVulkanPipelineLayout(),
-					0,
-					static_cast<unsigned int>(descriptorSets.size()),
-					descriptorSets.data(), 0, nullptr);
+					std::vector<VkDescriptorSet> descriptorSets = { mDescriptorSets.joints.mSets[imageIndex] };
 
-				mesh->Draw(mGraphicsCommandBuffers[imageIndex]);
+					vkCmdBindDescriptorSets(mGraphicsCommandBuffers[imageIndex],
+						VK_PIPELINE_BIND_POINT_GRAPHICS,
+						mPipelineLayouts.joints.GetVulkanPipelineLayout(),
+						0,
+						static_cast<unsigned int>(descriptorSets.size()),
+						descriptorSets.data(), 0, nullptr);
+
+					/*jointVertexBuffer.Unmap();
+					vkQueueWaitIdle(GRAPHICS_QUEUE);
+					jointVertexBuffer.Destroy();
+					MemoryUtility::CreateBuffer(sizeof(model->jointPositions[0]) * model->mAnimation->mBoneCount,
+						VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+						ALLOCATION_CALLBACK,
+						&jointVertexBuffer.mBuffer,
+						&jointVertexBuffer.mMemory);
+					jointVertexBuffer.Map();
+					jointVertexBuffer.CopyData(&model->jointPositions[0], sizeof(model->jointPositions[0]) * model->mAnimation->mBoneCount);*/
+
+					VkBuffer vertexBuffers[] = { jointVertexBuffer.mBuffer };	// buffers to bind
+					VkDeviceSize offsets[] = { 0 };								// offsets into buffers being bound
+					vkCmdBindVertexBuffers(mGraphicsCommandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
+
+					vkCmdDraw(mGraphicsCommandBuffers[imageIndex], model->mAnimation->mBoneCount, 1, 0, 0);
+
+					jointVertexBuffer.Unmap();
+				}
 			}
 		}
 	}
@@ -646,6 +819,9 @@ void vr::AnimationKeyframes::OnUpdateUIOverlay(UiOverlay* overlay)
 					if (overlay->CheckBox("Enable animation", &(model->mAnimation->settings.enableAnimation)))
 					{
 					}
+					if (overlay->CheckBox("Enable joints", &(model->mAnimation->settings.showJoints)))
+					{
+					}
 					if (model->mAnimation->settings.enableAnimation &&
 						overlay->InputFloat("Speed", &(model->mAnimation->settings.speed), 0.5, 3))
 					{
@@ -659,6 +835,26 @@ void vr::AnimationKeyframes::OnUpdateUIOverlay(UiOverlay* overlay)
 					if (model->mAnimation->settings.enableAnimation &&
 						ImGui::Combo("Track", &(model->mAnimation->settings.currentTrackIndex), model->mAnimation->settings.tracks.c_str()))
 					{
+					}
+					if (model->mScreenName._Equal("bengal tiger"))
+					{
+						switch (model->mAnimation->settings.currentTrackIndex)
+						{
+						case 1:
+						case 2:
+						case 3:
+							floor->mAnimation->settings.uvOffsetScale = 0.0f;
+							break;
+						case 4: // RUN
+							floor->mAnimation->settings.uvOffsetScale = 1.0f;
+							break;
+						case 5: // WALK
+							floor->mAnimation->settings.uvOffsetScale = 0.213f;
+							break;
+						case 6: // WALK FAST
+							floor->mAnimation->settings.uvOffsetScale = 0.552f;
+							break;
+						}
 					}
 					if (model->mAnimation->settings.enableAnimation)
 					{

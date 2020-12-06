@@ -1,0 +1,325 @@
+{
+  "accessors": [
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 54744,
+      "max": [
+        24.379020690917969,
+        25.704055786132812,
+        7.6546611785888672
+      ],
+      "min": [
+        -23.920982360839844,
+        -22.595947265625,
+        -1.4102305173873901
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 656928,
+      "componentType": 5126,
+      "count": 54744,
+      "max": [
+        0.99926334619522095,
+        0.99968588352203369,
+        0.99999552965164185
+      ],
+      "min": [
+        -0.99998962879180908,
+        -0.9994773268699646,
+        -0.99681609869003296
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5126,
+      "count": 54744,
+      "max": [
+        0.99997931718826294,
+        0.99999850988388062,
+        0.9998738169670105,
+        1
+      ],
+      "min": [
+        -0.99999362230300903,
+        -0.99997091293334961,
+        -0.99988073110580444,
+        -1
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 875904,
+      "componentType": 5126,
+      "count": 54744,
+      "max": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "min": [
+        1,
+        1,
+        1,
+        0
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 54744,
+      "max": [
+        0.99802142381668091,
+        0.99878466129302979
+      ],
+      "min": [
+        0.00097869406454265118,
+        0.00098177697509527206
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 251505,
+      "max": [
+        54743
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    }
+  ],
+  "asset": {
+    "extras": {
+      "author": "3dhdscan (https://sketchfab.com/3dhdscan)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/models/73f130b555d64befb727a6a89047de4d",
+      "title": "Ground moss fores square 8k"
+    },
+    "generator": "Sketchfab-3.19.3",
+    "version": "2.0"
+  },
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 1006020,
+      "byteOffset": 0,
+      "name": "floatBufferViews",
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 437952,
+      "byteOffset": 1006020,
+      "byteStride": 8,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 1313856,
+      "byteOffset": 1443972,
+      "byteStride": 12,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 1751808,
+      "byteOffset": 2757828,
+      "byteStride": 16,
+      "name": "floatBufferViews",
+      "target": 34962
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 4509636,
+      "uri": "scene.bin"
+    }
+  ],
+  "images": [
+    {
+      "uri": "textures/ground_moss_basecolor.jpeg"
+    },
+    {
+      "uri": "textures/ground_moss_normal.jpeg"
+    },
+    {
+      "uri": "textures/ground_moss_roughness.png"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": false,
+      "name": "ground_moss_1_100k_DiffuseMap",
+      "normalTexture": {
+        "index": 1,
+        "scale": 1,
+        "texCoord": 0
+      },
+      "occlusionTexture": {
+        "index": 2,
+        "strength": 1,
+        "texCoord": 0
+      },
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "baseColorTexture": {
+          "index": 0,
+          "texCoord": 0
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 0.89825211299999996
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "ground_moss_1_100k_ground_moss_1_100k_DiffuseMap_0",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 3,
+            "NORMAL": 1,
+            "POSITION": 0,
+            "TANGENT": 2,
+            "TEXCOORD_0": 4
+          },
+          "indices": 5,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "children": [
+        1
+      ],
+      "name": "RootNode (gltf orientation matrix)",
+      "rotation": [
+        -0.70710678118654746,
+        -0,
+        -0,
+        0.70710678118654757
+      ]
+    },
+    {
+      "children": [
+        2
+      ],
+      "name": "RootNode (model correction matrix)"
+    },
+    {
+      "children": [
+        3
+      ],
+      "matrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        -1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "name": "ground_moss_1_100k.FBX"
+    },
+    {
+      "children": [
+        4
+      ],
+      "name": "RootNode"
+    },
+    {
+      "children": [
+        5
+      ],
+      "matrix": [
+        4.3711388619804836e-06,
+        -5.5511151231257827e-15,
+        99.999999999999915,
+        0,
+        99.999999999999915,
+        1.1102230246251565e-14,
+        -4.3711388675315987e-06,
+        0,
+        -1.6653345369377348e-14,
+        100,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "name": "ground_moss_1_100k"
+    },
+    {
+      "mesh": 0,
+      "name": "ground_moss_1_100k_ground_moss_1_100k_DiffuseMap_0"
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    },
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 33071,
+      "wrapT": 33071
+    }
+  ],
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "OSG_Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 1,
+      "source": 1
+    },
+    {
+      "sampler": 1,
+      "source": 2
+    }
+  ]
+}
+

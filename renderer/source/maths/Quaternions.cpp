@@ -4,14 +4,14 @@ Quaternions::Quaternions()
 {
 }
 
-Quaternions::Quaternions(float X, float Y, float Z, float W): x(X), y(Y), z(Z), w(W)
+Quaternions::Quaternions(float X, float Y, float Z, float W) : x(X), y(Y), z(Z), w(W)
 {
 }
 
 void Quaternions::Normalize()
 {
-	float mag = sqrtf( x * x + y * y + z * z + w * w );
-	
+	float mag = sqrtf(x * x + y * y + z * z + w * w);
+
 	x /= mag;
 	y /= mag;
 	z /= mag;
@@ -20,8 +20,8 @@ void Quaternions::Normalize()
 
 Quaternions Quaternions::Normalized()
 {
-	float mag = sqrtf( x * x + y * y + z * z + w * w);
-	return Quaternions( x / mag, y / mag, z / mag, w / mag);
+	float mag = sqrtf(x * x + y * y + z * z + w * w);
+	return Quaternions(x / mag, y / mag, z / mag, w / mag);
 }
 
 aiMatrix4x4 Quaternions::GetMatrix()
@@ -49,7 +49,7 @@ aiMatrix4x4 Quaternions::GetMatrix()
 	matrix.a3 = 2.0 * (tmp1 + tmp2) * invs;
 
 	tmp1 = this->y * this->z;
-	tmp2 = this->x  * this->w;
+	tmp2 = this->x * this->w;
 	matrix.c2 = 2.0 * (tmp1 + tmp2) * invs;
 	matrix.b3 = 2.0 * (tmp1 - tmp2) * invs;
 
@@ -59,51 +59,48 @@ aiMatrix4x4 Quaternions::GetMatrix()
 Quaternions Quaternions::Slerp(Quaternions  b, float t)
 {
 	Quaternions a(this->x, this->y, this->z, this->w);
-	
+
 	a.Normalize();
 	b.Normalize();
 	float dot_product = Dot(a, b);
-	
+
 	Quaternions temp(b.x, b.y, b.z, b.w);
-	
+
 	if (abs(dot_product) >= 1.0)
 	{
-		temp.x = a.x; 
+		temp.x = a.x;
 		temp.y = a.y;
 		temp.z = a.z;
 		temp.w = a.w;
 
 		return temp;
 	}
-	if (dot_product < 0.0f) 
+	if (dot_product < 0.0f)
 	{
 		dot_product *= -1.0f;
 		Inverse(temp);
-		
 	}
 
 	float theta = acosf(dot_product);
 	float sinTheta = 1.0f / sinf(theta);
-	a = a * sinf(theta * (1.0f - t))* sinTheta;
-	temp = temp * sinf(t * theta)* sinTheta;
+	a = a * sinf(theta * (1.0f - t)) * sinTheta;
+	temp = temp * sinf(t * theta) * sinTheta;
 	Quaternions result;
-	result = a  + temp;
-		
+	result = a + temp;
+
 	return result.Normalized();
-	
 }
 
 Quaternions Quaternions::nLerp(Quaternions b, float t)
 {
-	
-	Quaternions a (this->x, this->y, this->z, this->w);
+	Quaternions a(this->x, this->y, this->z, this->w);
 
 	a.Normalize();
 	b.Normalize();
 
 	Quaternions result;
 	float dot_product = Dot(a, b);
-	
+
 	if (dot_product < 0.0f)
 	{
 		Quaternions a_val(a.x, a.y, a.z, a.w);
@@ -111,7 +108,6 @@ Quaternions Quaternions::nLerp(Quaternions b, float t)
 		a_val = a_val * (1.0f - t);
 		b_val = b_val * t;
 		result = a_val + b_val;
-		
 	}
 	else
 	{
@@ -138,24 +134,23 @@ float Quaternions::Length(Quaternions a)
 
 Quaternions Quaternions::operator*(float val)
 {
-	return Quaternions( x * val, y * val, z * val, w * val);
+	return Quaternions(x * val, y * val, z * val, w * val);
 }
 
-void Quaternions::Inverse(Quaternions & inv)
+void Quaternions::Inverse(Quaternions& inv)
 {
 	inv.x *= -1.0f;
 	inv.y *= -1.0f;
 	inv.z *= -1.0f;
 	inv.w *= -1.0f;
-
 }
 
-Quaternions Quaternions::operator+(Quaternions & val)
+Quaternions Quaternions::operator+(Quaternions& val)
 {
 	return Quaternions(x + val.x, y + val.y, z + val.z, w + val.w);
 }
 
-Quaternions Quaternions::operator*(Quaternions & val)
+Quaternions Quaternions::operator*(Quaternions& val)
 {
 	Quaternions q;
 	q.x = w * val.x + x * val.w + y * val.z - z * val.y;
@@ -176,5 +171,3 @@ Quaternions Quaternions::AngleAxis(float angle, aiVector3D axis)
 
 	return Quaternions(vn.x * sinAngle, vn.y * sinAngle, vn.z * sinAngle, cos(angle));
 }
-
-
