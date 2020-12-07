@@ -10,25 +10,21 @@ layout(set = 0, binding = 0) uniform UBO
 
 layout (push_constant) uniform PushModel
 {
-    mat4 joint_model;
-    mat4 line_model;
+    mat4 model;
     int render_joints; // 0 - joints, 1 - lines
 } push_model;
+
+layout (location = 0) out VS_OUT
+{
+    int render_joints;
+} vs_out;
 
 void main()
 {
    gl_PointSize = 5.0;
-   mat4 model = mat4(1.0);
-   if(push_model.render_joints == 0)
-   {
-        model = push_model.joint_model;
-   }
-   else
-   {
-        model = push_model.joint_model;
-   }
+   vs_out.render_joints = push_model.render_joints;
    gl_Position = ubo.projection 
                     * ubo.view
-                    * model
+                    * push_model.model
                     * position;
 } 

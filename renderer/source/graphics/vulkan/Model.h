@@ -294,6 +294,7 @@ namespace vrassimp
 			int enableIk = 0;
 			int showJoints = 0;
 			int showLines = 0;
+			int showMesh = 1;
 			float uvOffsetScale = 0.0;
 		} settings;
 

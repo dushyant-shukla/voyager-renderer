@@ -305,12 +305,12 @@ void vr::AnimationKeyframes::SetupPipeline()
 
 	// pipeline for joints
 	{
-		mPipelineLayouts.debug
+		mPipelineLayouts.joints
 			.AddDescriptorSetLayout(mDescriptorSetLayouts.debug.mLayout)
 			.AddPushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(boneModelData))
 			.Configure();
 
-		mPipelines.debug
+		mPipelines.joints
 			.AddShaderStage(VK_SHADER_STAGE_VERTEX_BIT, "vertex-skinning/primitive-drawing.vert.spv")
 			.AddShaderStage(VK_SHADER_STAGE_FRAGMENT_BIT, "vertex-skinning/primitive-drawing.frag.spv")
 			.ConfigureInputAssembly(VK_PRIMITIVE_TOPOLOGY_POINT_LIST, VK_FALSE, 0, nullptr)
@@ -329,7 +329,7 @@ void vr::AnimationKeyframes::SetupPipeline()
 				VK_BLEND_OP_SUBTRACT,
 				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT)
 			.ConfigureColorBlendState(nullptr, 0, VK_FALSE, VK_LOGIC_OP_COPY, 0.0f, 0.0f, 0.0f, 0.0f)
-			.Configure(mPipelineLayouts.debug.mLayout, mRenderpass.mRenderPass, 0, 0);
+			.Configure(mPipelineLayouts.joints.mLayout, mRenderpass.mRenderPass, 0, 0);
 	}
 
 	// pipeline for lines
@@ -430,10 +430,10 @@ void vr::AnimationKeyframes::LoadAssets()
 		nathan->LoadFromFile("nathan\\scene.gltf", "nathan");
 		nathan->mTransform.position = glm::vec3(0.0f, 0.2f, -10.0f);
 		nathan->mTransform.rotation = glm::vec3(0.0f, 180.0f, 0.0f);
-		nathan->mTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
+		nathan->mTransform.scale = glm::vec3(0.08, 0.08f, 0.08f);
 		nathan->mAnimationTransform.position = glm::vec3(0.0f, 0.2f, -10.0f);
 		nathan->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 180.0f);
-		nathan->mAnimationTransform.scale = glm::vec3(0.05, 0.05f, 0.05f);
+		nathan->mAnimationTransform.scale = glm::vec3(0.08, 0.08f, 0.08f);
 		nathan->mAnimation->settings.speed = 25.0f;
 		mModels.push_back(nathan);
 		animatedModel = nathan;
@@ -563,7 +563,7 @@ void vr::AnimationKeyframes::UpdateModelData(vrassimp::Model* model, const doubl
 		{
 			modelData.model = animatedModelMatrix;
 			modelData.type = 0; // for animated model
-			boneModelData.jointModel = animatedModelMatrix;
+			boneModelData.model = animatedModelMatrix;
 			return;
 		}
 		else
@@ -576,7 +576,7 @@ void vr::AnimationKeyframes::UpdateModelData(vrassimp::Model* model, const doubl
 			modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mTransform.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 			modelMatrix = glm::scale(modelMatrix, model->mTransform.scale);
 			modelData.model = modelMatrix;
-			boneModelData.jointModel = animatedModelMatrix;
+			boneModelData.model = animatedModelMatrix;
 			return;
 		}
 	}
@@ -800,7 +800,7 @@ void vr::AnimationKeyframes::RecordCommands(unsigned int imageIndex, const doubl
 
 			for (auto& mesh : model->meshes)
 			{
-				if (!(model->mAnimation->settings.showJoints))
+				if (model->mAnimation->settings.showMesh)
 				{
 					std::vector<VkDescriptorSet> descriptorSets = { mDescriptorSets.mesh.mSets[imageIndex] };
 					if (!mesh->textures.empty())
@@ -817,52 +817,61 @@ void vr::AnimationKeyframes::RecordCommands(unsigned int imageIndex, const doubl
 
 					mesh->Draw(mGraphicsCommandBuffers[imageIndex]);
 				}
-				else
-				{
-					vkCmdBindPipeline(mGraphicsCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.debug.GetVulkanPipeline());
+			}
 
-					boneModelData.renderJoints = 0;
-					vkCmdPushConstants(mGraphicsCommandBuffers[imageIndex],
-						mPipelineLayouts.debug.GetVulkanPipelineLayout(),
-						VK_SHADER_STAGE_VERTEX_BIT, 0,
-						sizeof(boneModelData), &boneModelData);
+			if (model->mAnimation->settings.showJoints)
+			{
+				vkCmdBindPipeline(mGraphicsCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.joints.GetVulkanPipeline());
 
-					std::vector<VkDescriptorSet> descriptorSets = { mDescriptorSets.debug.mSets[imageIndex] };
+				boneModelData.renderJoints = 0;
+				vkCmdPushConstants(mGraphicsCommandBuffers[imageIndex],
+					mPipelineLayouts.joints.GetVulkanPipelineLayout(),
+					VK_SHADER_STAGE_VERTEX_BIT, 0,
+					sizeof(boneModelData), &boneModelData);
 
-					vkCmdBindDescriptorSets(mGraphicsCommandBuffers[imageIndex],
-						VK_PIPELINE_BIND_POINT_GRAPHICS,
-						mPipelineLayouts.debug.GetVulkanPipelineLayout(),
-						0,
-						static_cast<unsigned int>(descriptorSets.size()),
-						descriptorSets.data(), 0, nullptr);
+				std::vector<VkDescriptorSet> descriptorSets = { mDescriptorSets.debug.mSets[imageIndex] };
 
-					VkBuffer vertexBuffers[] = { jointVertexBuffer.mBuffer };	// buffers to bind
-					VkDeviceSize offsets[] = { 0 };								// offsets into buffers being bound
-					vkCmdBindVertexBuffers(mGraphicsCommandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
+				vkCmdBindDescriptorSets(mGraphicsCommandBuffers[imageIndex],
+					VK_PIPELINE_BIND_POINT_GRAPHICS,
+					mPipelineLayouts.joints.GetVulkanPipelineLayout(),
+					0,
+					static_cast<unsigned int>(descriptorSets.size()),
+					descriptorSets.data(), 0, nullptr);
 
-					vkCmdDraw(mGraphicsCommandBuffers[imageIndex], model->mAnimation->mBoneCount, 1, 0, 0);
+				VkBuffer vertexBuffers[] = { jointVertexBuffer.mBuffer };	// buffers to bind
+				VkDeviceSize offsets[] = { 0 };								// offsets into buffers being bound
+				vkCmdBindVertexBuffers(mGraphicsCommandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
 
-					jointVertexBuffer.Unmap();
+				vkCmdDraw(mGraphicsCommandBuffers[imageIndex], model->mAnimation->mBoneCount, 1, 0, 0);
 
-					if (model->mAnimation->settings.showLines)
-					{
-						vkCmdBindPipeline(mGraphicsCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.lines.GetVulkanPipeline());
+				jointVertexBuffer.Unmap();
+			}
+			if (model->mAnimation->settings.showLines)
+			{
+				vkCmdBindPipeline(mGraphicsCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.lines.GetVulkanPipeline());
 
-						boneModelData.renderJoints = 1;
-						vkCmdPushConstants(mGraphicsCommandBuffers[imageIndex],
-							mPipelineLayouts.debug.GetVulkanPipelineLayout(),
-							VK_SHADER_STAGE_VERTEX_BIT, 0,
-							sizeof(boneModelData), &boneModelData);
+				boneModelData.renderJoints = 1;
+				vkCmdPushConstants(mGraphicsCommandBuffers[imageIndex],
+					mPipelineLayouts.lines.GetVulkanPipelineLayout(),
+					VK_SHADER_STAGE_VERTEX_BIT, 0,
+					sizeof(boneModelData), &boneModelData);
 
-						VkBuffer vertexBuffers[] = { boneVertexBuffer.mBuffer };
-						VkDeviceSize offsets[] = { 0 };
-						vkCmdBindVertexBuffers(mGraphicsCommandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
+				std::vector<VkDescriptorSet> descriptorSets = { mDescriptorSets.debug.mSets[imageIndex] };
 
-						vkCmdDraw(mGraphicsCommandBuffers[imageIndex], model->mAnimation->mBoneCount * 2, 1, 0, 0);
+				vkCmdBindDescriptorSets(mGraphicsCommandBuffers[imageIndex],
+					VK_PIPELINE_BIND_POINT_GRAPHICS,
+					mPipelineLayouts.lines.GetVulkanPipelineLayout(),
+					0,
+					static_cast<unsigned int>(descriptorSets.size()),
+					descriptorSets.data(), 0, nullptr);
 
-						boneVertexBuffer.Unmap();
-					}
-				}
+				VkBuffer vertexBuffers[] = { boneVertexBuffer.mBuffer };
+				VkDeviceSize offsets[] = { 0 };
+				vkCmdBindVertexBuffers(mGraphicsCommandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
+
+				vkCmdDraw(mGraphicsCommandBuffers[imageIndex], model->mAnimation->mBoneCount * 2, 1, 0, 0);
+
+				boneVertexBuffer.Unmap();
 			}
 		}
 	}
@@ -946,10 +955,13 @@ void vr::AnimationKeyframes::OnUpdateUIOverlay(UiOverlay* overlay)
 					if (overlay->CheckBox("Enable animation", &(model->mAnimation->settings.enableAnimation)))
 					{
 					}
-					if (overlay->CheckBox("Enable joints", &(model->mAnimation->settings.showJoints)))
+					if (overlay->CheckBox("Show mesh", &(model->mAnimation->settings.showMesh)))
 					{
 					}
-					if (overlay->CheckBox("Enable bones", &(model->mAnimation->settings.showLines)))
+					if (overlay->CheckBox("Show joints", &(model->mAnimation->settings.showJoints)))
+					{
+					}
+					if (overlay->CheckBox("Show bones", &(model->mAnimation->settings.showLines)))
 					{
 					}
 					if (model->mAnimation->settings.enableAnimation &&

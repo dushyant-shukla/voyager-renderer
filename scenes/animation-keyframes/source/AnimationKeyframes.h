@@ -57,14 +57,14 @@ namespace vr
 		struct
 		{
 			PipelineLayout mesh;
-			PipelineLayout debug;
+			PipelineLayout joints;
 			PipelineLayout lines;
 		} mPipelineLayouts;
 
 		struct
 		{
 			Pipeline mesh;
-			Pipeline debug;
+			Pipeline joints;
 			Pipeline lines;
 		} mPipelines;
 
@@ -129,9 +129,8 @@ namespace vr
 
 		struct BoneModelData
 		{
-			alignas(16) glm::mat4 jointModel;
-			alignas(16) glm::mat4 lineModel;
-			alignas(4) int renderJoints;
+			alignas(16) glm::mat4 model;
+			alignas(4) int renderJoints; // 0 - joints, 1 - lines
 		} boneModelData;
 
 		struct
