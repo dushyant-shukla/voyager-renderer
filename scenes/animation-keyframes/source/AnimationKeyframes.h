@@ -57,33 +57,35 @@ namespace vr
 		struct
 		{
 			PipelineLayout mesh;
-			PipelineLayout joints;
+			PipelineLayout debug;
+			PipelineLayout lines;
 		} mPipelineLayouts;
 
 		struct
 		{
 			Pipeline mesh;
-			Pipeline joints;
+			Pipeline debug;
+			Pipeline lines;
 		} mPipelines;
 
 		struct
 		{
 			DescriptorSets mesh;
-			DescriptorSets joints;
+			DescriptorSets debug;
 		} mDescriptorSets;
 
 		struct
 		{
 			DescriptorSetLayout mesh;
 			DescriptorSetLayout texture;
-			DescriptorSetLayout joints;
+			DescriptorSetLayout debug;
 		} mDescriptorSetLayouts;
 
 		struct
 		{
 			DescriptorPool mesh;
 			DescriptorPool texture;
-			DescriptorPool joints;
+			DescriptorPool debug;
 		} mDescriptorPools;
 
 		struct
@@ -102,6 +104,7 @@ namespace vr
 		std::vector<VkDeviceMemory> skinningUboMemory;
 
 		Buffer<glm::vec4> jointVertexBuffer;
+		Buffer<glm::vec4> boneVertexBuffer;
 
 		struct
 		{
@@ -124,10 +127,12 @@ namespace vr
 			alignas(4) int type;
 		} modelData;
 
-		struct
+		struct BoneModelData
 		{
-			alignas(16) glm::mat4 model;
-		} jointModelData;
+			alignas(16) glm::mat4 jointModel;
+			alignas(16) glm::mat4 lineModel;
+			alignas(4) int renderJoints;
+		} boneModelData;
 
 		struct
 		{

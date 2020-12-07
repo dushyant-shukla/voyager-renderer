@@ -236,20 +236,20 @@ void vr::AnimationKeyframes::SetupDescriptorSet()
 
 	// joints
 	{
-		mDescriptorPools.joints
+		mDescriptorPools.debug
 			.AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
 			.Create(0, static_cast<unsigned int>(mSwapchain->mImages.size()), nullptr);
 
-		mDescriptorSetLayouts.joints
+		mDescriptorSetLayouts.debug
 			.AddLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr)
 			.Create(0, nullptr);
 
-		mDescriptorSets.joints.Setup(mDescriptorSetLayouts.joints.mLayout,
-			mDescriptorPools.joints.mPool,
+		mDescriptorSets.debug.Setup(mDescriptorSetLayouts.debug.mLayout,
+			mDescriptorPools.debug.mPool,
 			static_cast<unsigned int>(mSwapchain->mImages.size()));
 
 		std::vector<VkWriteDescriptorSet> descriptorWrites = {};
-		for (size_t i = 0; i < mDescriptorSets.joints.mSets.size(); ++i)
+		for (size_t i = 0; i < mDescriptorSets.debug.mSets.size(); ++i)
 		{
 			VkDescriptorBufferInfo bufferInfo = {};
 			bufferInfo.buffer = viewUboBuffers[i];
@@ -258,7 +258,7 @@ void vr::AnimationKeyframes::SetupDescriptorSet()
 
 			VkWriteDescriptorSet writeBufferInfo = {};
 			writeBufferInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			writeBufferInfo.dstSet = mDescriptorSets.joints.mSets[i];
+			writeBufferInfo.dstSet = mDescriptorSets.debug.mSets[i];
 			writeBufferInfo.dstBinding = 0;
 			writeBufferInfo.dstArrayElement = 0;
 			writeBufferInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -305,12 +305,12 @@ void vr::AnimationKeyframes::SetupPipeline()
 
 	// pipeline for joints
 	{
-		mPipelineLayouts.joints
-			.AddDescriptorSetLayout(mDescriptorSetLayouts.joints.mLayout)
-			.AddPushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(jointModelData))
+		mPipelineLayouts.debug
+			.AddDescriptorSetLayout(mDescriptorSetLayouts.debug.mLayout)
+			.AddPushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(boneModelData))
 			.Configure();
 
-		mPipelines.joints
+		mPipelines.debug
 			.AddShaderStage(VK_SHADER_STAGE_VERTEX_BIT, "vertex-skinning/primitive-drawing.vert.spv")
 			.AddShaderStage(VK_SHADER_STAGE_FRAGMENT_BIT, "vertex-skinning/primitive-drawing.frag.spv")
 			.ConfigureInputAssembly(VK_PRIMITIVE_TOPOLOGY_POINT_LIST, VK_FALSE, 0, nullptr)
@@ -329,7 +329,36 @@ void vr::AnimationKeyframes::SetupPipeline()
 				VK_BLEND_OP_SUBTRACT,
 				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT)
 			.ConfigureColorBlendState(nullptr, 0, VK_FALSE, VK_LOGIC_OP_COPY, 0.0f, 0.0f, 0.0f, 0.0f)
-			.Configure(mPipelineLayouts.joints.mLayout, mRenderpass.mRenderPass, 0, 0);
+			.Configure(mPipelineLayouts.debug.mLayout, mRenderpass.mRenderPass, 0, 0);
+	}
+
+	// pipeline for lines
+	{
+		mPipelineLayouts.lines
+			.AddDescriptorSetLayout(mDescriptorSetLayouts.debug.mLayout)
+			.AddPushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(boneModelData))
+			.Configure();
+
+		mPipelines.lines
+			.AddShaderStage(VK_SHADER_STAGE_VERTEX_BIT, "vertex-skinning/primitive-drawing.vert.spv")
+			.AddShaderStage(VK_SHADER_STAGE_FRAGMENT_BIT, "vertex-skinning/primitive-drawing.frag.spv")
+			.ConfigureInputAssembly(VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_FALSE, 0, nullptr)
+			.AddVertexInputBindingDescription(vrassimp::JointVertex::GetVertexInputBindingDescription())
+			.AddVertexInputAttributeDescription(vrassimp::JointVertex::GetVertexInputAttributeDescriptions())
+			.ConfigureViewport(mSwapchain->GetSwapchainExtent())
+			.ConfigureRasterizer(VK_FALSE, VK_FALSE, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, VK_FALSE, 0.0f, 0.0f, 0.0f, 2.0f, 0, nullptr)
+			.ConfigureMultiSampling(VK_SAMPLE_COUNT_1_BIT, VK_FALSE, 1.0f, nullptr, 0, VK_FALSE, VK_FALSE, nullptr)
+			.ConfigureDefaultDepthTesting()
+			.AddColorBlendAttachmentState(VK_FALSE,
+				VK_BLEND_FACTOR_SRC_ALPHA,
+				VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+				VK_BLEND_OP_ADD,
+				VK_BLEND_FACTOR_SRC_ALPHA,
+				VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+				VK_BLEND_OP_SUBTRACT,
+				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT)
+			.ConfigureColorBlendState(nullptr, 0, VK_FALSE, VK_LOGIC_OP_COPY, 0.0f, 0.0f, 0.0f, 0.0f)
+			.Configure(mPipelineLayouts.lines.mLayout, mRenderpass.mRenderPass, 0, 0);
 	}
 }
 
@@ -534,7 +563,7 @@ void vr::AnimationKeyframes::UpdateModelData(vrassimp::Model* model, const doubl
 		{
 			modelData.model = animatedModelMatrix;
 			modelData.type = 0; // for animated model
-			jointModelData.model = animatedModelMatrix;
+			boneModelData.jointModel = animatedModelMatrix;
 			return;
 		}
 		else
@@ -547,7 +576,7 @@ void vr::AnimationKeyframes::UpdateModelData(vrassimp::Model* model, const doubl
 			modelMatrix = glm::rotate(modelMatrix, glm::radians(model->mTransform.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 			modelMatrix = glm::scale(modelMatrix, model->mTransform.scale);
 			modelData.model = modelMatrix;
-			jointModelData.model = animatedModelMatrix;
+			boneModelData.jointModel = animatedModelMatrix;
 			return;
 		}
 	}
@@ -619,7 +648,96 @@ void vr::AnimationKeyframes::UpdateBoneTransforms(vrassimp::Model* model, unsign
 	jointVertexBuffer.Map();
 	jointVertexBuffer.CopyData(&model->jointPositions[0], sizeof(model->jointPositions[0]) * model->mAnimation->mBoneCount);
 
+	model->linePositions.clear();
+	model->linePositions.resize(model->mAnimation->mBoneCount * 2);
+	std::vector<glm::vec4> BonePositionsMeshSpaceChild;
+	std::vector<glm::vec4> BonePositionsMeshSpaceParent;
+
+	for (unsigned int i = 1; i < model->mAnimation->mBoneCount; ++i)
+	{
+		unsigned int j = i * 2;
+		aiMatrix4x4 parent = model->mAnimation->boneEndpointPositions[i].parentBone;
+		aiMatrix4x4 child = model->mAnimation->boneEndpointPositions[i].childBone;
+
+		aiVector3D parentPos, parentScale, parentRot;
+		aiVector3D childPos, childScale, childRot;
+
+		parent.Decompose(parentScale, parentRot, parentPos);
+		child.Decompose(childScale, childRot, childPos);
+
+		glm::vec4 A(parentPos.x, parentPos.y, parentPos.z, 1.0); // parent
+		glm::vec4 B(childPos.x, childPos.y, childPos.z, 1.0); // child
+
+		BonePositionsMeshSpaceChild.push_back(B);
+		BonePositionsMeshSpaceParent.push_back(A);
+
+		model->linePositions[j] = { BonePositionsMeshSpaceChild[i - 1].x, BonePositionsMeshSpaceChild[i - 1].y, BonePositionsMeshSpaceChild[i - 1].z, 1.0 };
+		model->linePositions[j + 1] = { BonePositionsMeshSpaceParent[i - 1].x, BonePositionsMeshSpaceParent[i - 1].y, BonePositionsMeshSpaceParent[i - 1].z, 1.0 };
+	}
+
+	boneVertexBuffer.Unmap();
+	vkQueueWaitIdle(GRAPHICS_QUEUE);
+	boneVertexBuffer.Destroy();
+	MemoryUtility::CreateBuffer(sizeof(model->linePositions[0]) * model->mAnimation->mBoneCount * 2,
+		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+		ALLOCATION_CALLBACK,
+		&boneVertexBuffer.mBuffer,
+		&boneVertexBuffer.mMemory);
+
+	boneVertexBuffer.Map();
+	boneVertexBuffer.CopyData(&model->linePositions[0], sizeof(model->linePositions[0]) * model->mAnimation->mBoneCount * 2);
+
 	animation->timer += frametime * model->mAnimation->settings.speed;
+
+	{
+		//for (unsigned int i = 0; i < model->mAnimation->boneEndpointPositions.size(); ++i)
+//{
+//	aiMatrix4x4 parent = model->mAnimation->boneEndpointPositions[i].parentBone;
+//	aiMatrix4x4 child = model->mAnimation->boneEndpointPositions[i].childBone;
+
+//	aiVector3D parentPos, parentScale, parentRot;
+//	aiVector3D childPos, childScale, childRot;
+
+//	parent.Decompose(parentScale, parentRot, parentPos);
+//	child.Decompose(childScale, childRot, childPos);
+
+//	glm::vec3 A(parentPos.x, parentPos.y, parentPos.z); // parent
+//	glm::vec3 B(childPos.x, childPos.y, childPos.z); // child
+
+//	glm::mat4 FinalmodelMatrix = vrassimp::Model::ModelMatForLineBWTwoPoints(A, B);
+//	boneModelData.lineModel = FinalmodelMatrix;
+
+//	vkCmdPushConstants(mGraphicsCommandBuffers[imageIndex],
+//		mPipelineLayouts.debug.GetVulkanPipelineLayout(),
+//		VK_SHADER_STAGE_VERTEX_BIT, 0,
+//		sizeof(boneModelData), &boneModelData);
+
+//	boneVertexBuffer.Unmap();
+//	vkQueueWaitIdle(GRAPHICS_QUEUE);
+//	boneVertexBuffer.Destroy();
+//	MemoryUtility::CreateBuffer(sizeof(glm::vec4) * 2,
+//		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+//		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+//		ALLOCATION_CALLBACK,
+//		&boneVertexBuffer.mBuffer,
+//		&boneVertexBuffer.mMemory);
+
+//	boneVertexBuffer.Map();
+//	std::vector<glm::vec4> lines;
+//	lines.push_back(glm::vec4(A, 1.0));
+//	lines.push_back(glm::vec4(B, 1.0));
+//	boneVertexBuffer.CopyData(&lines[0], sizeof(lines[0]) * 2);
+
+//	VkBuffer vertexBuffers[] = { boneVertexBuffer.mBuffer };
+//	VkDeviceSize offsets[] = { 0 };
+//	vkCmdBindVertexBuffers(mGraphicsCommandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
+
+//	vkCmdDraw(mGraphicsCommandBuffers[imageIndex], 2, 1, 0, 0);
+
+//	boneVertexBuffer.Unmap();
+//}
+	}
 }
 
 void vr::AnimationKeyframes::UpdateLightBuffer(unsigned int imageIndex)
@@ -701,32 +819,22 @@ void vr::AnimationKeyframes::RecordCommands(unsigned int imageIndex, const doubl
 				}
 				else
 				{
-					vkCmdBindPipeline(mGraphicsCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.joints.GetVulkanPipeline());
-					vkCmdPushConstants(mGraphicsCommandBuffers[imageIndex],
-						mPipelineLayouts.joints.GetVulkanPipelineLayout(),
-						VK_SHADER_STAGE_VERTEX_BIT, 0,
-						sizeof(jointModelData), &jointModelData);
+					vkCmdBindPipeline(mGraphicsCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.debug.GetVulkanPipeline());
 
-					std::vector<VkDescriptorSet> descriptorSets = { mDescriptorSets.joints.mSets[imageIndex] };
+					boneModelData.renderJoints = 0;
+					vkCmdPushConstants(mGraphicsCommandBuffers[imageIndex],
+						mPipelineLayouts.debug.GetVulkanPipelineLayout(),
+						VK_SHADER_STAGE_VERTEX_BIT, 0,
+						sizeof(boneModelData), &boneModelData);
+
+					std::vector<VkDescriptorSet> descriptorSets = { mDescriptorSets.debug.mSets[imageIndex] };
 
 					vkCmdBindDescriptorSets(mGraphicsCommandBuffers[imageIndex],
 						VK_PIPELINE_BIND_POINT_GRAPHICS,
-						mPipelineLayouts.joints.GetVulkanPipelineLayout(),
+						mPipelineLayouts.debug.GetVulkanPipelineLayout(),
 						0,
 						static_cast<unsigned int>(descriptorSets.size()),
 						descriptorSets.data(), 0, nullptr);
-
-					/*jointVertexBuffer.Unmap();
-					vkQueueWaitIdle(GRAPHICS_QUEUE);
-					jointVertexBuffer.Destroy();
-					MemoryUtility::CreateBuffer(sizeof(model->jointPositions[0]) * model->mAnimation->mBoneCount,
-						VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-						ALLOCATION_CALLBACK,
-						&jointVertexBuffer.mBuffer,
-						&jointVertexBuffer.mMemory);
-					jointVertexBuffer.Map();
-					jointVertexBuffer.CopyData(&model->jointPositions[0], sizeof(model->jointPositions[0]) * model->mAnimation->mBoneCount);*/
 
 					VkBuffer vertexBuffers[] = { jointVertexBuffer.mBuffer };	// buffers to bind
 					VkDeviceSize offsets[] = { 0 };								// offsets into buffers being bound
@@ -735,6 +843,25 @@ void vr::AnimationKeyframes::RecordCommands(unsigned int imageIndex, const doubl
 					vkCmdDraw(mGraphicsCommandBuffers[imageIndex], model->mAnimation->mBoneCount, 1, 0, 0);
 
 					jointVertexBuffer.Unmap();
+
+					if (model->mAnimation->settings.showLines)
+					{
+						vkCmdBindPipeline(mGraphicsCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.lines.GetVulkanPipeline());
+
+						boneModelData.renderJoints = 1;
+						vkCmdPushConstants(mGraphicsCommandBuffers[imageIndex],
+							mPipelineLayouts.debug.GetVulkanPipelineLayout(),
+							VK_SHADER_STAGE_VERTEX_BIT, 0,
+							sizeof(boneModelData), &boneModelData);
+
+						VkBuffer vertexBuffers[] = { boneVertexBuffer.mBuffer };
+						VkDeviceSize offsets[] = { 0 };
+						vkCmdBindVertexBuffers(mGraphicsCommandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
+
+						vkCmdDraw(mGraphicsCommandBuffers[imageIndex], model->mAnimation->mBoneCount * 2, 1, 0, 0);
+
+						boneVertexBuffer.Unmap();
+					}
 				}
 			}
 		}
@@ -820,6 +947,9 @@ void vr::AnimationKeyframes::OnUpdateUIOverlay(UiOverlay* overlay)
 					{
 					}
 					if (overlay->CheckBox("Enable joints", &(model->mAnimation->settings.showJoints)))
+					{
+					}
+					if (overlay->CheckBox("Enable bones", &(model->mAnimation->settings.showLines)))
 					{
 					}
 					if (model->mAnimation->settings.enableAnimation &&

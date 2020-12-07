@@ -17,7 +17,6 @@
 #include <assimp/postprocess.h>
 
 #include "Texture.h"
-#include "maths/Quaternions.h"
 #include "Buffer.h"
 #include "DescriptorSets.h"
 #include "CCDSolver.h"
@@ -294,6 +293,7 @@ namespace vrassimp
 			float pathTime = 0.0; // for implementing a walk-cycle along a curve
 			int enableIk = 0;
 			int showJoints = 0;
+			int showLines = 0;
 			float uvOffsetScale = 0.0;
 		} settings;
 
@@ -313,7 +313,6 @@ namespace vrassimp
 		aiMatrix4x4 InterpolateTranslation(float time, const aiNodeAnim* pNodeAnim);
 		int FindPosition(float parentAnimationTime, const aiNodeAnim* parentNodeAnimation);
 
-		Quaternions nlerp(Quaternions a, Quaternions b, float blend);
 		glm::mat4 aiToGlm(aiMatrix4x4 ai_matr);
 
 		void InitializeIKData();
@@ -403,7 +402,7 @@ namespace vrassimp
 		void QueryMeshData(const unsigned int& meshIndex, const aiMesh* mesh);
 		void QueryMeshMaterial(const unsigned int& meshIndex, const aiMesh* mesh);
 
-		void Draw();
+		static glm::mat4 ModelMatForLineBWTwoPoints(glm::vec3 A, glm::vec3 B);
 
 	private:
 

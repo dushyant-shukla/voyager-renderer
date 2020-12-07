@@ -1,6 +1,7 @@
 #include "Model.h"
 #include "RendererState.h"
 #include "assertions.h"
+#include "maths/Quaternion.h"
 
 namespace vrassimp
 {
@@ -271,6 +272,24 @@ namespace vrassimp
 		}
 	}
 
+	glm::mat4 Model::ModelMatForLineBWTwoPoints(glm::vec3 A, glm::vec3 B)
+	{
+		float scale = glm::distance(A, B);
+		glm::mat4 rot = glm::mat4(1.0f);
+		// Calculate angles using the direction vector
+		glm::vec3 dir = B - A;
+		dir.z *= -1.0f;
+		double y = atan2(dir.z, sqrt(dir.x * dir.x + dir.y * dir.y));
+		double z = atan2(dir.y, dir.x);
+		rot = glm::mat4_cast(glm::quat(glm::vec3(0, y, z)));
+
+		// world space
+		if (scale == 0)
+			return glm::mat4(0.0f);
+
+		return glm::translate(glm::mat4(1.0f), glm::vec3(A)) * rot * glm::scale(glm::mat4(1.0f), glm::vec3(scale, scale, scale));
+	}
+
 	void VertexBoneData::AddBoneData(int id, float weight)
 	{
 		for (int i = 0; i < MAX_BONES_PER_VERTX; ++i)
@@ -473,6 +492,10 @@ namespace vrassimp
 		if (pNodeAnim->mNumRotationKeys == 1)
 		{
 			rotation = pNodeAnim->mRotationKeys[0].mValue;
+
+			// Quaternion
+			vrmath::Quaternion result(glm::vec4(rotation.x, rotation.y, rotation.z, rotation.w));
+			return result.ToAiRotationMatrix();
 		}
 		else
 		{
@@ -494,12 +517,18 @@ namespace vrassimp
 			const aiQuaternion& start = currentFrame.mValue;
 			const aiQuaternion& end = nextFrame.mValue;
 
-			aiQuaternion::Interpolate(rotation, start, end, delta);
-			rotation.Normalize();
+			//aiQuaternion::Interpolate(rotation, start, end, delta);
+			//rotation.Normalize();
+
+			// Quaternion
+			vrmath::Quaternion A(glm::vec4(start.x, start.y, start.z, start.w));
+			vrmath::Quaternion B(glm::vec4(end.x, end.y, end.z, end.w));
+			vrmath::Quaternion result = vrmath::Quaternion::Slerp(A, B, delta);
+			return result.ToAiRotationMatrix();
 		}
 
-		aiMatrix4x4 mat(rotation.GetMatrix());
-		return mat;
+		//aiMatrix4x4 mat(rotation.GetMatrix());
+		//return mat;
 	}
 
 	int Animation::FindRotation(float parentAnimationTime, const aiNodeAnim* parentNodeAnimation)
@@ -614,32 +643,5 @@ namespace vrassimp
 		{
 			ReadIKBoneHierarchy(animationTime, parentNode->mChildren[i], globalTransformation);
 		}
-	}
-
-	Quaternions Animation::nlerp(Quaternions a, Quaternions b, float blend)
-	{
-		a.Normalize();
-		b.Normalize();
-
-		Quaternions result;
-		float dot_product = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
-		float one_minus_blend = 1.0f - blend;
-
-		if (dot_product < 0.0f)
-		{
-			result.x = a.x * one_minus_blend + blend * -b.x;
-			result.y = a.y * one_minus_blend + blend * -b.y;
-			result.z = a.z * one_minus_blend + blend * -b.z;
-			result.w = a.w * one_minus_blend + blend * -b.w;
-		}
-		else
-		{
-			result.x = a.x * one_minus_blend + blend * b.x;
-			result.y = a.y * one_minus_blend + blend * b.y;
-			result.z = a.z * one_minus_blend + blend * b.z;
-			result.w = a.w * one_minus_blend + blend * b.w;
-		}
-
-		return result.Normalized();
 	}
 }
