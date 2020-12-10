@@ -267,6 +267,7 @@ namespace vr
 		pipelineDepthStencilStateCreateInfo.depthWriteEnable = depthWriteEnable;
 		pipelineDepthStencilStateCreateInfo.depthCompareOp = compareOp;
 		pipelineDepthStencilStateCreateInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
+		pipelineDepthStencilStateCreateInfo.front = pipelineDepthStencilStateCreateInfo.back;
 		return *this;
 	}
 

@@ -57,6 +57,21 @@ void vr::AnimationKeyframes::InitializeScene()
 	SetupDescriptorSet();
 	SetupPipeline();
 	LoadAssets();
+
+	//MemoryUtility::CreateBuffer(sizeof(animatedModel->jointPositions[0]) * animatedModel->mAnimation->mBoneCount,
+	//	VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	//	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+	//	ALLOCATION_CALLBACK,
+	//	&jointVertexBuffer.mBuffer,
+	//	&jointVertexBuffer.mMemory);
+
+	//MemoryUtility::CreateBuffer(sizeof(animatedModel->linePositions[0]) * animatedModel->mAnimation->mBoneCount * 2,
+	//	VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	//	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+	//	ALLOCATION_CALLBACK,
+	//	&boneVertexBuffer.mBuffer,
+	//	&boneVertexBuffer.mMemory);
+
 	isReady = true;
 }
 
@@ -445,10 +460,10 @@ void vr::AnimationKeyframes::LoadAssets()
 		//spidey->LoadFromFile("spiderman\\spiderman.fbx", "spidey");
 		//spidey->mTransform.position = glm::vec3(0.0f, 0.1f, -7.0f);
 		//spidey->mTransform.rotation = glm::vec3(-90.0f, 180.0f, 0.0f);
-		//spidey->mTransform.scale = glm::vec3(450.0, 450.0f, 450.0f);
+		//spidey->mTransform.scale = glm::vec3(650.0, 650.0f, 650.0f);
 		//spidey->mAnimationTransform.position = glm::vec3(0.0f, 0.1f, -3.0f);
 		//spidey->mAnimationTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-		//spidey->mAnimationTransform.scale = glm::vec3(4.0, 4.0f, 4.0f);
+		//spidey->mAnimationTransform.scale = glm::vec3(5.5, 5.5f, 5.5f);
 		//spidey->mAnimation->settings.speed = 0.75f;
 		//mModels.push_back(spidey);
 		//animatedModel = spidey;
@@ -458,12 +473,12 @@ void vr::AnimationKeyframes::LoadAssets()
 	{
 		//vrassimp::Model* bengalTiger = new vrassimp::Model();
 		//bengalTiger->LoadFromFile("bengal-tiger\\tiger.fbx", "bengal tiger");
-		//bengalTiger->mTransform.position = glm::vec3(0.0f, 2.50f, -13.0f);
+		//bengalTiger->mTransform.position = glm::vec3(0.0f, 4.00f, -13.0f);
 		//bengalTiger->mTransform.rotation = glm::vec3(-94.70f, 222.60f, 347.35f);
-		//bengalTiger->mTransform.scale = glm::vec3(3.5f, 3.5f, 3.5f);
+		//bengalTiger->mTransform.scale = glm::vec3(5.5f, 5.5f, 5.5f);
 		//bengalTiger->mAnimationTransform.position = glm::vec3(0.0f, 0.10f, -13.0f);
 		//bengalTiger->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 180.0f);
-		//bengalTiger->mAnimationTransform.scale = glm::vec3(3.5f, 3.5f, 3.5f);
+		//bengalTiger->mAnimationTransform.scale = glm::vec3(5.5f, 5.5f, 5.5f);
 		//bengalTiger->mAnimation->settings.speed = 0.75f;
 		//bengalTiger->mAnimation->settings.currentTrackIndex = 4;
 		//mModels.push_back(bengalTiger);
@@ -641,12 +656,14 @@ void vr::AnimationKeyframes::UpdateBoneTransforms(vrassimp::Model* model, unsign
 	jointVertexBuffer.Destroy();
 	MemoryUtility::CreateBuffer(sizeof(model->jointPositions[0]) * model->mAnimation->mBoneCount,
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 		ALLOCATION_CALLBACK,
 		&jointVertexBuffer.mBuffer,
 		&jointVertexBuffer.mMemory);
 	jointVertexBuffer.Map();
 	jointVertexBuffer.CopyData(&model->jointPositions[0], sizeof(model->jointPositions[0]) * model->mAnimation->mBoneCount);
+
+	//vkCmdUpdateBuffer(mGraphicsCommandBuffers[imageIndex], jointVertexBuffer.mBuffer, 0, sizeof(model->jointPositions[0]) * model->mAnimation->mBoneCount, &model->jointPositions[0]);
 
 	model->linePositions.clear();
 	model->linePositions.resize(model->mAnimation->mBoneCount * 2);
@@ -680,13 +697,15 @@ void vr::AnimationKeyframes::UpdateBoneTransforms(vrassimp::Model* model, unsign
 	boneVertexBuffer.Destroy();
 	MemoryUtility::CreateBuffer(sizeof(model->linePositions[0]) * model->mAnimation->mBoneCount * 2,
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 		ALLOCATION_CALLBACK,
 		&boneVertexBuffer.mBuffer,
 		&boneVertexBuffer.mMemory);
 
 	boneVertexBuffer.Map();
 	boneVertexBuffer.CopyData(&model->linePositions[0], sizeof(model->linePositions[0]) * model->mAnimation->mBoneCount * 2);
+
+	//vkCmdUpdateBuffer(mGraphicsCommandBuffers[imageIndex], boneVertexBuffer.mBuffer, 0, sizeof(model->linePositions[0]) * model->mAnimation->mBoneCount * 2, &model->linePositions[0]);
 
 	animation->timer += frametime * model->mAnimation->settings.speed;
 
