@@ -269,6 +269,54 @@ namespace vrassimp
 					meshes[meshIndex]->textures.push_back(texture);
 				}
 			}
+
+			if (material->GetTextureCount(aiTextureType_NORMALS))
+			{
+				if (material->GetTexture(aiTextureType_NORMALS, 0, &path) == AI_SUCCESS)
+				{
+					int index = std::string(path.data).rfind("\\");
+					if (index < 0)
+					{
+						index = std::string(path.data).rfind("/");
+					}
+					std::string filename = std::string(path.data).substr(index + 1);
+
+					Texture* texture = new Texture(Texture::Type::NORMALS, filename);
+					meshes[meshIndex]->textures.push_back(texture);
+				}
+			}
+
+			if (material->GetTextureCount(aiTextureType_SPECULAR))
+			{
+				if (material->GetTexture(aiTextureType_SPECULAR, 0, &path) == AI_SUCCESS)
+				{
+					int index = std::string(path.data).rfind("\\");
+					if (index < 0)
+					{
+						index = std::string(path.data).rfind("/");
+					}
+					std::string filename = std::string(path.data).substr(index + 1);
+
+					Texture* texture = new Texture(Texture::Type::SPECULAR, filename);
+					meshes[meshIndex]->textures.push_back(texture);
+				}
+			}
+
+			if (material->GetTextureCount(aiTextureType_OPACITY))
+			{
+				if (material->GetTexture(aiTextureType_OPACITY, 0, &path) == AI_SUCCESS)
+				{
+					int index = std::string(path.data).rfind("\\");
+					if (index < 0)
+					{
+						index = std::string(path.data).rfind("/");
+					}
+					std::string filename = std::string(path.data).substr(index + 1);
+
+					Texture* texture = new Texture(Texture::Type::OPACITY, filename);
+					meshes[meshIndex]->textures.push_back(texture);
+				}
+			}
 		}
 	}
 

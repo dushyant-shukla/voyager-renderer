@@ -18,6 +18,9 @@ layout(set = 0, binding = 1) uniform LightUBO
     float quadratic;
 } light_ubo;
 
+layout(set = 1, binding = 0) uniform sampler2D diffuse_sampler;
+layout(set = 1, binding = 1) uniform sampler2D normal_sampler; // normal_sampler is being used as opacity texture (hack)
+
 layout(location = 0) out vec4 frag_color;
 
 float CalculateAttenuation(float D)
@@ -40,7 +43,10 @@ void main()
     vec3 N = normalize(fs_in.normal);
     float attenuation = CalculateAttenuation(length(light_ubo.position - fs_in.frag_position));
 
-	vec4 Kd = vec4(0.03, 0.3, 1.0, 1.0);
+	//vec4 Kd = vec4(0.03, 0.3, 1.0, 1.0);
+	vec4 Kd = texture(diffuse_sampler, fs_in.uv);
+	vec4 opacity = texture(normal_sampler, fs_in.uv);
+	Kd = Kd * opacity;
     vec4 diffuse_color = CalculateDiffuseComponent(L, N, Kd);
 
     float ambient_strength = 0.1;

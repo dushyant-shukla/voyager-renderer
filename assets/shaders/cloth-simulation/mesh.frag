@@ -19,6 +19,7 @@ layout(set = 0, binding = 1) uniform LightUBO
 } light_ubo;
 
 layout(set = 1, binding = 0) uniform sampler2D diffuse_sampler;
+layout(set = 1, binding = 1) uniform sampler2D normal_sampler;
 
 layout(location = 0) out vec4 frag_color;
 

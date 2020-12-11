@@ -55,6 +55,7 @@ namespace vr
 		void offsetPos(const glm::vec3 v) { if (movable) pos += v; }
 
 		void makeUnmovable() { movable = false; }
+		void makeMovable() { movable = true; }
 
 		void addToNormal(glm::vec3 normal)
 		{

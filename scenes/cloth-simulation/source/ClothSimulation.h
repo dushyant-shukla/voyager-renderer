@@ -116,9 +116,11 @@ namespace vr
 		struct
 		{
 			TextureSampler diffuse;
+			TextureSampler normal;
 		} mSamplers;
 
 		vrassimp::Model* ball;
+		vrassimp::Model* phantom;
 		std::vector<vrassimp::Model*> mModels;
 
 		float ballRadius = 0.5f;
@@ -126,11 +128,6 @@ namespace vr
 		int mCurrentFrame = 0;
 
 		const int MAX_MESH_COUNT = 100;
-
-		struct
-		{
-			int wind = 0;
-		} mSettings;
 
 		struct ClothVertex
 		{
@@ -186,6 +183,21 @@ namespace vr
 			glm::vec3 rotation;
 			glm::vec3 scale;
 		} clothModel;
+
+		struct
+		{
+			int wind = 1;
+			glm::vec3 windForce = glm::vec3(0.0f, 0.0f, -5.0f);
+			glm::vec3 force = glm::vec3(0.0f, -0.02f, 0.002f);
+			float radiusAdjustment = 1.0f;
+
+			// pinned particles status : 1 for pinned, 0 for unpinned
+			int upperLeft = 1;
+			int upperRight = 1;
+			int bottomLeft = 1;
+			int bottomRight = 1;
+		} mSettings;
+
 		Cloth mCloth;
 		Buffer<ClothVertex> mClothBuffer;
 	};

@@ -5,6 +5,7 @@
 #include "graphics/vulkan/Model.h"
 
 #include <vector>
+#include <map>
 
 namespace vr
 {
@@ -15,6 +16,8 @@ namespace vr
 		int num_particles_width; // number of particles in "width" direction
 		int num_particles_height; // number of particles in "height" direction
 		// total number of particles is num_particles_width*num_particles_height
+
+		std::map<std::string, std::vector<std::pair<int, int>>> pinnedParticles;
 
 		std::vector<Particle> particles; // all particles that are part of this cloth
 		std::vector<Constraint> constraints; // alle constraints between particles as part of this cloth
@@ -61,7 +64,7 @@ namespace vr
 		/* This is a important constructor for the entire system of particles and constraints*/
 		Cloth(float width, float height, int num_particles_width, int num_particles_height) : num_particles_width(num_particles_width), num_particles_height(num_particles_height)
 		{
-			particles.resize(num_particles_width * num_particles_height); //I am essentially using this vector as an array with room for num_particles_width*num_particles_height particles
+			particles.resize(num_particles_width * num_particles_height);
 			UV.resize(num_particles_width * num_particles_height);
 
 			// creating particles in a grid of particles from (0,0,0) to (width,-height,0)
@@ -102,14 +105,37 @@ namespace vr
 			}
 
 			// making the upper left most three and right most three particles unmovable
+			std::vector<std::pair<int, int>> upperLeft;  // 0
+			std::vector<std::pair<int, int>> upperRight; // 1
+			std::vector<std::pair<int, int>> bottomLeft; // 2
+			std::vector<std::pair<int, int>> bottomRight;// 3
 			for (int i = 0; i < 3; i++)
 			{
+				// upper left
 				getParticle(0 + i, 0)->offsetPos(glm::vec3(0.5, 0.0, 0.0)); // moving the particle a bit towards the center, to make it hang more natural - because I like it ;)
-				getParticle(0 + i, 0)->makeUnmovable();
+				getParticle(0 + i, 0)->makeUnmovable(); // upper left
+				upperLeft.emplace_back(0 + i, 0);
 
-				getParticle(0 + i, 0)->offsetPos(glm::vec3(-0.5, 0.0, 0.0)); // moving the particle a bit towards the center, to make it hang more natural - because I like it ;)
-				getParticle(num_particles_width - 1 - i, 0)->makeUnmovable();
+				// upper right
+				getParticle(num_particles_width - 1 - i, 0)->offsetPos(glm::vec3(-0.5, 0.0, 0.0)); // moving the particle a bit towards the center, to make it hang more natural - because I like it ;)
+				getParticle(num_particles_width - 1 - i, 0)->makeUnmovable();// upper right
+				upperRight.emplace_back(num_particles_width - 1 - i, 0);
+
+				// bottom left
+				getParticle(0, num_particles_height - 1 - i)->offsetPos(glm::vec3(0.5, 0.0, 0.0));
+				getParticle(0, num_particles_height - 1 - i)->makeUnmovable(); // bottom left
+				bottomLeft.emplace_back(0, num_particles_height - 1 - i);
+
+				// bottom right
+				getParticle(num_particles_width - 1, num_particles_height - 1 - i)->offsetPos(glm::vec3(-0.5, 0.0, 0.0));
+				getParticle(num_particles_width - 1, num_particles_height - 1 - i)->makeUnmovable(); // bottom right
+				bottomRight.emplace_back(num_particles_width - 1, num_particles_height - 1 - i);
 			}
+
+			pinnedParticles["upper-left"] = upperLeft;
+			pinnedParticles["upper-right"] = upperRight;
+			pinnedParticles["bottom-left"] = bottomLeft;
+			pinnedParticles["bottom-right"] = bottomRight;
 		}
 
 		/* this is an important methods where the time is progressed one time step for the entire cloth.

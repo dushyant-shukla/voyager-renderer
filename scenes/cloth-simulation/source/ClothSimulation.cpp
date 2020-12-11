@@ -10,7 +10,7 @@ namespace vr
 		activeCamera = CameraType::FIRST_PERSON;
 		cameraTypeIndex = static_cast<int>(activeCamera);
 
-		mCamera.position = glm::vec3(0.0f, 5.00f, 15.0f);
+		mCamera.position = glm::vec3(0.0f, -15.00f, 15.0f);
 		mCamera.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
 
 		eCamera.type = EditingModeCamera::Type::look_at;
@@ -56,9 +56,10 @@ namespace vr
 		SetupPipeline();
 		LoadAssets();
 
-		mCloth = Cloth(1, 1, 50, 50);
-		//VkDeviceSize size = 115248 * sizeof(float);
-		VkDeviceSize size = 14406 * sizeof(ClothVertex);
+		//mCloth = Cloth(1, 1, 50, 50);
+		mCloth = Cloth(14, 10, 55, 45);
+		//VkDeviceSize size = 14406 * sizeof(ClothVertex);
+		VkDeviceSize size = 14256 * sizeof(ClothVertex);
 		MemoryUtility::CreateBuffer(size,
 			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -217,74 +218,178 @@ namespace vr
 			ImGui::DragFloat("##translate_z", &(clothModel.position.z), 0.05f, -9999.0, 9999.0, "T:z = %.2f");
 			ImGui::PopItemWidth();
 
-			if (overlay->CheckBox("simulate wind", &(mSettings.wind)))
+			overlay->CheckBox("simulate wind", &(mSettings.wind));
+			if (mSettings.wind)
 			{
+				ImGui::Text("Wind force:");
+				ImGui::PushItemWidth(80);
+				ImGui::DragFloat("##wind_x", &(mSettings.windForce.x), 0.001f, -10.0, 10.0, "x = %.3f");
+				ImGui::PopItemWidth();
+				ImGui::SameLine();
+				ImGui::PushItemWidth(80);
+				ImGui::DragFloat("##wind_y", &(mSettings.windForce.y), 0.001f, -10.0, 10.0, "y = %.3f");
+				ImGui::PopItemWidth();
+				ImGui::SameLine();
+				ImGui::PushItemWidth(80);
+				ImGui::DragFloat("##wind_z", &(mSettings.windForce.z), 0.001f, -10.0, 10.0, "z = %.3f");
+				ImGui::PopItemWidth();
 			}
+
+			ImGui::Text("Force:");
+			ImGui::PushItemWidth(80);
+			ImGui::DragFloat("##force_x", &(mSettings.force.x), 0.001f, -10.0, 10.0, "x = %.3f");
+			ImGui::PopItemWidth();
+			ImGui::SameLine();
+			ImGui::PushItemWidth(80);
+			ImGui::DragFloat("##force_y", &(mSettings.force.y), 0.001f, -10.0, 10.0, "y = %.3f");
+			ImGui::PopItemWidth();
+			ImGui::SameLine();
+			ImGui::PushItemWidth(80);
+			ImGui::DragFloat("##force_z", &(mSettings.force.z), 0.001f, -10.0, 10.0, "z = %.3f");
+			ImGui::PopItemWidth();
+
+			ImGui::Text("Radius adjustment factor:");
+			ImGui::SliderFloat("##linear", &(mSettings.radiusAdjustment), 0.01f, 1.0, "%.3f");
+
+			ImGui::Text("Pinned corners:");
+			overlay->CheckBox("Upper left", &(mSettings.upperLeft));
+			if (!mSettings.upperLeft)
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					std::pair<int, int> particle = mCloth.pinnedParticles["upper-left"][i];
+					mCloth.getParticle(particle.first, particle.second)->makeMovable();
+				}
+			}
+			else
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					std::pair<int, int> particle = mCloth.pinnedParticles["upper-left"][i];
+					mCloth.getParticle(particle.first, particle.second)->makeUnmovable();
+				}
+			}
+			overlay->CheckBox("Upper right", &(mSettings.upperRight));
+			if (!mSettings.upperRight)
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					std::pair<int, int> particle = mCloth.pinnedParticles["upper-right"][i];
+					mCloth.getParticle(particle.first, particle.second)->makeMovable();
+				}
+			}
+			else
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					std::pair<int, int> particle = mCloth.pinnedParticles["upper-right"][i];
+					mCloth.getParticle(particle.first, particle.second)->makeUnmovable();
+				}
+			}
+			overlay->CheckBox("Bottom left", &(mSettings.bottomLeft));
+			if (!mSettings.bottomLeft)
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					std::pair<int, int> particle = mCloth.pinnedParticles["bottom-left"][i];
+					mCloth.getParticle(particle.first, particle.second)->makeMovable();
+				}
+			}
+			else
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					std::pair<int, int> particle = mCloth.pinnedParticles["bottom-left"][i];
+					mCloth.getParticle(particle.first, particle.second)->makeUnmovable();
+				}
+			}
+			overlay->CheckBox("Bottom right", &(mSettings.bottomRight));
+			if (!mSettings.bottomRight)
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					std::pair<int, int> particle = mCloth.pinnedParticles["bottom-right"][i];
+					mCloth.getParticle(particle.first, particle.second)->makeMovable();
+				}
+			}
+			else
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					std::pair<int, int> particle = mCloth.pinnedParticles["bottom-right"][i];
+					mCloth.getParticle(particle.first, particle.second)->makeUnmovable();
+				}
+			}
+
 			ImGui::TreePop();
 		}
 
 		std::string modelText = "Models (";
 		modelText += std::to_string(mModels.size());
 		modelText += ")";
-		if (ImGui::TreeNode(modelText.c_str()))
+		//if (ImGui::TreeNode(modelText.c_str()))
+		//{
+		for (auto& model : mModels)
 		{
-			for (auto& model : mModels)
+			if (model->mScreenName._Equal("phantom-model"))
 			{
-				bool showStaticTransforms = true;
-				if (ImGui::TreeNode(model->mScreenName.c_str()))
-				{
-					if (model->mScreenName._Equal("football"))
-					{
-						ImGui::DragFloat("##radius", &(ballRadius), 0.01f, 0.01f, 50.0f, "Radius = %.2f");
-						model->mTransform.scale.x = ballRadius;
-						model->mTransform.scale.y = ballRadius;
-						model->mTransform.scale.z = ballRadius;
-					}
-					else
-					{
-						ImGui::PushItemWidth(80);
-						ImGui::DragFloat("##scale_x", &(model->mTransform.scale.x), 0.01f, -9999.0, 9999.0, "S:x = %.2f");
-						ImGui::PopItemWidth();
-						ImGui::SameLine();
-						ImGui::PushItemWidth(80);
-						ImGui::DragFloat("##scale_y", &(model->mTransform.scale.y), 0.01f, -9999.0, 9999.0, "S:y = %.2f");
-						ImGui::PopItemWidth();
-						ImGui::SameLine();
-						ImGui::PushItemWidth(80);
-						ImGui::DragFloat("##scale_z", &(model->mTransform.scale.z), 0.01f, -9999.0, 9999.0, "S:z = %.2f");
-						ImGui::PopItemWidth();
-					}
-
-					ImGui::PushItemWidth(80);
-					ImGui::DragFloat("##rotate_x", &(model->mTransform.rotation.x), 0.05f, -9999.0, 9999.0, "R:x = %.2f");
-					ImGui::PopItemWidth();
-					ImGui::SameLine();
-					ImGui::PushItemWidth(80);
-					ImGui::DragFloat("##rotate_y", &(model->mTransform.rotation.y), 0.05f, -9999.0, 9999.0, "R:y = %.2f");
-					ImGui::PopItemWidth();
-					ImGui::SameLine();
-					ImGui::PushItemWidth(80);
-					ImGui::DragFloat("##rotate_z", &(model->mTransform.rotation.z), 0.05f, -9999.0, 9999.0, "R:z = %.2f");
-					ImGui::PopItemWidth();
-
-					ImGui::PushItemWidth(80);
-					ImGui::DragFloat("##translate_x", &(model->mTransform.position.x), 0.05f, -9999.0, 9999.0, "T:x = %.2f");
-					ImGui::PopItemWidth();
-					ImGui::SameLine();
-					ImGui::PushItemWidth(80);
-					ImGui::DragFloat("##translate_y", &(model->mTransform.position.y), 0.05f, -9999.0, 9999.0, "T:y = %.2f");
-					ImGui::PopItemWidth();
-					ImGui::SameLine();
-					ImGui::PushItemWidth(80);
-					ImGui::DragFloat("##translate_z", &(model->mTransform.position.z), 0.05f, -9999.0, 9999.0, "T:z = %.2f");
-					ImGui::PopItemWidth();
-
-					ImGui::TreePop();
-				}
+				continue;
 			}
+			bool showStaticTransforms = true;
+			if (ImGui::TreeNode(model->mScreenName.c_str()))
+			{
+				if (model->mScreenName._Equal("Football"))
+				{
+					ImGui::DragFloat("##radius", &(ballRadius), 0.01f, 0.01f, 50.0f, "Radius = %.2f");
+					model->mTransform.scale.x = ballRadius;
+					model->mTransform.scale.y = ballRadius;
+					model->mTransform.scale.z = ballRadius;
+				}
+				else
+				{
+					ImGui::PushItemWidth(80);
+					ImGui::DragFloat("##scale_x", &(model->mTransform.scale.x), 0.01f, -9999.0, 9999.0, "S:x = %.2f");
+					ImGui::PopItemWidth();
+					ImGui::SameLine();
+					ImGui::PushItemWidth(80);
+					ImGui::DragFloat("##scale_y", &(model->mTransform.scale.y), 0.01f, -9999.0, 9999.0, "S:y = %.2f");
+					ImGui::PopItemWidth();
+					ImGui::SameLine();
+					ImGui::PushItemWidth(80);
+					ImGui::DragFloat("##scale_z", &(model->mTransform.scale.z), 0.01f, -9999.0, 9999.0, "S:z = %.2f");
+					ImGui::PopItemWidth();
+				}
 
-			ImGui::TreePop();
+				ImGui::PushItemWidth(80);
+				ImGui::DragFloat("##rotate_x", &(model->mTransform.rotation.x), 0.05f, -9999.0, 9999.0, "R:x = %.2f");
+				ImGui::PopItemWidth();
+				ImGui::SameLine();
+				ImGui::PushItemWidth(80);
+				ImGui::DragFloat("##rotate_y", &(model->mTransform.rotation.y), 0.05f, -9999.0, 9999.0, "R:y = %.2f");
+				ImGui::PopItemWidth();
+				ImGui::SameLine();
+				ImGui::PushItemWidth(80);
+				ImGui::DragFloat("##rotate_z", &(model->mTransform.rotation.z), 0.05f, -9999.0, 9999.0, "R:z = %.2f");
+				ImGui::PopItemWidth();
+
+				ImGui::PushItemWidth(80);
+				ImGui::DragFloat("##translate_x", &(model->mTransform.position.x), 0.05f, -9999.0, 9999.0, "T:x = %.2f");
+				ImGui::PopItemWidth();
+				ImGui::SameLine();
+				ImGui::PushItemWidth(80);
+				ImGui::DragFloat("##translate_y", &(model->mTransform.position.y), 0.05f, -9999.0, 9999.0, "T:y = %.2f");
+				ImGui::PopItemWidth();
+				ImGui::SameLine();
+				ImGui::PushItemWidth(80);
+				ImGui::DragFloat("##translate_z", &(model->mTransform.position.z), 0.05f, -9999.0, 9999.0, "T:z = %.2f");
+				ImGui::PopItemWidth();
+
+				ImGui::TreePop();
+			}
 		}
+
+		//	ImGui::TreePop();
+		//}
 		ImGui::End();
 	}
 
@@ -355,10 +460,12 @@ namespace vr
 		{
 			mDescriptorPools.texture
 				.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
+				.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
 				.Create(0, MAX_MESH_COUNT, nullptr); // each mesh will own a descriptor set for holding texture data
 
 			mDescriptorSetLayouts.texture
 				.AddLayoutBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr)	// sampler diffuse
+				.AddLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr)	// sampler normal
 				.Create(0, nullptr);
 		}
 
@@ -458,6 +565,7 @@ namespace vr
 		{
 			mPipelineLayouts.cloth
 				.AddDescriptorSetLayout(mDescriptorSetLayouts.cloth.mLayout)
+				.AddDescriptorSetLayout(mDescriptorSetLayouts.texture.mLayout)
 				.AddPushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(modelData))
 				.Configure();
 
@@ -512,6 +620,7 @@ namespace vr
 	void ClothSimulation::SetupTextureSamplers()
 	{
 		mSamplers.diffuse.CreateDefault();
+		mSamplers.normal.CreateDefault();
 	}
 
 	void ClothSimulation::LoadAssets()
@@ -526,21 +635,21 @@ namespace vr
 		//	mModels.push_back(floor);
 		//}
 
-		/*cloth = new vrassimp::Model();
+		// a phantom model: not rendered, only used for loading texture descritors which are bound when cloth is rendered
+		phantom = new vrassimp::Model();
 		{
-			cloth->LoadFromFile("plane\\plane.gltf", "plane");
-			cloth->mTransform.position = glm::vec3(10.0f, 2.15f, -20.0f);
-			cloth->mTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-			cloth->mTransform.scale = glm::vec3(5.0f, 5.0f, 1.0f);
-			cloth->mAnimation = new vrassimp::Animation();
-			cloth->modelSettings.texturesAvailable = false;
-			mModels.push_back(cloth);
-		}*/
+			phantom->LoadFromFile("floor-dummy\\scene.gltf", "phantom-model");
+			phantom->mTransform.position = glm::vec3(10.0f, 2.15f, -20.0f);
+			phantom->mTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+			phantom->mTransform.scale = glm::vec3(5.0f, 5.0f, 1.0f);
+			phantom->mAnimation = new vrassimp::Animation();
+			mModels.push_back(phantom);
+		}
 
 		ball = new vrassimp::Model();
 		{
-			ball->LoadFromFile("football\\scene.gltf", "football");
-			ball->mTransform.position = glm::vec3(0.0f, 5.0f, -5.0f);
+			ball->LoadFromFile("football\\scene.gltf", "Football");
+			ball->mTransform.position = glm::vec3(6.5f, -4.5f, -4.5f);
 			ball->mTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
 			ball->mTransform.scale = glm::vec3(ballRadius);
 			ball->mAnimation = new vrassimp::Animation();
@@ -567,6 +676,16 @@ namespace vr
 						case vrassimp::Texture::Type::DIFFUSE:
 							t = new Texture(0);
 							t->LoadFromFile(texture->path.c_str(), mSamplers.diffuse.GetVulkanSampler());
+							texture->texture = t;
+							break;
+						case vrassimp::Texture::Type::NORMALS:
+							t = new Texture(1);
+							t->LoadFromFile(texture->path.c_str(), mSamplers.normal.GetVulkanSampler());
+							texture->texture = t;
+							break;
+						case vrassimp::Texture::Type::AMBIENT_OCCLUSION:
+							t = new Texture(2);
+							t->LoadFromFile(texture->path.c_str(), mSamplers.normal.GetVulkanSampler());
 							texture->texture = t;
 							break;
 						default:
@@ -668,6 +787,10 @@ namespace vr
 		{
 			for (auto& model : mModels)
 			{
+				if (model->mScreenName._Equal("phantom-model"))
+				{
+					continue;
+				}
 				UpdateModelData(model, frametime);
 
 				vkCmdBindPipeline(mGraphicsCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelines.mesh.GetVulkanPipeline());
@@ -712,10 +835,15 @@ namespace vr
 
 	void ClothSimulation::UpdateCloth(unsigned int imageIndex)
 	{
-		mCloth.addForce(glm::vec3(0, -0.02, 0.002) * Particle::TIME_STEP_2); // add gravity each frame, pointing down
-		mCloth.windForce(glm::vec3(0.0, 0, -10.0) * Particle::TIME_STEP_2);
+		//mCloth.addForce(glm::vec3(0, -0.02, 0.002) * Particle::TIME_STEP_2); // add gravity each frame, pointing down
+		mCloth.addForce(mSettings.force * Particle::TIME_STEP_2); // add gravity each frame, pointing down
+		if (mSettings.wind)
+		{
+			//mCloth.windForce(glm::vec3(0.0, 0, -10.0) * Particle::TIME_STEP_2);
+			mCloth.windForce(mSettings.windForce * Particle::TIME_STEP_2);
+		}
 		mCloth.timeStep();
-		mCloth.ballCollision(ball->mTransform.position, ball->mTransform.scale.x);
+		mCloth.ballCollision(ball->mTransform.position, ball->mTransform.scale.x * mSettings.radiusAdjustment);
 		std::vector<Particle>::iterator particle;
 		for (particle = mCloth.particles.begin(); particle != mCloth.particles.end(); particle++)
 		{
@@ -852,7 +980,7 @@ namespace vr
 			VK_SHADER_STAGE_VERTEX_BIT, 0,
 			sizeof(modelData), &modelData);	// we can also pass an array of data
 
-		std::vector<VkDescriptorSet> descriptorSets = { mDescriptorSets.cloth.mSets[imageIndex] };
+		std::vector<VkDescriptorSet> descriptorSets = { mDescriptorSets.cloth.mSets[imageIndex], phantom->meshes[0]->mDescriptorSets.mSets[0] };
 		vkCmdBindDescriptorSets(mGraphicsCommandBuffers[imageIndex],
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			mPipelineLayouts.cloth.GetVulkanPipelineLayout(),
