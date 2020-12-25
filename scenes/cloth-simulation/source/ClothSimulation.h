@@ -55,6 +55,8 @@ namespace vr
 		void UpdateCloth(unsigned int imageIndex);
 		void DrawCloth(unsigned int imageIndex);
 
+		void ProcessInput(const float frametime);
+
 	private:
 
 		struct
@@ -123,8 +125,6 @@ namespace vr
 		vrassimp::Model* phantom;
 		std::vector<vrassimp::Model*> mModels;
 
-		float ballRadius = 0.5f;
-
 		int mCurrentFrame = 0;
 
 		const int MAX_MESH_COUNT = 100;
@@ -187,9 +187,13 @@ namespace vr
 		struct
 		{
 			int wind = 1;
-			glm::vec3 windForce = glm::vec3(0.0f, 0.0f, -5.0f);
-			glm::vec3 force = glm::vec3(0.0f, -0.02f, 0.002f);
-			float radiusAdjustment = 1.0f;
+			glm::vec3 windForce = glm::vec3(0.0f, 0.0f, -0.001f);
+			glm::vec3 force = glm::vec3(0.001f, 0.001f, 0.001f);
+			int resetForces = 0;
+			int removeForces = 0;
+
+			float ballRadius = 10.5f;
+			float radiusAdjustment = 0.202f;
 
 			// pinned particles status : 1 for pinned, 0 for unpinned
 			int upperLeft = 1;

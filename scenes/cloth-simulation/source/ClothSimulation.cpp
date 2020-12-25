@@ -10,7 +10,7 @@ namespace vr
 		activeCamera = CameraType::FIRST_PERSON;
 		cameraTypeIndex = static_cast<int>(activeCamera);
 
-		mCamera.position = glm::vec3(0.0f, -15.00f, 15.0f);
+		mCamera.position = glm::vec3(5.0f, -5.00f, 15.0f);
 		mCamera.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
 
 		eCamera.type = EditingModeCamera::Type::look_at;
@@ -57,9 +57,14 @@ namespace vr
 		LoadAssets();
 
 		//mCloth = Cloth(1, 1, 50, 50);
-		mCloth = Cloth(14, 10, 55, 45);
 		//VkDeviceSize size = 14406 * sizeof(ClothVertex);
-		VkDeviceSize size = 14256 * sizeof(ClothVertex);
+
+		//mCloth = Cloth(14, 10, 55, 45);
+		//VkDeviceSize size = 14256 * sizeof(ClothVertex);
+
+		mCloth = Cloth(14, 10, 60, 50);
+		VkDeviceSize size = 17346 * sizeof(ClothVertex);
+
 		MemoryUtility::CreateBuffer(size,
 			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -248,6 +253,20 @@ namespace vr
 			ImGui::DragFloat("##force_z", &(mSettings.force.z), 0.001f, -10.0, 10.0, "z = %.3f");
 			ImGui::PopItemWidth();
 
+			if (overlay->CheckBox("Reset all forces", &(mSettings.resetForces)))
+			{
+				mSettings.windForce = glm::vec3(0.0f, 0.0f, -0.001f);
+				mSettings.force = glm::vec3(0.001f, 0.001f, 0.001f);
+				mSettings.resetForces = 0;
+			}
+
+			if (overlay->CheckBox("Remove all forces", &(mSettings.removeForces)))
+			{
+				mSettings.windForce = glm::vec3(0.0f);
+				mSettings.force = glm::vec3(0.0f);
+				mSettings.removeForces = 0;
+			}
+
 			ImGui::Text("Radius adjustment factor:");
 			ImGui::SliderFloat("##linear", &(mSettings.radiusAdjustment), 0.01f, 1.0, "%.3f");
 
@@ -258,7 +277,7 @@ namespace vr
 				for (int i = 0; i < 3; i++)
 				{
 					std::pair<int, int> particle = mCloth.pinnedParticles["upper-left"][i];
-					mCloth.getParticle(particle.first, particle.second)->makeMovable();
+					mCloth.GetParticle(particle.first, particle.second)->MakeMovable();
 				}
 			}
 			else
@@ -266,7 +285,7 @@ namespace vr
 				for (int i = 0; i < 3; i++)
 				{
 					std::pair<int, int> particle = mCloth.pinnedParticles["upper-left"][i];
-					mCloth.getParticle(particle.first, particle.second)->makeUnmovable();
+					mCloth.GetParticle(particle.first, particle.second)->MakeUnmovable();
 				}
 			}
 			overlay->CheckBox("Upper right", &(mSettings.upperRight));
@@ -275,7 +294,7 @@ namespace vr
 				for (int i = 0; i < 3; i++)
 				{
 					std::pair<int, int> particle = mCloth.pinnedParticles["upper-right"][i];
-					mCloth.getParticle(particle.first, particle.second)->makeMovable();
+					mCloth.GetParticle(particle.first, particle.second)->MakeMovable();
 				}
 			}
 			else
@@ -283,7 +302,7 @@ namespace vr
 				for (int i = 0; i < 3; i++)
 				{
 					std::pair<int, int> particle = mCloth.pinnedParticles["upper-right"][i];
-					mCloth.getParticle(particle.first, particle.second)->makeUnmovable();
+					mCloth.GetParticle(particle.first, particle.second)->MakeUnmovable();
 				}
 			}
 			overlay->CheckBox("Bottom left", &(mSettings.bottomLeft));
@@ -292,7 +311,7 @@ namespace vr
 				for (int i = 0; i < 3; i++)
 				{
 					std::pair<int, int> particle = mCloth.pinnedParticles["bottom-left"][i];
-					mCloth.getParticle(particle.first, particle.second)->makeMovable();
+					mCloth.GetParticle(particle.first, particle.second)->MakeMovable();
 				}
 			}
 			else
@@ -300,7 +319,7 @@ namespace vr
 				for (int i = 0; i < 3; i++)
 				{
 					std::pair<int, int> particle = mCloth.pinnedParticles["bottom-left"][i];
-					mCloth.getParticle(particle.first, particle.second)->makeUnmovable();
+					mCloth.GetParticle(particle.first, particle.second)->MakeUnmovable();
 				}
 			}
 			overlay->CheckBox("Bottom right", &(mSettings.bottomRight));
@@ -309,7 +328,7 @@ namespace vr
 				for (int i = 0; i < 3; i++)
 				{
 					std::pair<int, int> particle = mCloth.pinnedParticles["bottom-right"][i];
-					mCloth.getParticle(particle.first, particle.second)->makeMovable();
+					mCloth.GetParticle(particle.first, particle.second)->MakeMovable();
 				}
 			}
 			else
@@ -317,7 +336,7 @@ namespace vr
 				for (int i = 0; i < 3; i++)
 				{
 					std::pair<int, int> particle = mCloth.pinnedParticles["bottom-right"][i];
-					mCloth.getParticle(particle.first, particle.second)->makeUnmovable();
+					mCloth.GetParticle(particle.first, particle.second)->MakeUnmovable();
 				}
 			}
 
@@ -340,10 +359,10 @@ namespace vr
 			{
 				if (model->mScreenName._Equal("Football"))
 				{
-					ImGui::DragFloat("##radius", &(ballRadius), 0.01f, 0.01f, 50.0f, "Radius = %.2f");
-					model->mTransform.scale.x = ballRadius;
-					model->mTransform.scale.y = ballRadius;
-					model->mTransform.scale.z = ballRadius;
+					ImGui::DragFloat("##radius", &(mSettings.ballRadius), 0.01f, 0.01f, 50.0f, "Radius = %.2f");
+					model->mTransform.scale.x = mSettings.ballRadius;
+					model->mTransform.scale.y = mSettings.ballRadius;
+					model->mTransform.scale.z = mSettings.ballRadius;
 				}
 				else
 				{
@@ -625,16 +644,6 @@ namespace vr
 
 	void ClothSimulation::LoadAssets()
 	{
-		//vrassimp::Model* floor = new vrassimp::Model();
-		//{
-		//	floor->LoadFromFile("dungeon_ground\\scene.gltf", "floor");
-		//	floor->mTransform.position = glm::vec3(5.0f, -0.15f, -20.0f);
-		//	floor->mTransform.rotation = glm::vec3(90.0f, 0.0f, 0.0f);
-		//	floor->mTransform.scale = glm::vec3(5.0f, 3.0f, 1.0f);
-		//	floor->mAnimation = new vrassimp::Animation();
-		//	mModels.push_back(floor);
-		//}
-
 		// a phantom model: not rendered, only used for loading texture descritors which are bound when cloth is rendered
 		phantom = new vrassimp::Model();
 		{
@@ -649,9 +658,9 @@ namespace vr
 		ball = new vrassimp::Model();
 		{
 			ball->LoadFromFile("football\\scene.gltf", "Football");
-			ball->mTransform.position = glm::vec3(6.5f, -4.5f, -4.5f);
+			ball->mTransform.position = glm::vec3(6.0f, -5.0f, 6.0f);
 			ball->mTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-			ball->mTransform.scale = glm::vec3(ballRadius);
+			ball->mTransform.scale = glm::vec3(mSettings.ballRadius);
 			ball->mAnimation = new vrassimp::Animation();
 			mModels.push_back(ball);
 		}
@@ -753,6 +762,7 @@ namespace vr
 
 	void ClothSimulation::RecordCommands(unsigned int imageIndex, const double& frametime)
 	{
+		ProcessInput(frametime);
 		UpdateViewBuffer(imageIndex);
 		UpdateLightBuffer(imageIndex);
 		UpdateCloth(imageIndex);
@@ -836,130 +846,66 @@ namespace vr
 	void ClothSimulation::UpdateCloth(unsigned int imageIndex)
 	{
 		//mCloth.addForce(glm::vec3(0, -0.02, 0.002) * Particle::TIME_STEP_2); // add gravity each frame, pointing down
-		mCloth.addForce(mSettings.force * Particle::TIME_STEP_2); // add gravity each frame, pointing down
+		mCloth.AddForce(mSettings.force * Particle::TIME_STEP_2); // add gravity each frame, pointing down
 		if (mSettings.wind)
 		{
 			//mCloth.windForce(glm::vec3(0.0, 0, -10.0) * Particle::TIME_STEP_2);
-			mCloth.windForce(mSettings.windForce * Particle::TIME_STEP_2);
+			mCloth.WindForce(mSettings.windForce * Particle::TIME_STEP_2);
 		}
-		mCloth.timeStep();
-		mCloth.ballCollision(ball->mTransform.position, ball->mTransform.scale.x * mSettings.radiusAdjustment);
+		mCloth.TimeStep();
+		mCloth.BallCollision(ball->mTransform.position, ball->mTransform.scale.x * mSettings.radiusAdjustment);
 		std::vector<Particle>::iterator particle;
 		for (particle = mCloth.particles.begin(); particle != mCloth.particles.end(); particle++)
 		{
-			(*particle).resetNormal();
+			(*particle).ResetNormal();
 		}
 		std::vector<ClothVertex> vertexInputData;
 		//std::vector<float> vertexInputData;
 		//create smooth per particle normals by adding up all the (hard) triangle normals that each particle is part of
-		for (int x = 0; x < mCloth.num_particles_width - 1; x++)
+		for (int x = 0; x < mCloth.horizontalParticleCount - 1; x++)
 		{
-			for (int y = 0; y < mCloth.num_particles_height - 1; y++)
+			for (int y = 0; y < mCloth.verticalParticleCount - 1; y++)
 			{
-				glm::vec3 normal = mCloth.calcTriangleNormal(mCloth.getParticle(x + 1, y), mCloth.getParticle(x, y), mCloth.getParticle(x, y + 1));
-				mCloth.getParticle(x + 1, y)->addToNormal(normal);
-				mCloth.getParticle(x, y)->addToNormal(normal);
-				mCloth.getParticle(x, y + 1)->addToNormal(normal);
-				Particle* part = mCloth.getParticle(x + 1, y);
+				glm::vec3 normal = mCloth.CalculateTriangleNormal(mCloth.GetParticle(x + 1, y), mCloth.GetParticle(x, y), mCloth.GetParticle(x, y + 1));
+				mCloth.GetParticle(x + 1, y)->AddToNormal(normal);
+				mCloth.GetParticle(x, y)->AddToNormal(normal);
+				mCloth.GetParticle(x, y + 1)->AddToNormal(normal);
 
-				//vertexInputData.push_back(part->getPos().x);
-				//vertexInputData.push_back(part->getPos().y);
-				//vertexInputData.push_back(part->getPos().z);
+				Particle* part = mCloth.GetParticle(x + 1, y);
+				vertexInputData.emplace_back(part->GetPosition(), part->GetNormal(), part->GetUV());
 
-				//vertexInputData.push_back(part->getNormal().x);
-				//vertexInputData.push_back(part->getNormal().y);
-				//vertexInputData.push_back(part->getNormal().z);
-
-				//vertexInputData.push_back(part->getUV().x);
-				//vertexInputData.push_back(part->getUV().y);
-
-				vertexInputData.emplace_back(part->getPos(), part->getNormal(), part->getUV());
 				////////////////////////////////////////
-				part = mCloth.getParticle(x, y);
 
-				//vertexInputData.push_back(part->getPos().x);
-				//vertexInputData.push_back(part->getPos().y);
-				//vertexInputData.push_back(part->getPos().z);
+				part = mCloth.GetParticle(x, y);
+				vertexInputData.emplace_back(part->GetPosition(), part->GetNormal(), part->GetUV());
 
-				//vertexInputData.push_back(part->getNormal().x);
-				//vertexInputData.push_back(part->getNormal().y);
-				//vertexInputData.push_back(part->getNormal().z);
-
-				//vertexInputData.push_back(part->getUV().x);
-				//vertexInputData.push_back(part->getUV().y);
-
-				vertexInputData.emplace_back(part->getPos(), part->getNormal(), part->getUV());
 				/////////////////////////////////////
-				part = mCloth.getParticle(x, y + 1);
 
-				//vertexInputData.push_back(part->getPos().x);
-				//vertexInputData.push_back(part->getPos().y);
-				//vertexInputData.push_back(part->getPos().z);
+				part = mCloth.GetParticle(x, y + 1);
+				vertexInputData.emplace_back(part->GetPosition(), part->GetNormal(), part->GetUV());
 
-				//vertexInputData.push_back(part->getNormal().x);
-				//vertexInputData.push_back(part->getNormal().y);
-				//vertexInputData.push_back(part->getNormal().z);
-
-				//vertexInputData.push_back(part->getUV().x);
-				//vertexInputData.push_back(part->getUV().y);
-
-				vertexInputData.emplace_back(part->getPos(), part->getNormal(), part->getUV());
 				//////////////////////////////////////////////////////////////////////
 
-				normal = mCloth.calcTriangleNormal(mCloth.getParticle(x + 1, y + 1), mCloth.getParticle(x + 1, y), mCloth.getParticle(x, y + 1));
-				mCloth.getParticle(x + 1, y + 1)->addToNormal(normal);
-				mCloth.getParticle(x + 1, y)->addToNormal(normal);
-				mCloth.getParticle(x, y + 1)->addToNormal(normal);
+				normal = mCloth.CalculateTriangleNormal(mCloth.GetParticle(x + 1, y + 1), mCloth.GetParticle(x + 1, y), mCloth.GetParticle(x, y + 1));
+				mCloth.GetParticle(x + 1, y + 1)->AddToNormal(normal);
+				mCloth.GetParticle(x + 1, y)->AddToNormal(normal);
+				mCloth.GetParticle(x, y + 1)->AddToNormal(normal);
 
-				part = mCloth.getParticle(x + 1, y + 1);
+				part = mCloth.GetParticle(x + 1, y + 1);
+				vertexInputData.emplace_back(part->GetPosition(), part->GetNormal(), part->GetUV());
 
-				//vertexInputData.push_back(part->getPos().x);
-				//vertexInputData.push_back(part->getPos().y);
-				//vertexInputData.push_back(part->getPos().z);
-
-				//vertexInputData.push_back(part->getNormal().x);
-				//vertexInputData.push_back(part->getNormal().y);
-				//vertexInputData.push_back(part->getNormal().z);
-
-				//vertexInputData.push_back(part->getUV().x);
-				//vertexInputData.push_back(part->getUV().y);
-
-				vertexInputData.emplace_back(part->getPos(), part->getNormal(), part->getUV());
 				////////////////////////////////////////
-				part = mCloth.getParticle(x + 1, y);
 
-				//vertexInputData.push_back(part->getPos().x);
-				//vertexInputData.push_back(part->getPos().y);
-				//vertexInputData.push_back(part->getPos().z);
+				part = mCloth.GetParticle(x + 1, y);
+				vertexInputData.emplace_back(part->GetPosition(), part->GetNormal(), part->GetUV());
 
-				//vertexInputData.push_back(part->getNormal().x);
-				//vertexInputData.push_back(part->getNormal().y);
-				//vertexInputData.push_back(part->getNormal().z);
-
-				//vertexInputData.push_back(part->getUV().x);
-				//vertexInputData.push_back(part->getUV().y);
-
-				vertexInputData.emplace_back(part->getPos(), part->getNormal(), part->getUV());
 				/////////////////////////////////////
-				part = mCloth.getParticle(x, y + 1);
 
-				//vertexInputData.push_back(part->getPos().x);
-				//vertexInputData.push_back(part->getPos().y);
-				//vertexInputData.push_back(part->getPos().z);
-
-				//vertexInputData.push_back(part->getNormal().x);
-				//vertexInputData.push_back(part->getNormal().y);
-				//vertexInputData.push_back(part->getNormal().z);
-
-				//vertexInputData.push_back(part->getUV().x);
-				//vertexInputData.push_back(part->getUV().y);
-
-				vertexInputData.emplace_back(part->getPos(), part->getNormal(), part->getUV());
+				part = mCloth.GetParticle(x, y + 1);
+				vertexInputData.emplace_back(part->GetPosition(), part->GetNormal(), part->GetUV());
 			}
 		}
 
-		//memcpy(mClothBuffer.mapped, vertexInputData.data(), vertexInputData.size() * sizeof(float));
-		memcpy(mClothBuffer.mapped, vertexInputData.data(), vertexInputData.size() * sizeof(ClothVertex));
 		mClothBuffer.CopyData(vertexInputData.data(), vertexInputData.size() * sizeof(ClothVertex));
 	}
 
@@ -994,6 +940,37 @@ namespace vr
 		vkCmdBindVertexBuffers(mGraphicsCommandBuffers[imageIndex], 0, 1, &mClothBuffer.mBuffer, offsets);
 
 		vkCmdDraw(mGraphicsCommandBuffers[imageIndex], 14406, 1, 0, 0);
+	}
+
+	void ClothSimulation::ProcessInput(const float frametime)
+	{
+		InputManager* inputManager = InputManager::GetInstance();
+		if (inputManager->IsKeyPressed(KEY_UP))
+		{
+			ball->mTransform.position.y += 2.0f * frametime;
+		}
+		if (inputManager->IsKeyPressed(KEY_DOWN))
+		{
+			ball->mTransform.position.y -= 2.0f * frametime;
+		}
+
+		if (inputManager->IsKeyPressed(KEY_LEFT))
+		{
+			ball->mTransform.position.x -= 2.0f * frametime;
+		}
+		if (inputManager->IsKeyPressed(KEY_RIGHT))
+		{
+			ball->mTransform.position.x += 2.0f * frametime;
+		}
+
+		if (inputManager->IsKeyPressed(KEY_E)) // towards viewer
+		{
+			ball->mTransform.position.z += 2.0f * frametime;
+		}
+		if (inputManager->IsKeyPressed(KEY_Q)) // away from viewer
+		{
+			ball->mTransform.position.z -= 2.0f * frametime;
+		}
 	}
 
 	Application* CreateApplication()

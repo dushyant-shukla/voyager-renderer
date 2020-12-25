@@ -47,6 +47,7 @@ namespace vr
 		void UpdateViewBuffer(unsigned int imageIndex);
 		void UpdateModelData(vrassimp::Model* model, const double& frametime);
 		void UpdateBoneTransforms(vrassimp::Model* model, unsigned int imageIndex, const double& frametime);
+		void UpdateLightBuffer(unsigned int imageIndex);
 
 		// input processing
 		void ProcessInput(vrassimp::Model* model);
@@ -102,6 +103,19 @@ namespace vr
 		} skinningUBO;
 		std::vector<VkBuffer> skinningUboBuffers;
 		std::vector<VkDeviceMemory> skinningUboMemory;
+
+		struct
+		{
+			alignas(16) glm::vec3 position;
+			alignas(16) glm::vec3 color;
+			//alignas(16) glm::vec3 direction;
+			//alignas(4) float cutoff;
+			alignas(4) float constant;
+			alignas(4) float linear;
+			alignas(4) float quadratic;
+		} lightUBO;
+		std::vector<VkBuffer> lightUboBuffers;
+		std::vector<VkDeviceMemory> lightUboMemory;
 
 		struct
 		{

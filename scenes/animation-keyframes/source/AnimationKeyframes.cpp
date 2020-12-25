@@ -441,33 +441,33 @@ void vr::AnimationKeyframes::LoadAssets()
 
 	// nathan
 	{
-		vrassimp::Model* nathan = new vrassimp::Model();
-		nathan->LoadFromFile("nathan\\scene.gltf", "nathan");
-		nathan->mTransform.position = glm::vec3(0.0f, 0.2f, -10.0f);
-		nathan->mTransform.rotation = glm::vec3(0.0f, 180.0f, 0.0f);
-		nathan->mTransform.scale = glm::vec3(0.08, 0.08f, 0.08f);
-		nathan->mAnimationTransform.position = glm::vec3(0.0f, 0.2f, -10.0f);
-		nathan->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 180.0f);
-		nathan->mAnimationTransform.scale = glm::vec3(0.08, 0.08f, 0.08f);
-		nathan->mAnimation->settings.speed = 25.0f;
-		mModels.push_back(nathan);
-		animatedModel = nathan;
-		floor->mAnimation->settings.uvOffsetScale = 0.058;
+		//vrassimp::Model* nathan = new vrassimp::Model();
+		//nathan->LoadFromFile("nathan\\scene.gltf", "nathan");
+		//nathan->mTransform.position = glm::vec3(0.0f, 0.2f, -10.0f);
+		//nathan->mTransform.rotation = glm::vec3(0.0f, 180.0f, 0.0f);
+		//nathan->mTransform.scale = glm::vec3(0.08, 0.08f, 0.08f);
+		//nathan->mAnimationTransform.position = glm::vec3(0.0f, 0.2f, -10.0f);
+		//nathan->mAnimationTransform.rotation = glm::vec3(90.0f, 0.0f, 180.0f);
+		//nathan->mAnimationTransform.scale = glm::vec3(0.08, 0.08f, 0.08f);
+		//nathan->mAnimation->settings.speed = 25.0f;
+		//mModels.push_back(nathan);
+		//animatedModel = nathan;
+		//floor->mAnimation->settings.uvOffsetScale = 0.058;
 	}
 
 	{
-		//vrassimp::Model* spidey = new vrassimp::Model();
-		//spidey->LoadFromFile("spiderman\\spiderman.fbx", "spidey");
-		//spidey->mTransform.position = glm::vec3(0.0f, 0.1f, -7.0f);
-		//spidey->mTransform.rotation = glm::vec3(-90.0f, 180.0f, 0.0f);
-		//spidey->mTransform.scale = glm::vec3(650.0, 650.0f, 650.0f);
-		//spidey->mAnimationTransform.position = glm::vec3(0.0f, 0.1f, -3.0f);
-		//spidey->mAnimationTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-		//spidey->mAnimationTransform.scale = glm::vec3(5.5, 5.5f, 5.5f);
-		//spidey->mAnimation->settings.speed = 0.75f;
-		//mModels.push_back(spidey);
-		//animatedModel = spidey;
-		//floor->mAnimation->settings.uvOffsetScale = 0.0f;
+		vrassimp::Model* spidey = new vrassimp::Model();
+		spidey->LoadFromFile("spiderman\\spiderman.fbx", "spidey");
+		spidey->mTransform.position = glm::vec3(0.0f, 0.1f, -7.0f);
+		spidey->mTransform.rotation = glm::vec3(-90.0f, 180.0f, 0.0f);
+		spidey->mTransform.scale = glm::vec3(650.0, 650.0f, 650.0f);
+		spidey->mAnimationTransform.position = glm::vec3(0.0f, 0.1f, -3.0f);
+		spidey->mAnimationTransform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+		spidey->mAnimationTransform.scale = glm::vec3(5.5, 5.5f, 5.5f);
+		spidey->mAnimation->settings.speed = 0.75f;
+		mModels.push_back(spidey);
+		animatedModel = spidey;
+		floor->mAnimation->settings.uvOffsetScale = 0.0f;
 	}
 
 	{
@@ -980,9 +980,9 @@ void vr::AnimationKeyframes::OnUpdateUIOverlay(UiOverlay* overlay)
 					if (overlay->CheckBox("Show joints", &(model->mAnimation->settings.showJoints)))
 					{
 					}
-					if (overlay->CheckBox("Show bones", &(model->mAnimation->settings.showLines)))
-					{
-					}
+					//if (overlay->CheckBox("Show bones", &(model->mAnimation->settings.showLines)))
+					//{
+					//}
 					if (model->mAnimation->settings.enableAnimation &&
 						overlay->InputFloat("Speed", &(model->mAnimation->settings.speed), 0.5, 3))
 					{

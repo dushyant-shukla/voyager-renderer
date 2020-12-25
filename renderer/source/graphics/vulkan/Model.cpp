@@ -286,7 +286,7 @@ namespace vrassimp
 				}
 			}
 
-			if (material->GetTextureCount(aiTextureType_SPECULAR))
+			/*if (material->GetTextureCount(aiTextureType_SPECULAR))
 			{
 				if (material->GetTexture(aiTextureType_SPECULAR, 0, &path) == AI_SUCCESS)
 				{
@@ -316,7 +316,7 @@ namespace vrassimp
 					Texture* texture = new Texture(Texture::Type::OPACITY, filename);
 					meshes[meshIndex]->textures.push_back(texture);
 				}
-			}
+			}*/
 		}
 	}
 

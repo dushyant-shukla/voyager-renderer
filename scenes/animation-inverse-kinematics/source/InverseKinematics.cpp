@@ -18,6 +18,12 @@ vr::InverseKinematics::InverseKinematics(std::string name) : Application(name)
 	eCamera.SetPosition(glm::vec3(0.0f, 5.00f, -20.0f));
 	eCamera.SetRotation(glm::vec3(0.0f, 0.0f, 0.0f));
 	eCamera.SetPerspective(glm::radians(60.0f), (float)Window::WIDTH / Window::HEIGHT, 0.1f, 1024.0f);
+
+	lightUBO.color = glm::vec3(1.0f, 1.0f, 1.0f);
+	lightUBO.position = glm::vec3(0.0f, 10.0f, 5.0f);
+	lightUBO.constant = 1.0f;
+	lightUBO.linear = 0.22f;
+	lightUBO.quadratic = 0.20f;
 }
 
 vr::InverseKinematics::~InverseKinematics()
@@ -35,6 +41,8 @@ vr::InverseKinematics::~InverseKinematics()
 			vkFreeMemory(LOGICAL_DEVICE, viewUboMemory[i], nullptr);
 			vkDestroyBuffer(LOGICAL_DEVICE, skinningUboBuffers[i], nullptr);
 			vkFreeMemory(LOGICAL_DEVICE, skinningUboMemory[i], nullptr);
+			vkDestroyBuffer(LOGICAL_DEVICE, lightUboBuffers[i], nullptr);
+			vkFreeMemory(LOGICAL_DEVICE, lightUboMemory[i], nullptr);
 		}
 		RENDERER_DEBUG("RESOURCE DESTROYED: UNIFORM BUFFER");
 		RENDERER_DEBUG("RESOURCE FREED: UNIFORM BUFFER MEMORY");
@@ -130,11 +138,13 @@ void vr::InverseKinematics::SetupDescriptorSet()
 		mDescriptorPools.mesh
 			.AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
 			.AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
+			.AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
 			.Create(0, static_cast<unsigned int>(mSwapchain->mImages.size()), nullptr);
 
 		mDescriptorSetLayouts.mesh
 			.AddLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr)
 			.AddLayoutBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr)
+			.AddLayoutBinding(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr)
 			.Create(0, nullptr);
 
 		mDescriptorSets.mesh.Setup(mDescriptorSetLayouts.mesh.mLayout,
@@ -174,6 +184,27 @@ void vr::InverseKinematics::SetupDescriptorSet()
 			writeBufferInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writeBufferInfo.dstSet = mDescriptorSets.mesh.mSets[i];
 			writeBufferInfo.dstBinding = 1;
+			writeBufferInfo.dstArrayElement = 0;
+			writeBufferInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			writeBufferInfo.descriptorCount = 1;
+			writeBufferInfo.pBufferInfo = &bufferInfo;
+
+			descriptorWrites.push_back(writeBufferInfo);
+		}
+		vkUpdateDescriptorSets(LOGICAL_DEVICE, static_cast<unsigned int>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+
+		descriptorWrites = {};
+		for (size_t i = 0; i < mDescriptorSets.mesh.mSets.size(); ++i)
+		{
+			VkDescriptorBufferInfo bufferInfo = {};
+			bufferInfo.buffer = lightUboBuffers[i];
+			bufferInfo.offset = 0;
+			bufferInfo.range = sizeof(lightUBO);
+
+			VkWriteDescriptorSet writeBufferInfo = {};
+			writeBufferInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeBufferInfo.dstSet = mDescriptorSets.mesh.mSets[i];
+			writeBufferInfo.dstBinding = 2;
 			writeBufferInfo.dstArrayElement = 0;
 			writeBufferInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			writeBufferInfo.descriptorCount = 1;
@@ -253,6 +284,16 @@ void vr::InverseKinematics::SetupUbo()
 		MemoryUtility::CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			ALLOCATION_CALLBACK, &skinningUboBuffers[i], &skinningUboMemory[i]);
+	}
+
+	bufferSize = sizeof(lightUBO);
+	lightUboBuffers.resize(mSwapchain->mImages.size());
+	lightUboMemory.resize(mSwapchain->mImages.size());
+	for (unsigned int i = 0; i < mSwapchain->mImages.size(); ++i)
+	{
+		MemoryUtility::CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			ALLOCATION_CALLBACK, &lightUboBuffers[i], &lightUboMemory[i]);
 	}
 }
 
@@ -458,10 +499,11 @@ void vr::InverseKinematics::UpdateBoneTransforms(vrassimp::Model* model, unsigne
 	std::vector<aiMatrix4x4> transforms; // joint transforms in model-space
 	std::vector<aiMatrix4x4> boneTransforms;
 	//model->mAnimation->Animate(animation->timer, transforms, boneTransforms);
-	//for (unsigned int i = 0; i < transforms.size(); ++i)
-	//{
-	//	skinningUBO.bones[i] = glm::transpose(glm::make_mat4(&(transforms[i].a1)));
-	//}
+	model->mAnimation->Animate(0.0, transforms, boneTransforms);
+	for (unsigned int i = 0; i < transforms.size(); ++i)
+	{
+		skinningUBO.bones[i] = glm::transpose(glm::make_mat4(&(transforms[i].a1)));
+	}
 
 	// solve CCD
 	model->mAnimation->mCCDSolver.Solve(target->mTransform.position);
@@ -477,6 +519,14 @@ void vr::InverseKinematics::UpdateBoneTransforms(vrassimp::Model* model, unsigne
 	vkUnmapMemory(LOGICAL_DEVICE, skinningUboMemory[imageIndex]);
 
 	animation->timer += frametime * model->mAnimation->settings.speed;
+}
+
+void vr::InverseKinematics::UpdateLightBuffer(unsigned int imageIndex)
+{
+	void* data;
+	vkMapMemory(LOGICAL_DEVICE, lightUboMemory[imageIndex], 0, sizeof(lightUBO), 0, &data);
+	memcpy(data, &lightUBO, sizeof(lightUBO));
+	vkUnmapMemory(LOGICAL_DEVICE, lightUboMemory[imageIndex]);
 }
 
 void vr::InverseKinematics::ProcessInput(vrassimp::Model* model)
