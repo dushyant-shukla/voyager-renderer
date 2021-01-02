@@ -49,39 +49,6 @@ namespace vrassimp
 		vkCmdDrawIndexed(cmdBuffer, indices.size(), 1, 0, 0, 0);
 	}
 
-	VertexLayout::VertexLayout(std::vector<VertexLayoutComponentType> components) : layoutComponents(std::move(components)) {}
-
-	unsigned int VertexLayout::Stride()
-	{
-		unsigned int stride = 0;
-		for (auto& component : layoutComponents)
-		{
-			switch (component)
-			{
-			case VertexLayoutComponentType::VERTEX_COMPONENT_UV:
-				stride += 2 * sizeof(float);
-				break;
-			case VertexLayoutComponentType::VERTEX_COMPONENT_DUMMY_FLOAT:
-				stride += sizeof(float);
-				break;
-			case VertexLayoutComponentType::VERTEX_COMPONENT_DUMMY_VEC4:
-				stride += 4 * sizeof(float);
-				break;
-			case VertexLayoutComponentType::VERTEX_COMPONENT_BONE_WEIGHT:
-				stride += 4 * sizeof(float);
-				break;
-			case VertexLayoutComponentType::VERTEX_COMPONENT_BONE_IDS:
-				stride += 4 * sizeof(float);
-				break;
-			default:
-				// All components except the ones listed above are made up of 3 floats
-				stride += 3 * sizeof(float);
-			}
-		}
-
-		return stride;
-	}
-
 	Model::~Model()
 	{
 		for (auto& mesh : meshes)
@@ -130,7 +97,6 @@ namespace vrassimp
 		isAnimationAvailable = true;
 		mAnimation = new Animation();
 		mAnimation->mScene = mScene;
-		mAnimation->SetAnimation(0);
 		mAnimation->mGlobalInverseTransform = mScene->mRootNode->mTransformation;
 		mAnimation->mGlobalInverseTransform.Inverse(); // animation runs without inverse as well
 
@@ -349,34 +315,6 @@ namespace vrassimp
 				return;
 			}
 		}
-	}
-
-	Model::ModelCreateInfo::ModelCreateInfo()
-		: center(glm::vec3(0.0f)),
-		scale(glm::vec3(1.0f)),
-		uvScale(glm::vec2(1.0f))
-	{}
-
-	Model::ModelCreateInfo::ModelCreateInfo(glm::vec3 _center, glm::vec3 _scale, glm::vec2 _uvScale)
-		: center(_center),
-		scale(_scale),
-		uvScale(_uvScale)
-	{}
-
-	Model::ModelCreateInfo::ModelCreateInfo(float _center, float _scale, float _uvScale)
-		: center(glm::vec3(_center)),
-		scale(glm::vec3(_scale)),
-		uvScale(glm::vec2(_uvScale))
-	{}
-
-	void Animation::SetAnimation(unsigned int animationIndex)
-	{
-		if (animationIndex < mScene->mNumAnimations)
-		{
-			mActiveAnimation = mScene->mAnimations[animationIndex];
-			return;
-		}
-		THROW("ANIMATION FAILURE: INVALID INDEX PASSED");
 	}
 
 	void Animation::ProcessMesh(int meshIndex, aiMesh* mesh)

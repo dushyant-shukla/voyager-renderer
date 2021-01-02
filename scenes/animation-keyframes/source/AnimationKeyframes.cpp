@@ -2,7 +2,6 @@
 
 #include "graphics/vulkan/utility/RendererCoreUtility.h"
 #include "input/InputManager.h"
-
 #include <imgui.h>
 
 vr::AnimationKeyframes::AnimationKeyframes(std::string name) : Application(name)
@@ -57,20 +56,6 @@ void vr::AnimationKeyframes::InitializeScene()
 	SetupDescriptorSet();
 	SetupPipeline();
 	LoadAssets();
-
-	//MemoryUtility::CreateBuffer(sizeof(animatedModel->jointPositions[0]) * animatedModel->mAnimation->mBoneCount,
-	//	VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	//	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-	//	ALLOCATION_CALLBACK,
-	//	&jointVertexBuffer.mBuffer,
-	//	&jointVertexBuffer.mMemory);
-
-	//MemoryUtility::CreateBuffer(sizeof(animatedModel->linePositions[0]) * animatedModel->mAnimation->mBoneCount * 2,
-	//	VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	//	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-	//	ALLOCATION_CALLBACK,
-	//	&boneVertexBuffer.mBuffer,
-	//	&boneVertexBuffer.mMemory);
 
 	isReady = true;
 }
@@ -303,7 +288,8 @@ void vr::AnimationKeyframes::SetupPipeline()
 			.AddVertexInputBindingDescription(vrassimp::MeshVertex::GetVertexInputBindingDescription())
 			.AddVertexInputAttributeDescription(vrassimp::MeshVertex::GetVertexInputAttributeDescriptions())
 			.ConfigureViewport(mSwapchain->mExtent)
-			.ConfigureRasterizer(VK_FALSE, VK_FALSE, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f, 0, nullptr)
+			//.ConfigureRasterizer(VK_FALSE, VK_FALSE, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f, 0, nullptr)
+			.ConfigureRasterizer(VK_FALSE, VK_FALSE, VK_POLYGON_MODE_FILL, VK_CULL_MODE_FRONT_BIT, VK_FRONT_FACE_CLOCKWISE, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f, 0, nullptr)
 			.ConfigureMultiSampling(VK_SAMPLE_COUNT_1_BIT, VK_FALSE, 1.0f, nullptr, 0, VK_FALSE, VK_FALSE, nullptr)
 			.ConfigureDefaultDepthTesting()
 			.AddColorBlendAttachmentState(VK_FALSE, // disabled as clear color and object color were getting blended together
@@ -663,8 +649,6 @@ void vr::AnimationKeyframes::UpdateBoneTransforms(vrassimp::Model* model, unsign
 	jointVertexBuffer.Map();
 	jointVertexBuffer.CopyData(&model->jointPositions[0], sizeof(model->jointPositions[0]) * model->mAnimation->mBoneCount);
 
-	//vkCmdUpdateBuffer(mGraphicsCommandBuffers[imageIndex], jointVertexBuffer.mBuffer, 0, sizeof(model->jointPositions[0]) * model->mAnimation->mBoneCount, &model->jointPositions[0]);
-
 	model->linePositions.clear();
 	model->linePositions.resize(model->mAnimation->mBoneCount * 2);
 	std::vector<glm::vec4> BonePositionsMeshSpaceChild;
@@ -705,58 +689,7 @@ void vr::AnimationKeyframes::UpdateBoneTransforms(vrassimp::Model* model, unsign
 	boneVertexBuffer.Map();
 	boneVertexBuffer.CopyData(&model->linePositions[0], sizeof(model->linePositions[0]) * model->mAnimation->mBoneCount * 2);
 
-	//vkCmdUpdateBuffer(mGraphicsCommandBuffers[imageIndex], boneVertexBuffer.mBuffer, 0, sizeof(model->linePositions[0]) * model->mAnimation->mBoneCount * 2, &model->linePositions[0]);
-
 	animation->timer += frametime * model->mAnimation->settings.speed;
-
-	{
-		//for (unsigned int i = 0; i < model->mAnimation->boneEndpointPositions.size(); ++i)
-//{
-//	aiMatrix4x4 parent = model->mAnimation->boneEndpointPositions[i].parentBone;
-//	aiMatrix4x4 child = model->mAnimation->boneEndpointPositions[i].childBone;
-
-//	aiVector3D parentPos, parentScale, parentRot;
-//	aiVector3D childPos, childScale, childRot;
-
-//	parent.Decompose(parentScale, parentRot, parentPos);
-//	child.Decompose(childScale, childRot, childPos);
-
-//	glm::vec3 A(parentPos.x, parentPos.y, parentPos.z); // parent
-//	glm::vec3 B(childPos.x, childPos.y, childPos.z); // child
-
-//	glm::mat4 FinalmodelMatrix = vrassimp::Model::ModelMatForLineBWTwoPoints(A, B);
-//	boneModelData.lineModel = FinalmodelMatrix;
-
-//	vkCmdPushConstants(mGraphicsCommandBuffers[imageIndex],
-//		mPipelineLayouts.debug.GetVulkanPipelineLayout(),
-//		VK_SHADER_STAGE_VERTEX_BIT, 0,
-//		sizeof(boneModelData), &boneModelData);
-
-//	boneVertexBuffer.Unmap();
-//	vkQueueWaitIdle(GRAPHICS_QUEUE);
-//	boneVertexBuffer.Destroy();
-//	MemoryUtility::CreateBuffer(sizeof(glm::vec4) * 2,
-//		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-//		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-//		ALLOCATION_CALLBACK,
-//		&boneVertexBuffer.mBuffer,
-//		&boneVertexBuffer.mMemory);
-
-//	boneVertexBuffer.Map();
-//	std::vector<glm::vec4> lines;
-//	lines.push_back(glm::vec4(A, 1.0));
-//	lines.push_back(glm::vec4(B, 1.0));
-//	boneVertexBuffer.CopyData(&lines[0], sizeof(lines[0]) * 2);
-
-//	VkBuffer vertexBuffers[] = { boneVertexBuffer.mBuffer };
-//	VkDeviceSize offsets[] = { 0 };
-//	vkCmdBindVertexBuffers(mGraphicsCommandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
-
-//	vkCmdDraw(mGraphicsCommandBuffers[imageIndex], 2, 1, 0, 0);
-
-//	boneVertexBuffer.Unmap();
-//}
-	}
 }
 
 void vr::AnimationKeyframes::UpdateLightBuffer(unsigned int imageIndex)

@@ -147,29 +147,6 @@ namespace vrassimp
 		}
 	};
 
-	enum class VertexLayoutComponentType
-	{
-		VERTEX_COMPONENT_POSITION = 0x0,
-		VERTEX_COMPONENT_NORMAL = 0x1,
-		VERTEX_COMPONENT_COLOR = 0x2,
-		VERTEX_COMPONENT_UV = 0x3,
-		VERTEX_COMPONENT_TANGENT = 0x4,
-		VERTEX_COMPONENT_BITANGENT = 0x5,
-		VERTEX_COMPONENT_BONE_WEIGHT = 0x6,
-		VERTEX_COMPONENT_BONE_IDS = 0x7,
-		VERTEX_COMPONENT_DUMMY_FLOAT = 0x8,
-		VERTEX_COMPONENT_DUMMY_VEC4 = 0x9
-	};
-
-	struct VertexLayout
-	{
-		std::vector<VertexLayoutComponentType> layoutComponents;
-
-		VertexLayout(std::vector<VertexLayoutComponentType> components);
-
-		unsigned int Stride();
-	};
-
 	/*
 		Per vertex bone ids and weights
 	*/
@@ -242,7 +219,6 @@ namespace vrassimp
 	struct Animation
 	{
 		float mTicksPerSecond = 0.0f;
-		aiMatrix4x4 mGlobalInverseTransform;
 
 		int mBoneCount = 0;
 
@@ -257,16 +233,14 @@ namespace vrassimp
 		*/
 		std::map<std::string, int> mBoneMapping;
 		std::vector<BoneMatrix> mBoneMatrices;
-		std::vector<glm::vec3> mBonePosition;
+		aiMatrix4x4 mGlobalInverseTransform;
+
 		std::vector<BoneLine> boneEndpointPositions;
 
 		std::vector<std::string> mIKBoneNames;
 		vr::CCDSolver mCCDSolver;
 
-		bool mEnableSlerp;
-
 		const aiScene* mScene;
-		aiAnimation* mActiveAnimation;
 
 		struct AnimationTrack
 		{
@@ -280,7 +254,6 @@ namespace vrassimp
 			{}
 		};
 		std::vector<AnimationTrack> availableTracks;
-		unsigned int activeTrackIndex = 0;
 		float timer = 0.0f;
 
 		struct AnimationSettings
@@ -298,8 +271,6 @@ namespace vrassimp
 			float uvOffsetScale = 0.0;
 		} settings;
 
-		void SetAnimation(unsigned int animationIndex);
-		//void ProcessNode(aiNode* node, const aiScene* scene);
 		void ProcessMesh(int meshIndex, aiMesh* mesh);
 		void Animate(double seconds, std::vector<aiMatrix4x4>& transforms, std::vector<aiMatrix4x4>& boneTransforms);
 		void ReadNodeHierarchy(float parentAnimationTime, const aiNode* parentNode, const aiMatrix4x4 parentTransform);
@@ -373,21 +344,6 @@ namespace vrassimp
 			glm::vec3 color = glm::vec3(1.0f, 0.0f, 0.0f);
 		} modelSettings;
 
-		/*
-			Used for parameterizing model loading
-		*/
-		struct ModelCreateInfo
-		{
-			glm::vec3 center;
-			glm::vec3 scale;
-			glm::vec2 uvScale;
-			VkMemoryPropertyFlags memoryPropertyFlags = 0;
-
-			ModelCreateInfo();
-			ModelCreateInfo(glm::vec3 _center, glm::vec3 _scale, glm::vec2 _uvScale);
-			ModelCreateInfo(float _center, float _scale, float _uvScale);
-		};
-
 		const aiScene* mScene = nullptr;
 		Animation* mAnimation = nullptr;
 		bool isAnimationAvailable = false;
@@ -396,7 +352,6 @@ namespace vrassimp
 		std::vector<Mesh*> meshes;
 		std::vector<glm::vec4> jointPositions;
 		std::vector<glm::vec4> linePositions;
-		std::vector<glm::vec4> localLinePositions;
 
 		void LoadFromFile(std::string filename, std::string screename);
 		void QueryAnimationData();
