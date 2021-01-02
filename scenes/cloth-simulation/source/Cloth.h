@@ -2,7 +2,6 @@
 
 #include "Constraint.h"
 #include "Particle.h"
-#include "graphics/vulkan/Model.h"
 
 #include <vector>
 #include <map>

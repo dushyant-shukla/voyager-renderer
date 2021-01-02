@@ -3,9 +3,8 @@
 #include "main.h"
 #include "Application.h"
 #include "Splines.h"
-#include "graphics/vulkan/Model.h"
+#include "graphics/model/Model.h"
 
-//#define MAX_BONES 100
 #define MAX_MESH_COUNT 100
 
 namespace vr

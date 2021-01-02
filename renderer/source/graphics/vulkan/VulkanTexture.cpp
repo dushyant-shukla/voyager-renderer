@@ -4,7 +4,6 @@
 #include "utility/ImageUtility.h"
 #include "utility/RendererCoreUtility.h"
 #include "RendererState.h"
-#include "Model.h"
 
 namespace vr
 {

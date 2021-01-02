@@ -1,4 +1,6 @@
 #include "ClothSimulation.h"
+#include "graphics/model/Texture.h"
+
 #include "input/InputManager.h"
 
 #include <imgui.h>

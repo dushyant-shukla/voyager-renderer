@@ -1,4 +1,5 @@
 #include "InverseKinematics.h"
+#include "graphics/model/Texture.h"
 
 #include "graphics/vulkan/utility/RendererCoreUtility.h"
 #include "input/InputManager.h"

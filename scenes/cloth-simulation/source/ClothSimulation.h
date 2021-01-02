@@ -13,7 +13,7 @@
 #include "graphics/vulkan/Pipeline.h"
 #include "graphics/vulkan/PipelineLayout.h"
 #include "graphics/vulkan/TextureSampler.h"
-#include "graphics/vulkan/Model.h"
+#include "graphics/model/Model.h"
 
 #include "Cloth.h"
 

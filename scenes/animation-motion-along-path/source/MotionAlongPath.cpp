@@ -1,4 +1,6 @@
 #include "MotionAlongPath.h"
+#include "graphics/model/Texture.h"
+
 #include "CurveVertex.h"
 #include "graphics/vulkan/utility/RendererCoreUtility.h"
 
