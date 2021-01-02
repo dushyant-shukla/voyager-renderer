@@ -13,7 +13,7 @@
 #include "graphics/vulkan/DescriptorSetLayout.h"
 #include "graphics/vulkan/PipelineLayout.h"
 #include "graphics/vulkan/DescriptorSets.h"
-#include "graphics/vulkan/Texture.h"
+#include "graphics/vulkan/VulkanTexture.h"
 #include "graphics/vulkan/TextureSampler.h"
 
 namespace vr
@@ -91,7 +91,7 @@ namespace vr
 
 		struct
 		{
-			Texture texture;
+			VulkanTexture texture;
 			TextureSampler sampler;
 		} mFont;
 

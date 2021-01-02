@@ -10,7 +10,7 @@
 #include "graphics/vulkan/Vertex.h"
 #include "graphics/vulkan/DescriptorSetLayout.h"
 #include "graphics/vulkan/DescriptorPool.h"
-#include "graphics/vulkan/Texture.h"
+#include "graphics/vulkan/VulkanTexture.h"
 #include "graphics/vulkan/TextureSampler.h"
 
 #include "clock/Clock.h"
@@ -88,7 +88,7 @@ namespace vr
 		DescriptorPool mDescriptorPool;
 		std::vector<VkDescriptorSet> mDescriptorSets;
 
-		Texture mCross;
+		VulkanTexture mCross;
 		TextureSampler mTextureSampler;
 
 		int mCurrentFrame = 0;

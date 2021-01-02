@@ -4,13 +4,13 @@
 
 namespace vr
 {
-	class Texture
+	class VulkanTexture
 	{
 	public:
 
-		Texture();
-		Texture(unsigned int binding);
-		~Texture();
+		VulkanTexture();
+		VulkanTexture(unsigned int binding);
+		~VulkanTexture();
 
 		/*
 			Must update descriptor set while loading the texture

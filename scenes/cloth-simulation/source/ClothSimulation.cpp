@@ -679,21 +679,21 @@ namespace vr
 
 					for (auto texture : mesh->textures)
 					{
-						Texture* t = nullptr;
+						VulkanTexture* t = nullptr;
 						switch (texture->type)
 						{
 						case vrassimp::Texture::Type::DIFFUSE:
-							t = new Texture(0);
+							t = new VulkanTexture(0);
 							t->LoadFromFile(texture->path.c_str(), mSamplers.diffuse.GetVulkanSampler());
 							texture->texture = t;
 							break;
 						case vrassimp::Texture::Type::NORMALS:
-							t = new Texture(1);
+							t = new VulkanTexture(1);
 							t->LoadFromFile(texture->path.c_str(), mSamplers.normal.GetVulkanSampler());
 							texture->texture = t;
 							break;
 						case vrassimp::Texture::Type::AMBIENT_OCCLUSION:
-							t = new Texture(2);
+							t = new VulkanTexture(2);
 							t->LoadFromFile(texture->path.c_str(), mSamplers.normal.GetVulkanSampler());
 							texture->texture = t;
 							break;

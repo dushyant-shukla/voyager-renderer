@@ -389,21 +389,21 @@ void vr::InverseKinematics::LoadAssets()
 
 				for (auto texture : mesh->textures)
 				{
-					Texture* t = nullptr;
+					VulkanTexture* t = nullptr;
 					switch (texture->type)
 					{
 					case vrassimp::Texture::Type::DIFFUSE:
-						t = new Texture(0);
+						t = new VulkanTexture(0);
 						t->LoadFromFile(texture->path.c_str(), mSamplers.diffuse.GetVulkanSampler());
 						texture->texture = t;
 						break;
 					case vrassimp::Texture::Type::SPECULAR:
-						t = new Texture(1);
+						t = new VulkanTexture(1);
 						t->LoadFromFile(texture->path.c_str(), mSamplers.specular.GetVulkanSampler());
 						texture->texture = t;
 						break;
 					case vrassimp::Texture::Type::EMISSIVE:
-						t = new Texture(2);
+						t = new VulkanTexture(2);
 						t->LoadFromFile(texture->path.c_str(), mSamplers.emission.GetVulkanSampler());
 						texture->texture = t;
 						break;

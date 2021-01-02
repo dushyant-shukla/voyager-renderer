@@ -1,4 +1,4 @@
-#include "Texture.h"
+#include "VulkanTexture.h"
 #include "ResourceLoader.h"
 #include "utility/MemoryUtility.h"
 #include "utility/ImageUtility.h"
@@ -8,13 +8,13 @@
 
 namespace vr
 {
-	Texture::Texture() {}
+	VulkanTexture::VulkanTexture() {}
 
-	Texture::Texture(unsigned int binding) : mBinding(binding)
+	VulkanTexture::VulkanTexture(unsigned int binding) : mBinding(binding)
 	{
 	}
 
-	Texture::~Texture()
+	VulkanTexture::~VulkanTexture()
 	{
 		if (mImage != VK_NULL_HANDLE)
 		{
@@ -35,7 +35,7 @@ namespace vr
 		}
 	}
 
-	void Texture::LoadFromFile(const char* filename)
+	void VulkanTexture::LoadFromFile(const char* filename)
 	{
 		int width, height;
 		VkDeviceSize imageSize;
@@ -77,7 +77,7 @@ namespace vr
 		RENDERER_DEBUG("RESOURCE CREATED: IMAGE TEXTURE (" + std::string(filename) + ")");
 	}
 
-	void Texture::LoadFromFile(const char* filename, const VkSampler& sampler)
+	void VulkanTexture::LoadFromFile(const char* filename, const VkSampler& sampler)
 	{
 		LoadFromFile(filename);
 
@@ -86,7 +86,7 @@ namespace vr
 		mImageInfo.sampler = sampler;
 	}
 
-	void Texture::LoadWithData(const unsigned char* data, const VkDeviceSize size, const int width, const int height, const VkSampler& sampler)
+	void VulkanTexture::LoadWithData(const unsigned char* data, const VkDeviceSize size, const int width, const int height, const VkSampler& sampler)
 	{
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingMemory;
@@ -129,12 +129,12 @@ namespace vr
 		mImageInfo.sampler = sampler;
 	}
 
-	const VkImageView& Texture::GetVulkanImageView()
+	const VkImageView& VulkanTexture::GetVulkanImageView()
 	{
 		return mImageView;
 	}
 
-	const VkImage& Texture::GetVulkanImage()
+	const VkImage& VulkanTexture::GetVulkanImage()
 	{
 		return mImage;
 	}

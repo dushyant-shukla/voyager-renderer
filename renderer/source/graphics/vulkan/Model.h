@@ -16,7 +16,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-#include "Texture.h"
+#include "VulkanTexture.h"
 #include "Buffer.h"
 #include "DescriptorSets.h"
 #include "CCDSolver.h"
@@ -209,7 +209,7 @@ namespace vrassimp
 
 		Type type;
 		std::string path;
-		vr::Texture* texture;
+		vr::VulkanTexture* texture;
 
 		Texture();
 		Texture(Type _type, std::string _path);
