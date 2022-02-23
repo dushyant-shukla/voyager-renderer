@@ -29,8 +29,9 @@ namespace vr
 
 		bool IsValid()
 		{
-			return graphics.has_value() && presentation.has_value();
-			//&& compute.has_value() && transfer.has_value();
+			bool result = graphics.has_value() && presentation.has_value();
+			result = result && compute.has_value() && transfer.has_value();
+			return result;
 		}
 
 		QueueFamilyIndices() {}

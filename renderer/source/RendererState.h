@@ -9,6 +9,7 @@
 #define GRAPHICS_CMD_POOL		vr::RendererState::GetGraphicsCommandPool()
 #define TRANSFER_QUEUE			vr::RendererState::GetTransferQueue()
 #define TRANSFER_CMD_POOL		vr::RendererState::GetTransferCommandPool()
+#define COMPUTE_QUEUE			vr::RendererState::GetComputeQueue()
 
 namespace vr
 {
@@ -80,6 +81,15 @@ namespace vr
 		static const VkCommandPool& GetTransferCommandPool()
 		{
 			return sTransferCommandPool;
+		}
+
+		static void SetComputeQueue(const VkQueue& computeQueue)
+		{
+			sComputeQueue = computeQueue;
+		}
+		static const VkQueue& GetComputeQueue()
+		{
+			return sComputeQueue;
 		}
 
 	private:

@@ -57,7 +57,8 @@ namespace vr
 		QueueFamilyIndices indices = mPhysicalDevice.queueFamilies;
 
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-		const std::set<unsigned int> queueFamilyIndices = { indices.graphics.value(), indices.presentation.value() };
+		//const std::set<unsigned int> queueFamilyIndices = { indices.graphics.value(), indices.presentation.value() };
+		const std::set<unsigned int> queueFamilyIndices = { indices.graphics.value(), indices.compute.value(), indices.transfer.value(), indices.presentation.value() };
 		for (int queueFamilyIndex : queueFamilyIndices)
 		{
 			// queues the logical device needs to create

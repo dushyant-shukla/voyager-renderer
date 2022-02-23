@@ -36,9 +36,11 @@ dll_name = {}
 
 -- build non-header-only library
 -- these projects have premake script
+group "dependencies"
 include "externals/glfw"
 include "externals/imgui"
 include "externals/jsoncpp"
+group ""
 
 --include "scenes/animation-motion-along-path"
 
@@ -477,3 +479,50 @@ postbuildcommands
 {
   ("{COPY} $(SolutionDir)externals\\assimp\\release\\assimp-vc142-mt.dll $(SolutionDir)scenes\\%{prj.name}\\")
 }
+
+-----------------------------------------------GPU COMPUTING---------------------------------------------------------------
+
+project "gpu-computing"
+  location  "scenes/gpu-computing"
+  kind      "ConsoleApp"
+  language  "C++"
+  characterset ("MBCS")
+
+  targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+  objdir ("bin-intermediate/" .. outputdir .. "/%{prj.name}")
+
+  files
+  {
+		"scenes/%{prj.name}/source/**.h",
+		"scenes/%{prj.name}/source/**.cpp"
+  }
+
+  includedirs
+  {
+	"renderer",
+	"renderer/source",
+    "%{include_dir.glm}",
+    "%{include_dir.imgui}",
+    "%{include_dir.jsoncpp}",
+	"%{include_dir.spdlog}",
+	"%{include_dir.vulkan}",
+	"%{include_dir.assimp}"
+  }
+
+  links
+  {
+    "renderer"
+  }
+
+  filter "system:windows"
+	cppdialect "C++17"
+	staticruntime "On"
+	systemversion "latest"
+
+  filter "configurations:Debug"
+	buildoptions "/MDd"
+	symbols "On"
+
+  filter "configurations:Release"
+	buildoptions "/MD"
+	optimize "On"
