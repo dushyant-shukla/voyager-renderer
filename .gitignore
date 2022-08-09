@@ -387,3 +387,5 @@ engine/externals/glfw/src/out/build/
 externals/jsoncpp/src/jsontestrunner/out/**
 externals/jsoncpp/src/lib_json/out/**
 externals/jsoncpp/src/test_lib_json/out/**
+
+scenes/**/*.dll
